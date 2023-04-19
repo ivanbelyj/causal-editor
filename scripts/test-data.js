@@ -90,7 +90,7 @@
     }
   ]`;
 
-var characterFacts = `
+export const characterFacts = `
 [
   {
     "Id": "b60c45c1-10f3-42ee-a168-7a8756501d38",

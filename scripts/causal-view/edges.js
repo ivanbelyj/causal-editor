@@ -1,12 +1,19 @@
-  function updateEdge(edgePathSelection, line, nodeWidth, nodeHeight) {
+  
+  
+  export function updateEdges(edgePathSelection, line, nodeWidth, nodeHeight) {
     return edgePathSelection.attr("d", (d) => {
-      console.log(d)
       return line([{ x: d.source.x + nodeWidth / 2, y: d.source.y + nodeHeight / 2},
         { x: d.target.x + nodeWidth / 2, y: d.target.y + nodeHeight / 2 }])
     })
   }
+
+  // Ребра идентифицируются по id источника и цели
+  export function sourceAndTargetIdsToEdgeId(source, target) {
+    return `${source}--${target}`; 
+  }
   
-  function addEdges(svgSelection, dag, nodeIdsAndColors, implementationEdges, line) {
+  export function addEdges(svgSelection, dag, nodeIdsAndColors, implementationEdges,
+    line) {
     const defs = svgSelection.append("defs"); // For gradients
   
     const edgePathSelection = svgSelection
@@ -17,7 +24,7 @@
       .append("path")
       .attr("class", "edge");
   
-    updateEdge(edgePathSelection, line, 140, 40)
+    updateEdges(edgePathSelection, line, 140, 40)
       .attr("fill", "none")
       .attr("stroke-width", 3)
       .attr("stroke", ({ source, target }) => {

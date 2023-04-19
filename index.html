@@ -12,19 +12,18 @@
   <script src="https://cdn.jsdelivr.net/npm/d3-drag@3"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3-zoom@3"></script>
 
-  <script src="scripts/add-view-drag-and-scale.js"></script>
-  <script src="scripts/add-draggable-nodes.js"></script>
-  <script src="scripts/edges.js"></script>
-
-  <!-- <script src="scripts//add-draggables.js"></script> -->
-  <script src="scripts/test-data.js"></script>
-  <script src="scripts/main.js"></script>
+  <script src="scripts/test-data.js" type="module"></script>
+  <script src="scripts/causal-view/add-view-drag-and-scale.js"></script>
+  <script src="scripts/causal-view/edges.js" type="module"></script>
+  <script src="scripts/causal-view/nodes.js" type="module"></script>
+  <script src="scripts/causal-view/causal-view.js" type="module"></script>
+  
+  <script src="scripts/main.js" type="module"></script>
   <title>Causal Model</title>
 </head>
 
 <body>
-  <svg>
-  </svg>
+  <div class="causal-view"></div>
 </body>
 
 </html>
