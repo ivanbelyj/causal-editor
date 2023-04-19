@@ -1,29 +1,43 @@
 <html>
+  <head>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/d3-dag@0.8.2"></script>
 
-<head>
-  <meta name="viewport" 
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <link rel="stylesheet" href="styles.css"/>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="https://unpkg.com/d3-dag@0.8.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-dispatch@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-selection@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-drag@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-zoom@3"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/d3-dispatch@3"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3-selection@3"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3-drag@3"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3-zoom@3"></script>
+    <script src="scripts/test-data.js" type="module"></script>
+    <script
+      src="scripts/causal-view/add-view-drag-and-scale.js"
+      type="module"
+    ></script>
+    <script src="scripts/causal-view/edges.js" type="module"></script>
+    <script src="scripts/causal-view/nodes.js" type="module"></script>
+    <script src="scripts/causal-view/causal-view.js" type="module"></script>
 
-  <script src="scripts/test-data.js" type="module"></script>
-  <script src="scripts/causal-view/add-view-drag-and-scale.js"></script>
-  <script src="scripts/causal-view/edges.js" type="module"></script>
-  <script src="scripts/causal-view/nodes.js" type="module"></script>
-  <script src="scripts/causal-view/causal-view.js" type="module"></script>
-  
-  <script src="scripts/main.js" type="module"></script>
-  <title>Causal Model</title>
-</head>
+    <script src="scripts/main.js" type="module"></script>
+    <title>Causal Editor</title>
+  </head>
 
-<body>
-  <div class="causal-view"></div>
-</body>
-
+  <body>
+    <div class="causal-view"></div>
+    <div class="panel">
+      <div class="panel__input">
+        <label>Title</label><input type="text" placeholder="Title" />
+      </div>
+      <div class="panel__input">
+        <label>Id</label><input type="text" placeholder="Id" />
+      </div>
+      <div class="panel__input">
+        <label>Node Value</label><input type="text" placeholder="Node Value" />
+      </div>
+    </div>
+  </body>
 </html>
