@@ -10,7 +10,10 @@ body {
 
 .causal-view {
   width: 100%;
-  height: 500px;
+  height: 200px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
 
 .panel__input {
