@@ -14,6 +14,9 @@ function onUpdateButtonClick() {}
 
 function tests(causalView) {
   const firstNode = causalView.causalModelNodes[0];
-  firstNode.NodeValue = "Updated node value";
-  causalView.updateNodeById(firstNode);
+  causalView.updateNodeTitleAndValueById(
+    firstNode.Id,
+    "New node title",
+    "Updated node value"
+  );
 }

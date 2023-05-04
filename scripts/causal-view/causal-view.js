@@ -1,69 +1,103 @@
 export class CausalView {
-  constructor(selector, causalModelNodes) {
-    this.causalModelNodes = causalModelNodes;
-    const { dag, implementationEdgesSet } =
-      this.getDagAndImplementationEdgesSet(causalModelNodes);
-    const parentSelection = d3.select(selector);
-    this.renderCausalView(parentSelection, dag, implementationEdgesSet);
-  }
-  updateNodeById(nodeToSet) {
-    this.causalModelNodes.map((node) =>
-      node.Id === nodeToSet.Id ? node : nodeToSet
-    );
-    // Todo:
-    // Обновить ребра-причины (абстрактные или вероятностные)
-    d3.select(`.${nodeToSet.Id}`)
-      .select("text")
-      .text((d) => d.data.NodeValue);
+  _causalModelNodes = null;
+  _dag = null;
+
+  // Список id ребер-реализаций требуется для их особого отображения
+  _implementationEdgesSet = null;
+
+  _nodeWidth = 140;
+  _nodeHeight = 40;
+
+  // Линия для отображения ребер может потребоваться на разных этапах
+  _line = null;
+  _nodeIdsAndColors = null;
+
+  _svgSelection = null;
+
+  _nodesParent;
+
+  get causalModelNodes() {
+    return this._causalModelNodes;
   }
 
-  // Создает dag на основе каузальной модели, а также
+  constructor(selector, causalModelNodes) {
+    this._causalModelNodes = causalModelNodes;
+    this.setDagAndImplementationEdgesSet(causalModelNodes);
+
+    this._line = d3
+      .line()
+      .curve(d3.curveCatmullRom)
+      .x((d) => d.x)
+      .y((d) => d.y);
+
+    const parentSelection = d3.select(selector);
+    this.render(parentSelection);
+  }
+
+  updateNodeTitleAndValueById(nodeId, nodeTitle, nodeValue) {
+    const index = this._causalModelNodes.findIndex(
+      (node) => node.Id === nodeId
+    );
+    if (index !== -1) {
+      this._causalModelNodes[index].NodeTitle = nodeTitle;
+      this._causalModelNodes[index].NodeValue = nodeValue;
+
+      d3.select(`.${nodeId}`)
+        .select("text")
+        .text((d) => nodeTitle);
+    }
+  }
+
+  // Устанавливает dag на основе каузальной модели, а также
   // набор ребер-реализаций абстрактных фактов в виде строк
-  getDagAndImplementationEdgesSet(causalModelNodes) {
+  setDagAndImplementationEdgesSet(causalModelNodes) {
     const implementationEdgesSet = new Set();
-    const dag = d3
+    const causalView = this;
+    this._dag = d3
       .dagStratify()
       .id(({ Id: id }) => id)
       // Получаем
       .parentIds((node) => {
-        // Причинно-следственные связи преобразуются в id-based parent data,
-        // предназначенные для отображения
-        const res = this.findCauseIds(node["ProbabilityNest"]);
-        const abstractFactId = node["AbstractFactId"];
-        if (abstractFactId) {
-          res.push(abstractFactId);
-          implementationEdgesSet.add(
-            this.sourceAndTargetIdsToEdgeId(abstractFactId, node["Id"])
-          );
-        }
-        return res;
+        return causalView.getParents(node, implementationEdgesSet);
       })(causalModelNodes);
-    return { dag, implementationEdgesSet };
+    this._implementationEdgesSet = implementationEdgesSet;
   }
 
-  // Список id ребер-реализаций требуется для особого отображения
-  renderCausalView(svgParentSelection, dag, implementationEdges) {
-    // const nodeRadius = 20;
-    const nodeWidth = 140;
-    const nodeHeight = 40;
+  getParents(node, implementationEdgesSet) {
+    // Причинно-следственные связи преобразуются в id-based parent data,
+    // предназначенные для отображения
+    const res = this.findCauseIds(node["ProbabilityNest"]);
+    const abstractFactId = node["AbstractFactId"];
+    if (abstractFactId) {
+      res.push(abstractFactId);
+      implementationEdgesSet.add(
+        this.sourceAndTargetIdsToEdgeId(abstractFactId, node["Id"])
+      );
+    }
+    return res;
+  }
+
+  render(svgParentSelection) {
     const layout = d3
       .sugiyama() // base layout
       .decross(d3.decrossOpt()) // minimize number of crossings
       // set node size instead of constraining to fit
-      .nodeSize((node) => [(node ? 1.3 : 0) * nodeWidth, 3 * nodeHeight]);
-    const { width: dagWidth, height: dagHeight } = layout(dag);
+      .nodeSize((node) => [
+        (node ? 1.3 : 0) * this._nodeWidth,
+        3 * this._nodeHeight,
+      ]);
+    const { width: dagWidth, height: dagHeight } = layout(this._dag);
 
     const width = parseFloat(svgParentSelection.style("width"));
     const height = parseFloat(svgParentSelection.style("height"));
-    console.log("width: ", width, "height: ", height);
 
     // Rendering
-    const svgSelection = svgParentSelection
+    this._svgSelection = svgParentSelection
       .append("svg")
       .style("width", width)
       .style("height", height);
-    svgSelection.attr("viewBox", [0, 0, dagWidth, height].join(" "));
-    const svgChild = svgSelection.append("g");
+    this._svgSelection.attr("viewBox", [0, 0, dagWidth, height].join(" "));
+    const svgChild = this._svgSelection.append("g");
     svgChild
       .append("rect")
       .attr("width", width)
@@ -73,23 +107,18 @@ export class CausalView {
 
     // Map colors to nodes
     const interp = d3.interpolateRainbow;
-    const nodeIdsAndColors = new Map();
-    for (const node of dag.idescendants()) {
-      const rndStep = Math.random() * dag.size();
-      nodeIdsAndColors.set(node.data["Id"], interp(rndStep));
+    this._nodeIdsAndColors = new Map();
+    for (const node of this._dag.idescendants()) {
+      const rndStep = Math.random() * this._dag.size();
+      this._nodeIdsAndColors.set(node.data["Id"], interp(rndStep));
     }
 
-    const line = d3
-      .line()
-      .curve(d3.curveCatmullRom)
-      .x((d) => d.x)
-      .y((d) => d.y);
+    this.addEdges(svgChild);
 
-    this.addEdges(svgChild, dag, nodeIdsAndColors, implementationEdges, line);
+    this._nodesParentSelection = svgChild.append("g").selectAll("g");
+    this.addNodes(this._dag.descendants());
 
-    this.addNodes(svgChild, dag, nodeWidth, nodeHeight, nodeIdsAndColors, line);
-
-    // addArrows(svgChild, dag, 15, nodeIdsAndColors);
+    // addArrows(svgChild);
   }
 
   findCauseIds(obj) {
@@ -107,18 +136,9 @@ export class CausalView {
     return edgeProps;
   }
 
-  addNodes(
-    nodesParentSelection,
-    dag,
-    nodeWidth,
-    nodeHeight,
-    nodeIdsAndColors,
-    line
-  ) {
-    const nodes = nodesParentSelection
-      .append("g")
-      .selectAll("g")
-      .data(dag.descendants())
+  addNodes(data) {
+    const nodesSelection = this._nodesParentSelection
+      .data(data)
       .enter()
       .append("g")
       .attr("transform", (d) => `translate(${(d.x = d.x)}, ${(d.y = d.y)})`)
@@ -127,36 +147,23 @@ export class CausalView {
         return `node ${d.data.Id}`;
       });
 
-    // Plot node circles
-    // nodes
-    //   .append("circle")
-    //   .attr("r", nodeRadius)
-    //   .attr("fill", (n) => colorMap.get(n.data.id));
-
-    // Add rect
-    nodes
+    nodesSelection
       .append("rect")
-      .attr("width", nodeWidth)
-      .attr("height", nodeHeight)
+      .attr("width", this._nodeWidth)
+      .attr("height", this._nodeHeight)
       .attr("rx", 5)
       .attr("ry", 5)
-      .attr("fill", (n) => nodeIdsAndColors.get(n.data["Id"]))
+      .attr("fill", (n) => this._nodeIdsAndColors.get(n.data["Id"]))
       .attr("stroke-width", 1.5);
     // .attr("stroke", "#888");
 
-    // Todo: заголовки, а не значения
-    this.addText(
-      nodes,
-      nodeWidth,
-      nodeHeight,
-      (d) => d.data["NodeValue"] || d.data["Id"]
-    );
+    this.addText(nodesSelection, (d) => d.data["NodeValue"] || d.data["Id"]);
     // addText(nodes, "test string for node");
 
-    this.addNodesDragAndDrop(nodes, line, nodeWidth, nodeHeight);
+    this.addNodesDragAndDrop(nodesSelection);
   }
 
-  addText(selection, nodeWidth, nodeHeight, getText) {
+  addText(selection, getText) {
     selection
       .append("text")
       .text(getText)
@@ -164,14 +171,17 @@ export class CausalView {
       .attr("font-family", "sans-serif")
       .attr("text-anchor", "middle")
       .attr("alignment-baseline", "middle")
-      .attr("transform", `translate(${nodeWidth / 2}, ${nodeHeight / 2})`)
+      .attr(
+        "transform",
+        `translate(${this._nodeWidth / 2}, ${this._nodeHeight / 2})`
+      )
       // .attr("dominant-baseline", "hanging")
       .attr("fill", "white");
   }
 
   // Делает узлы, переданные в выборке, перетаскиваемыми. line требуется для обновления линий svg
   // (совпадает с line, использованным при отображении графа до перетаскиваний)
-  addNodesDragAndDrop(nodesSelection, line, nodeWidth, nodeHeight) {
+  addNodesDragAndDrop(nodesSelection) {
     nodesSelection.call(
       d3
         .drag()
@@ -196,12 +206,7 @@ export class CausalView {
       //         const l = line([{ x: d.source.x, y: d.source.y }, { x: d.target.x, y: d.target.y }]);
       //         return l;
       //     });
-      causalView.updateEdges(
-        d3.selectAll(".edge"),
-        line,
-        nodeWidth,
-        nodeHeight
-      );
+      causalView.updateEdges(d3.selectAll(".edge"));
     }
 
     function dragEnded() {
@@ -209,9 +214,11 @@ export class CausalView {
     }
   }
 
-  updateEdges(edgePathSelection, line, nodeWidth, nodeHeight) {
-    return edgePathSelection.attr("d", (d) => {
-      return line([
+  updateEdges(edgePathsSelection) {
+    const nodeWidth = this._nodeWidth;
+    const nodeHeight = this._nodeHeight;
+    return edgePathsSelection.attr("d", (d) => {
+      return this._line([
         { x: d.source.x + nodeWidth / 2, y: d.source.y + nodeHeight / 2 },
         { x: d.target.x + nodeWidth / 2, y: d.target.y + nodeHeight / 2 },
       ]);
@@ -223,18 +230,18 @@ export class CausalView {
     return `${source}--${target}`;
   }
 
-  addEdges(svgSelection, dag, nodeIdsAndColors, implementationEdges, line) {
-    const defs = svgSelection.append("defs"); // For gradients
+  addEdges(selection) {
+    const defs = selection.append("defs"); // For gradients
 
-    const edgePathSelection = svgSelection
+    const edgePathSelection = selection
       .append("g")
       .selectAll("path")
-      .data(dag.links())
+      .data(this._dag.links())
       .enter()
       .append("path")
       .attr("class", "edge");
 
-    this.updateEdges(edgePathSelection, line, 140, 40)
+    this.updateEdges(edgePathSelection)
       .attr("fill", "none")
       .attr("stroke-width", 3)
       .attr("stroke", ({ source, target }) => {
@@ -253,11 +260,11 @@ export class CausalView {
         grad
           .append("stop")
           .attr("offset", "0%")
-          .attr("stop-color", nodeIdsAndColors.get(source.data["Id"]));
+          .attr("stop-color", this._nodeIdsAndColors.get(source.data["Id"]));
         grad
           .append("stop")
           .attr("offset", "100%")
-          .attr("stop-color", nodeIdsAndColors.get(target.data["Id"]));
+          .attr("stop-color", this._nodeIdsAndColors.get(target.data["Id"]));
         return `url(#${gradId})`;
       })
       .attr("stroke-dasharray", ({ source, target }) => {
@@ -265,19 +272,19 @@ export class CausalView {
           source.data["Id"],
           target.data["Id"]
         );
-        const isEdgeImplementation = implementationEdges.has(edgeId);
+        const isEdgeImplementation = this._implementationEdgesSet.has(edgeId);
         return isEdgeImplementation ? "5,5" : "";
       });
   }
 
-  addArrows(svgSelection, dag, nodeWidth, colorMap) {
-    const arrowSize = (nodeWidth * nodeWidth) / 5.0;
+  addArrows(selection, colorMap) {
+    const arrowSize = (this._nodeWidth * this._nodeWidth) / 5.0;
     const arrowLen = Math.sqrt((4 * arrowSize) / Math.sqrt(3));
     const arrow = d3.symbol().type(d3.symbolTriangle).size(arrowSize);
-    svgSelection
+    selection
       .append("g")
       .selectAll("path")
-      .data(dag.links())
+      .data(this._dag.links())
       .enter()
       .append("path")
       .attr("d", arrow)
