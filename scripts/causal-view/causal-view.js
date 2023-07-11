@@ -180,7 +180,7 @@ export class CausalView extends EventTarget {
     );
     // addText(nodes, "test string for node");
 
-    this.addNodesDragAndDrop(nodesSelection);
+    this.addNodesDrag(nodesSelection);
   }
 
   addText(selection, getText) {
@@ -201,7 +201,7 @@ export class CausalView extends EventTarget {
 
   // Делает узлы, переданные в выборке, перетаскиваемыми. line требуется для обновления линий svg
   // (совпадает с line, использованным при отображении графа до перетаскиваний)
-  addNodesDragAndDrop(nodesSelection) {
+  addNodesDrag(nodesSelection) {
     nodesSelection.call(
       d3
         .drag()
@@ -211,14 +211,18 @@ export class CausalView extends EventTarget {
     );
 
     function dragStarted() {
-      d3.select(this).raise().attr("cursor", "grabbing");
+      d3.select(this)
+        // .raise()
+        .attr("cursor", "grabbing");
     }
     const causalView = this;
     function dragged(event, d) {
-      d3.select(this).attr(
-        "transform",
-        `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`
-      );
+      d3.select(this)
+        .attr(
+          "transform",
+          `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`
+        )
+        .raise();
 
       // Обновляем все ребра (пока что просадки по производительности не заметны)
       // d3.selectAll(".edge")
@@ -293,7 +297,7 @@ export class CausalView extends EventTarget {
           target.data["Id"]
         );
         const isEdgeImplementation = this._implementationEdgesSet.has(edgeId);
-        return isEdgeImplementation ? "5,5" : "";
+        return isEdgeImplementation ? "" : "5,5";
       });
   }
 
