@@ -98,16 +98,19 @@ export class CausalView extends EventTarget {
     // Rendering
     this._svgSelection = svgParentSelection
       .append("svg")
-      .style("width", width)
-      .style("height", height);
+      .attr("width", width)
+      .attr("height", height);
+
+    // this.addDragAndScale(svgParentSelection, width, height);
+
     this._svgSelection.attr("viewBox", [0, 0, dagWidth, height].join(" "));
     const svgChild = this._svgSelection.append("g");
-    svgChild
-      .append("rect")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("fill", "white");
-    this.addDragAndScale(svgChild, width, height);
+    // svgChild
+    //   .append("rect")
+    //   .attr("width", width)
+    //   .attr("height", height)
+    //   .attr("fill", "white");
+    this.addDragAndScale(this._svgSelection, svgChild, width, height);
 
     // Map colors to nodes
     const interp = d3.interpolateRainbow;
@@ -157,7 +160,6 @@ export class CausalView extends EventTarget {
         return `node id-${d.data.Id}`;
       })
       .on("click", (d, i) => {
-        console.log(d, i);
         this.nodeClicked.data = { d, i };
         this.dispatchEvent(this.nodeClicked);
       });
@@ -172,7 +174,10 @@ export class CausalView extends EventTarget {
       .attr("stroke-width", 1.5);
     // .attr("stroke", "#888");
 
-    this.addText(nodesSelection, (d) => d.data["NodeValue"] || d.data["Id"]);
+    this.addText(
+      nodesSelection,
+      (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
+    );
     // addText(nodes, "test string for node");
 
     this.addNodesDragAndDrop(nodesSelection);
@@ -323,41 +328,48 @@ export class CausalView extends EventTarget {
       .attr("stroke-width", 1.5)
       .attr("stroke-dasharray", `${arrowLen},${arrowLen}`);
   }
-  addDragAndScale(selection, width, height) {
+  addDragAndScale(svgSelection, svgChildselection, width, height) {
+    svgSelection.call(
+      d3.zoom().on("zoom", function () {
+        svgChildselection.attr("transform", (e) => d3.zoomTransform(this));
+      })
+    );
+
     // svgSelection
     //     .call(d3.drag()
     //         .on("start", dragStarted)
     //         .on("drag", dragged)
     //         .on("end", dragEnded))
-    selection.call(
-      d3
-        .zoom()
-        .extent([
-          [0, 0],
-          [width, height],
-        ])
-        .scaleExtent([1, 8])
-        .on("zoom", zoomed)
-    );
 
-    function dragStarted() {
-      d3.select(this).raise();
-      selection.attr("cursor", "grabbing");
-    }
+    // selection.call(
+    //   d3
+    //     .zoom()
+    //     .extent([
+    //       [0, 0],
+    //       [width, height],
+    //     ])
+    //     .scaleExtent([1, 8])
+    //     .on("zoom", zoomed)
+    // );
 
-    function dragged(event, d) {
-      d3.select(this)
-        .attr("cx", (d.x = event.x))
-        .attr("cy", (d.y = event.y));
-    }
+    // function dragStarted() {
+    //   d3.select(this).raise();
+    //   svgChildselection.attr("cursor", "grabbing");
+    // }
 
-    function dragEnded() {
-      selection.attr("cursor", "grab");
-    }
+    // function dragged(event, d) {
+    //   d3.select(this)
+    //     .attr("cx", (d.x = event.x))
+    //     .attr("cy", (d.y = event.y));
+    // }
 
-    function zoomed({ transform }) {
-      console.log("zoomed. transform: ", transform);
-      selection.attr("transform", transform);
-    }
+    // function dragEnded() {
+    //   svgChildselection.attr("cursor", "grab");
+    // }
+
+    // function zoomed({ transform }) {
+    //   console.log("zoomed. transform: ", transform);
+    //   svgChildselection.attr("transform", transform);
+    // }
   }
 }
