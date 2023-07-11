@@ -1,4 +1,4 @@
-export class CausalView {
+export class CausalView extends EventTarget {
   _causalModelNodes = null;
   _dag = null;
 
@@ -16,11 +16,16 @@ export class CausalView {
 
   _nodesParent;
 
+  nodeClicked = null;
+
   get causalModelNodes() {
     return this._causalModelNodes;
   }
 
   constructor(selector, causalModelNodes) {
+    super();
+    this.nodeClicked = new Event("nodeClicked");
+
     this._causalModelNodes = causalModelNodes;
     this.setDagAndImplementationEdgesSet(causalModelNodes);
 
@@ -42,7 +47,7 @@ export class CausalView {
       this._causalModelNodes[index].NodeTitle = nodeTitle;
       this._causalModelNodes[index].NodeValue = nodeValue;
 
-      d3.select(`.${nodeId}`)
+      d3.select(`.id-${nodeId}`)
         .select("text")
         .text((d) => nodeTitle);
     }
@@ -56,7 +61,6 @@ export class CausalView {
     this._dag = d3
       .dagStratify()
       .id(({ Id: id }) => id)
-      // Получаем
       .parentIds((node) => {
         return causalView.getParents(node, implementationEdgesSet);
       })(causalModelNodes);
@@ -69,7 +73,7 @@ export class CausalView {
     const res = this.findCauseIds(node["ProbabilityNest"]);
     const abstractFactId = node["AbstractFactId"];
     if (abstractFactId) {
-      res.push(abstractFactId);
+      if (!res.includes(abstractFactId)) res.push(abstractFactId);
       implementationEdgesSet.add(
         this.sourceAndTargetIdsToEdgeId(abstractFactId, node["Id"])
       );
@@ -122,18 +126,24 @@ export class CausalView {
   }
 
   findCauseIds(obj) {
-    let edgeProps = [];
+    let edgeProps = new Set();
     for (let prop in obj) {
       if (prop === "Edge") {
-        if (obj[prop].hasOwnProperty("CauseId"))
-          edgeProps.push(obj[prop]["CauseId"]);
+        if (
+          obj[prop].hasOwnProperty("CauseId") &&
+          !edgeProps.has(obj[prop]["CauseId"])
+        )
+          edgeProps.add(obj[prop]["CauseId"]);
       }
       if (typeof obj[prop] === "object") {
-        let nestedEdgeProps = this.findCauseIds(obj[prop]);
-        edgeProps = edgeProps.concat(nestedEdgeProps);
+        const nestedEdgeProps = this.findCauseIds(obj[prop]);
+        // for (const nestedEdgeProp in nestedEdgeProps) {
+        //   if (!edgeProps.has(nestedEdgeProp)) edgeProps.add(nestedEdgeProp);
+        // }
+        edgeProps = new Set(Array.from(edgeProps).concat(nestedEdgeProps));
       }
     }
-    return edgeProps;
+    return [...edgeProps];
   }
 
   addNodes(data) {
@@ -144,7 +154,12 @@ export class CausalView {
       .attr("transform", (d) => `translate(${(d.x = d.x)}, ${(d.y = d.y)})`)
       .attr("cursor", "grab")
       .attr("class", (d) => {
-        return `node ${d.data.Id}`;
+        return `node id-${d.data.Id}`;
+      })
+      .on("click", (d, i) => {
+        console.log(d, i);
+        this.nodeClicked.data = { d, i };
+        this.dispatchEvent(this.nodeClicked);
       });
 
     nodesSelection
@@ -227,7 +242,7 @@ export class CausalView {
 
   // Ребра идентифицируются по id источника и цели
   sourceAndTargetIdsToEdgeId(source, target) {
-    return `${source}--${target}`;
+    return `id-${source}--${target}`;
   }
 
   addEdges(selection) {
