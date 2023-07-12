@@ -98,8 +98,8 @@ export class CausalView extends EventTarget {
     // Rendering
     this._svgSelection = svgParentSelection
       .append("svg")
-      .attr("width", width)
-      .attr("height", height);
+      .attr("width", "100%")
+      .attr("height", "100%");
 
     // this.addDragAndScale(svgParentSelection, width, height);
 
