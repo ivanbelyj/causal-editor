@@ -1,3 +1,5 @@
+const nodeSelectionStrokeWidth = 12;
+
 export class CausalView extends EventTarget {
   _causalModelNodes = null;
   _dag = null;
@@ -13,6 +15,7 @@ export class CausalView extends EventTarget {
   _nodeIdsAndColors = null;
 
   _svgSelection = null;
+  _svgChild = null;
 
   _nodesParent;
 
@@ -54,17 +57,38 @@ export class CausalView extends EventTarget {
   }
 
   selectNode(nodeId) {
+    const causalView = this;
     d3.select(CausalView.getNodeIdClassByNodeId(nodeId))
       .select("rect")
-      .attr("stroke-width", 3)
-      .attr("stroke", "#F5AE00");
+      .attr("stroke-width", causalView.getSelectionStrokeWidthIgnoreZoom())
+      .attr("stroke", "#F5AE00")
+      .classed("node__rect_selected", true);
+  }
+
+  getSelectionStrokeWidthIgnoreZoom() {
+    return nodeSelectionStrokeWidth / d3.zoomTransform(this._svgChild.node()).k;
   }
 
   deselectNode(nodeId) {
     d3.select(CausalView.getNodeIdClassByNodeId(nodeId))
       .select("rect")
-      .attr("stroke", "none");
+      .attr("stroke", "none")
+      .classed("node__rect_selected", false);
   }
+
+  // selectNode(nodeId) {
+  //   this.setNodeSelected(nodeId, true);
+  // }
+
+  // deselectNode(nodeId) {
+  //   this.setNodeSelected(nodeId, false);
+  // }
+
+  // setNodeSelected(nodeId, val) {
+  //   d3.select(CausalView.getNodeIdClassByNodeId(nodeId))
+  //     .select("rect")
+  //     .classed("node__rect_selected", val);
+  // }
 
   static getNodeIdClassByNodeId(nodeId) {
     return `.id-${nodeId}`;
@@ -122,6 +146,7 @@ export class CausalView extends EventTarget {
 
     this._svgSelection.attr("viewBox", [0, 0, dagWidth, height].join(" "));
     const svgChild = this._svgSelection.append("g");
+    this._svgChild = svgChild;
     // svgChild
     //   .append("rect")
     //   .attr("width", width)
@@ -348,9 +373,15 @@ export class CausalView extends EventTarget {
       .attr("stroke-dasharray", `${arrowLen},${arrowLen}`);
   }
   addDragAndScale(svgSelection, svgChildselection, width, height) {
+    const causalView = this;
     svgSelection.call(
       d3.zoom().on("zoom", function () {
-        svgChildselection.attr("transform", (e) => d3.zoomTransform(this));
+        svgChildselection.attr("transform", () => d3.zoomTransform(this));
+        d3.selectAll(".node__rect_selected").attr(
+          "stroke-width",
+          // () => nodeSelectionStrokeWidth / d3.zoomTransform(this).k
+          () => causalView.getSelectionStrokeWidthIgnoreZoom()
+        );
       })
     );
 
