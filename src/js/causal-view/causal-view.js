@@ -59,6 +59,7 @@ export class CausalView extends EventTarget {
   selectNode(nodeId) {
     const causalView = this;
     d3.select(CausalView.getNodeIdClassByNodeId(nodeId))
+      .raise()
       .select("rect")
       .attr("stroke-width", causalView.getSelectionStrokeWidthIgnoreZoom())
       .attr("stroke", "#F5AE00")
@@ -142,17 +143,10 @@ export class CausalView extends EventTarget {
       .attr("width", "100%")
       .attr("height", "100%");
 
-    // this.addDragAndScale(svgParentSelection, width, height);
-
     this._svgSelection.attr("viewBox", [0, 0, dagWidth, height].join(" "));
     const svgChild = this._svgSelection.append("g");
     this._svgChild = svgChild;
-    // svgChild
-    //   .append("rect")
-    //   .attr("width", width)
-    //   .attr("height", height)
-    //   .attr("fill", "white");
-    this.addDragAndScale(this._svgSelection, svgChild, width, height);
+    this.addZoom(this._svgSelection, svgChild, width, height);
 
     // Map colors to nodes
     const interp = d3.interpolateRainbow;
@@ -166,8 +160,36 @@ export class CausalView extends EventTarget {
 
     this._nodesParentSelection = svgChild.append("g").selectAll("g");
     this.addNodes(this._dag.descendants());
+  }
 
-    // addArrows(svgChild);
+  // addArrows() {
+  //   const arrow = d3
+  //     .arrow1()
+  //     .id("my-arrow")
+  //     .attr("fill", "steelblue")
+  //     .attr("stroke", "steelblue");
+  //   this._svgSelection.call(arrow);
+  //   this._svgSelection
+  //     .append("polyline")
+  //     .attr("marker-end", "url(#my-arrow)")
+  //     .attr("points", [
+  //       [5, 10],
+  //       [55, 10],
+  //     ])
+  //     .attr("stroke", "steelblue")
+  //     .attr("stroke-width", 2);
+  // }
+
+  addZoom(svgSelection, svgChildselection, width, height) {
+    const causalView = this;
+    svgSelection.call(
+      d3.zoom().on("zoom", function () {
+        svgChildselection.attr("transform", () => d3.zoomTransform(this));
+        d3.selectAll(".node__rect_selected").attr("stroke-width", () =>
+          causalView.getSelectionStrokeWidthIgnoreZoom()
+        );
+      })
+    );
   }
 
   findCauseIds(obj) {
@@ -251,9 +273,7 @@ export class CausalView extends EventTarget {
     );
 
     function dragStarted() {
-      d3.select(this)
-        // .raise()
-        .attr("cursor", "grabbing");
+      d3.select(this).attr("cursor", "grabbing");
     }
     const causalView = this;
     function dragged(event, d) {
@@ -264,12 +284,6 @@ export class CausalView extends EventTarget {
         )
         .raise();
 
-      // Обновляем все ребра (пока что просадки по производительности не заметны)
-      // d3.selectAll(".edge")
-      //     .attr("d", (d) => {
-      //         const l = line([{ x: d.source.x, y: d.source.y }, { x: d.target.x, y: d.target.y }]);
-      //         return l;
-      //     });
       causalView.updateEdges(d3.selectAll(".edge"));
     }
 
@@ -278,6 +292,7 @@ export class CausalView extends EventTarget {
     }
   }
 
+  // Updates all edges in causal view
   updateEdges(edgePathsSelection) {
     const nodeWidth = this._nodeWidth;
     const nodeHeight = this._nodeHeight;
@@ -338,88 +353,56 @@ export class CausalView extends EventTarget {
         );
         const isEdgeImplementation = this._implementationEdgesSet.has(edgeId);
         return isEdgeImplementation ? "" : "5,5";
-      });
-  }
+      })
+      .attr("marker-end", "url(#arrowId)");
 
-  addArrows(selection, colorMap) {
-    const arrowSize = (this._nodeWidth * this._nodeWidth) / 5.0;
-    const arrowLen = Math.sqrt((4 * arrowSize) / Math.sqrt(3));
-    const arrow = d3.symbol().type(d3.symbolTriangle).size(arrowSize);
-    selection
-      .append("g")
-      .selectAll("path")
-      .data(this._dag.links())
+    // Add arrows
+    this._svgChild
+      .selectAll("marker")
+      .data(["end"]) // Different link / path types can be defined here
       .enter()
-      .append("path")
-      .attr("d", arrow)
-      .attr("transform", ({ source, target, points }) => {
-        const [end, start] = points.slice().reverse();
-        // This sets the arrows the node radius (20) + a little bit (3) away from the node center,
-        // on the last line segment of the edge. This means that edges that only span ine level
-        // will work perfectly, but if the edge bends, this will be a little off.
-        const dx = start.x - end.x;
-        const dy = start.y - end.y;
-        const scale = (nodeWidth * 1.15) / Math.sqrt(dx * dx + dy * dy);
-        // This is the angle of the last line segment
-        const angle = (Math.atan2(-dy, -dx) * 180) / Math.PI + 90;
-        // console.log(angle, dx, dy);
-        return `translate(${end.x + dx * scale}, ${
-          end.y + dy * scale
-        }) rotate(${angle})`;
-      })
-      .attr("fill", ({ target }) => colorMap[target.data["Id"]])
-      .attr("stroke", "white")
-      .attr("stroke-width", 1.5)
-      .attr("stroke-dasharray", `${arrowLen},${arrowLen}`);
+      .append("svg:marker") // This section adds in the arrows
+      .attr("id", "arrowId")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 25)
+      .attr("refY", 0)
+      .attr("markerWidth", 4)
+      .attr("markerHeight", 4)
+      .attr("orient", "auto")
+      .append("svg:path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#222");
   }
-  addDragAndScale(svgSelection, svgChildselection, width, height) {
-    const causalView = this;
-    svgSelection.call(
-      d3.zoom().on("zoom", function () {
-        svgChildselection.attr("transform", () => d3.zoomTransform(this));
-        d3.selectAll(".node__rect_selected").attr(
-          "stroke-width",
-          // () => nodeSelectionStrokeWidth / d3.zoomTransform(this).k
-          () => causalView.getSelectionStrokeWidthIgnoreZoom()
-        );
-      })
-    );
 
-    // svgSelection
-    //     .call(d3.drag()
-    //         .on("start", dragStarted)
-    //         .on("drag", dragged)
-    //         .on("end", dragEnded))
-
-    // selection.call(
-    //   d3
-    //     .zoom()
-    //     .extent([
-    //       [0, 0],
-    //       [width, height],
-    //     ])
-    //     .scaleExtent([1, 8])
-    //     .on("zoom", zoomed)
-    // );
-
-    // function dragStarted() {
-    //   d3.select(this).raise();
-    //   svgChildselection.attr("cursor", "grabbing");
-    // }
-
-    // function dragged(event, d) {
-    //   d3.select(this)
-    //     .attr("cx", (d.x = event.x))
-    //     .attr("cy", (d.y = event.y));
-    // }
-
-    // function dragEnded() {
-    //   svgChildselection.attr("cursor", "grab");
-    // }
-
-    // function zoomed({ transform }) {
-    //   console.log("zoomed. transform: ", transform);
-    //   svgChildselection.attr("transform", transform);
-    // }
-  }
+  // addArrows(selection, colorMap) {
+  //   const arrowSize = (this._nodeWidth * this._nodeWidth) / 50.0;
+  //   const arrowLen = Math.sqrt((4 * arrowSize) / Math.sqrt(3));
+  //   const arrow = d3.symbol().type(d3.symbolTriangle).size(arrowSize);
+  //   selection
+  //     .append("g")
+  //     .selectAll("path")
+  //     .data(this._dag.links())
+  //     .enter()
+  //     .append("path")
+  //     .attr("d", arrow)
+  //     .attr("transform", ({ source, target, points }) => {
+  //       const [end, start] = points.slice().reverse();
+  //       // This sets the arrows the node radius (20) + a little bit (3) away from the node center,
+  //       // on the last line segment of the edge. This means that edges that only span ine level
+  //       // will work perfectly, but if the edge bends, this will be a little off.
+  //       const dx = start.x - end.x;
+  //       const dy = start.y - end.y;
+  //       const scale = (this._nodeWidth * 1.15) / Math.sqrt(dx * dx + dy * dy);
+  //       // This is the angle of the last line segment
+  //       const angle = (Math.atan2(-dy, -dx) * 180) / Math.PI + 90;
+  //       // console.log(angle, dx, dy);
+  //       return `translate(${end.x + dx * scale}, ${
+  //         end.y + dy * scale
+  //       }) rotate(${angle})`;
+  //     })
+  //     .attr("fill", ({ target }) => colorMap[target.data["Id"]])
+  //     .attr("stroke", "white")
+  //     .attr("stroke-width", 1.5)
+  //     .attr("stroke-dasharray", `${arrowLen},${arrowLen}`);
+  // }
 }
