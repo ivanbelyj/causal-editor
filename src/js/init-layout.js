@@ -19,7 +19,7 @@ const defaultConfig = {
             {
               type: "component",
               componentName: "Test Component",
-              componentState: { label: "C" },
+              componentState: { label: "Hello world" },
             },
           ],
         },
@@ -33,7 +33,9 @@ export const initLayout = () => {
   layout.registerComponent(
     "Test Component",
     function (container, componentState) {
-      container.getElement().html("<h2>" + componentState.label + "</h2>");
+      container
+        .getElement()
+        .html(`<h2 class="text-3xl font-bold underline">Hello world!</h2>`);
     }
   );
   layout.registerComponent("Causal View", causalViewComponent);

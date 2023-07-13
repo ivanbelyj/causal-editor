@@ -11,9 +11,10 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <link rel="stylesheet" href="styles/goldenlayout-base.css" />
-    <link rel="stylesheet" href="styles/goldenlayout-dark-theme.css" />
-    <link rel="stylesheet" href="styles/styles.css" />
+    <link rel="stylesheet" href="src/css/styles.css" />
+    <link rel="stylesheet" href="dist/css/tailwind.css" />
+    <link rel="stylesheet" href="src/css/goldenlayout-base.css" />
+    <link rel="stylesheet" href="src/css/goldenlayout-dark-theme.css" />
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/d3-dag@0.8.2"></script>
@@ -31,28 +32,11 @@
       integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g="
       crossorigin="anonymous"
     ></script>
-    <script src="scripts/goldenlayout.min.js"></script>
+    <script src="src/js/goldenlayout.min.js"></script>
     <!-- <script src="scripts/init-causal-view.js" type="module"></script>
     <script src="scripts/init-layout.js" type="module"></script> -->
-    <script src="scripts/index.js" type="module"></script>
+    <script src="src/js/index.js" type="module"></script>
     <title>Causal Editor</title>
   </head>
-
-  <body>
-    <div class="panel">
-      <div class="panel__input">
-        <label>Id</label
-        ><input type="text" placeholder="Id" id="node-id-input" readonly />
-      </div>
-      <div class="panel__input">
-        <label>Title</label
-        ><input type="text" placeholder="Title" id="node-title-input" />
-      </div>
-      <div class="panel__input">
-        <label>Node Value</label
-        ><input type="text" placeholder="Node Value" id="node-value-input" />
-      </div>
-      <button id="update-btn">Update</button>
-    </div>
-  </body>
+  <body></body>
 </html>
