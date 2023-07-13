@@ -47,10 +47,27 @@ export class CausalView extends EventTarget {
       this._causalModelNodes[index].NodeTitle = nodeTitle;
       this._causalModelNodes[index].NodeValue = nodeValue;
 
-      d3.select(`.id-${nodeId}`)
+      d3.select(CausalView.getNodeIdClassByNodeId(nodeId))
         .select("text")
         .text((d) => nodeTitle);
     }
+  }
+
+  selectNode(nodeId) {
+    d3.select(CausalView.getNodeIdClassByNodeId(nodeId))
+      .select("rect")
+      .attr("stroke-width", 3)
+      .attr("stroke", "#F5AE00");
+  }
+
+  deselectNode(nodeId) {
+    d3.select(CausalView.getNodeIdClassByNodeId(nodeId))
+      .select("rect")
+      .attr("stroke", "none");
+  }
+
+  static getNodeIdClassByNodeId(nodeId) {
+    return `.id-${nodeId}`;
   }
 
   // Устанавливает dag на основе каузальной модели, а также
@@ -170,9 +187,7 @@ export class CausalView extends EventTarget {
       .attr("height", this._nodeHeight)
       .attr("rx", 5)
       .attr("ry", 5)
-      .attr("fill", (n) => this._nodeIdsAndColors.get(n.data["Id"]))
-      .attr("stroke-width", 1.5);
-    // .attr("stroke", "#888");
+      .attr("fill", (n) => this._nodeIdsAndColors.get(n.data["Id"]));
 
     this.addText(
       nodesSelection,

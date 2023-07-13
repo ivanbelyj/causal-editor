@@ -8,12 +8,17 @@ export function initCausalView() {
   const causalView = new CausalView(".causal-view", causalModelNodes);
   causalView.addEventListener("nodeClicked", (event) => {
     const nodeData = event.data.i.data;
+    const prevSelectedNodeId = currentSelectedNodeId;
     currentSelectedNodeId = nodeData["Id"];
+
     const nodeValue = nodeData["NodeValue"];
     document.getElementById("node-id-input").value = currentSelectedNodeId;
     document.getElementById("node-title-input").value =
       nodeData["NodeTitle"] || nodeValue;
     document.getElementById("node-value-input").value = nodeValue;
+
+    causalView.selectNode(currentSelectedNodeId);
+    if (prevSelectedNodeId) causalView.deselectNode(prevSelectedNodeId);
   });
 
   document.getElementById("update-btn").onclick = (...data) => {
