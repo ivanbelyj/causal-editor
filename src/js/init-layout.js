@@ -11,10 +11,12 @@ const defaultConfig = {
         },
         {
           type: "column",
+          width: 25,
           content: [
             {
               type: "component",
               componentName: "Node Value",
+              height: 45,
             },
             {
               type: "component",
@@ -32,17 +34,14 @@ export const initLayout = () => {
   const layout = new GoldenLayout(defaultConfig);
   layout.registerComponent(
     "Test Component",
-    function (container, componentState) {
-      container
-        .getElement()
-        .html(`<h2 class="text-3xl font-bold underline">Hello world!</h2>`);
-    }
+    function (container, componentState) {}
   );
   layout.registerComponent("Causal View", causalViewComponent);
   layout.registerComponent("Node Value", nodeValueComponent);
   layout.on("initialised", () => {
     initCausalView();
   });
+  layout.on("itemCreated", function (item) {});
   layout.init();
 };
 
@@ -56,18 +55,21 @@ const nodeValueComponent = function (container, componentState) {
   const element = $(`
     <div class="component">
       <div class="text-input text-input_readonly">
-        <label>Id</label>
-        <input type="text" placeholder="Id" id="node-id-input" readonly />
+        <label class="text-input__label">Id</label>
+        <input class="text-input__input" type="text"
+          placeholder="Id" id="node-id-input" readonly />
       </div>
       <div class="text-input">
-        <label>Title</label>
-        <input type="text" placeholder="Title" id="node-title-input" />
+        <label class="text-input__label">Title</label>
+        <input class="text-input__input" type="text"
+          placeholder="Title" id="node-title-input" />
       </div>
       <div class="text-input">
-        <label>Node Value</label>
-        <input type="text" placeholder="Node Value" id="node-value-input" />
+        <label class="text-input__label">Node Value</label>
+        <textarea class="textarea text-input__input"
+          placeholder="Node Value" id="node-value-input"></textarea>
       </div>
-      <button id="update-btn">Update</button>
+      <button class="button" id="update-btn">Update</button>
     </div>`);
   container.getElement().append(element);
 };
