@@ -23,8 +23,6 @@ function createWindow(appLocale) {
   //   mainWindow.webContents.session.availableSpellCheckerLanguages;
 
   const languages = [appLocale, "en-US"];
-  console.log(languages);
-
   mainWindow.webContents.session.setSpellCheckerLanguages(languages);
 
   return mainWindow;

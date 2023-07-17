@@ -30,7 +30,7 @@ export class CausalView extends EventTarget {
     this.nodeClicked = new Event("nodeClicked");
 
     this._causalModelNodes = causalModelNodes;
-    this.setDagAndImplementationEdgesSet(causalModelNodes);
+    this.setDag(causalModelNodes);
 
     this._line = d3
       .line()
@@ -92,21 +92,23 @@ export class CausalView extends EventTarget {
     return `.id-${nodeId}`;
   }
 
-  // Устанавливает dag на основе каузальной модели, а также
-  // набор ребер-реализаций абстрактных фактов в виде строк
-  setDagAndImplementationEdgesSet(causalModelNodes) {
-    const implementationEdgesSet = new Set();
+  // Устанавливает dag на основе каузальной модели, а также способ
+  // получения набора ребер-реализаций абстрактных фактов в виде строк
+  setDag(causalModelNodes) {
+    this._implementationEdgesSet = new Set();
     const causalView = this;
     this._dag = d3
       .dagStratify()
       .id(({ Id: id }) => id)
       .parentIds((node) => {
-        return causalView.getParents(node, implementationEdgesSet);
+        return causalView.addNodeParents(
+          node,
+          causalView._implementationEdgesSet
+        );
       })(causalModelNodes);
-    this._implementationEdgesSet = implementationEdgesSet;
   }
 
-  getParents(node, implementationEdgesSet) {
+  addNodeParents(node, implementationEdgesSet) {
     // Причинно-следственные связи преобразуются в id-based parent data,
     // предназначенные для отображения
     const res = this.findCauseIds(node["ProbabilityNest"]);
@@ -145,18 +147,24 @@ export class CausalView extends EventTarget {
     this._svgChild = svgChild;
     this.addZoom(this._svgSelection, svgChild, width, height);
 
+    this._nodesParentSelection = svgChild.append("g").selectAll("g");
+
+    this.setColorsForNodes();
+    console.log("descendants", this._dag.descendants());
+    this.addNodes(this._dag.descendants());
+
+    this.addEdges(svgChild);
+  }
+
+  setColorsForNodes() {
     // Map colors to nodes
     const interp = d3.interpolateRainbow;
-    this._nodeIdsAndColors = new Map();
+    if (!this._nodeIdsAndColors) this._nodeIdsAndColors = new Map();
+    console.log("this._dag.idescendants()", this._dag.idescendants());
     for (const node of this._dag.idescendants()) {
       const rndStep = Math.random() * this._dag.size();
       this._nodeIdsAndColors.set(node.data["Id"], interp(rndStep));
     }
-
-    this.addEdges(svgChild);
-
-    this._nodesParentSelection = svgChild.append("g").selectAll("g");
-    this.addNodes(this._dag.descendants());
   }
 
   // addArrows() {
@@ -211,6 +219,8 @@ export class CausalView extends EventTarget {
   }
 
   addNodes(data) {
+    console.log("nodes data", data);
+
     const nodesSelection = this._nodesParentSelection
       .data(data)
       .enter()
@@ -231,7 +241,7 @@ export class CausalView extends EventTarget {
       .attr("height", this._nodeHeight)
       .attr("rx", 5)
       .attr("ry", 5)
-      .attr("fill", (n) => this._nodeIdsAndColors.get(n.data["Id"]));
+      .attr("fill", (n) => this._nodeIdsAndColors.get(n.data["Id"]) ?? "#eee");
 
     this.addText(
       nodesSelection,

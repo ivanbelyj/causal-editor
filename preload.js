@@ -29,8 +29,10 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 ipcRenderer.on("create-node", (event, data) => {
-  if (elementWithClassFrom(data, "causal-view"))
-    console.log("clicked on causal-view");
+  const causalViewElement = elementWithClassFrom(data, "causal-view");
+  if (!causalViewElement) return;
+
+  console.log("clicked on causal-view");
 });
 
 function elementWithClassFrom(pos, className) {
