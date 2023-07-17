@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu } = require("electron");
+const { app, BrowserWindow } = require("electron");
 const path = require("path");
 const { setMenu } = require("./set-menu.js");
 const { setContextMenu } = require("./set-context-menu.js");
@@ -9,6 +9,7 @@ function createWindow(appLocale) {
     width: 800,
     height: 600,
     webPreferences: {
+      contextIsolation: true,
       preload: path.join(__dirname, "preload.js"),
       spellcheck: true,
     },

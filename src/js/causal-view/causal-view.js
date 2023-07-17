@@ -20,6 +20,8 @@ export class CausalView extends EventTarget {
   _nodesParent;
 
   nodeClicked = null;
+  nodeEnter = null;
+  nodeLeave = null;
 
   get causalModelNodes() {
     return this._causalModelNodes;
@@ -28,6 +30,8 @@ export class CausalView extends EventTarget {
   constructor(causalModelNodes) {
     super();
     this.nodeClicked = new Event("nodeClicked");
+    this.nodeEnter = new Event("nodeEnter");
+    this.nodeLeave = new Event("nodeLeave");
 
     this._causalModelNodes = causalModelNodes;
     this.setDag(causalModelNodes);
@@ -233,6 +237,14 @@ export class CausalView extends EventTarget {
       .on("click", (d, i) => {
         this.nodeClicked.data = { d, i };
         this.dispatchEvent(this.nodeClicked);
+      })
+      .on("mouseenter", (d, i) => {
+        this.nodeClicked.data = { d, i };
+        this.dispatchEvent(this.nodeEnter);
+      })
+      .on("mouseleave", (d, i) => {
+        this.nodeClicked.data = { d, i };
+        this.dispatchEvent(this.nodeLeave);
       });
 
     nodesSelection

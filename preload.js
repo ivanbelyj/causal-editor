@@ -5,65 +5,21 @@
  *
  * https://www.electronjs.org/docs/latest/tutorial/sandbox
  */
-const { ipcRenderer } = require("electron");
-window.addEventListener("DOMContentLoaded", () => {
-  const nodes = document.getElementsByClassName("node");
-  for (const node of nodes) {
-    node.addEventListener("mouseenter", () => {
-      ipcRenderer.send("node-enter");
-    });
-    node.addEventListener("mouseleave", () => {
-      ipcRenderer.send("node-leave");
-    });
-  }
+const { ipcRenderer, contextBridge } = require("electron");
 
-  const causalViews = document.getElementsByClassName("causal-view");
-  for (const node of causalViews) {
-    node.addEventListener("mouseenter", () => {
-      ipcRenderer.send("causal-view-enter");
-    });
-    node.addEventListener("mouseleave", () => {
-      ipcRenderer.send("causal-view-leave");
-    });
-  }
+contextBridge.exposeInMainWorld("api", {
+  sendNodeEnter: () => send("node-enter"),
+  sendNodeLeave: () => send("node-leave"),
+  sendCausalViewEnter: () => send("causal-view-enter"),
+  sendCausalViewLeave: () => send("causal-view-leave"),
+  receiveCreateNode: (func) => receive("create-node", func),
+  receiveRemoveNode: (func) => receive("remove-node", func),
 });
 
-ipcRenderer.on("create-node", (event, data) => {
-  const causalViewElement = elementWithClassFrom(data, "causal-view");
-  if (!causalViewElement) return;
-
-  console.log("clicked on causal-view");
-});
-
-function elementWithClassFrom(pos, className) {
-  const elems = getElementsByPos(pos);
-  for (const elem of elems) {
-    for (const curClassName of elem.classList) {
-      if (curClassName == className) {
-        return elem;
-      }
-    }
-  }
-  return null;
-}
-function getElementsByPos(pos) {
-  return document.elementsFromPoint(pos.x, pos.y);
+function send(channelName, data) {
+  ipcRenderer.send(channelName, data);
 }
 
-// document.elementsFromPoint ignores <g> because it is used only for
-// grouping, not displaying, so there is a hack, depending on node structure
-function nodeElementFromPoint(pos) {
-  const elems = getElementsByPos(pos);
-  for (const elem of elems) {
-    if (elem.tagName == "rect") {
-      if (elem.parentNode.classList.contains("node")) {
-        return elem.parentNode;
-      }
-    }
-  }
-  return null;
+function receive(channelName, func) {
+  ipcRenderer.on(channelName, (event, ...args) => func(event, ...args));
 }
-
-ipcRenderer.on("remove-node", (event, data) => {
-  if (nodeElementFromPoint(data, "node")) console.log("remove node");
-});
