@@ -5,7 +5,8 @@ let currentSelectedNodeId;
 
 export function initCausalView() {
   const causalModelNodes = JSON.parse(factsCollection);
-  const causalView = new CausalView(".causal-view", causalModelNodes);
+  const causalView = new CausalView(causalModelNodes);
+
   causalView.addEventListener("nodeClicked", (event) => {
     const nodeData = event.data.i.data;
     const prevSelectedNodeId = currentSelectedNodeId;
@@ -20,6 +21,9 @@ export function initCausalView() {
     causalView.selectNode(currentSelectedNodeId);
     if (prevSelectedNodeId) causalView.deselectNode(prevSelectedNodeId);
   });
+
+  const parentSelection = d3.select(".causal-view");
+  causalView.render(parentSelection);
 
   document.getElementById("update-btn").onclick = (...data) => {
     onUpdateButtonClick(causalView, ...data);

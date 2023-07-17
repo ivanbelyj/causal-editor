@@ -25,7 +25,7 @@ export class CausalView extends EventTarget {
     return this._causalModelNodes;
   }
 
-  constructor(selector, causalModelNodes) {
+  constructor(causalModelNodes) {
     super();
     this.nodeClicked = new Event("nodeClicked");
 
@@ -37,9 +37,6 @@ export class CausalView extends EventTarget {
       .curve(d3.curveCatmullRom)
       .x((d) => d.x)
       .y((d) => d.y);
-
-    const parentSelection = d3.select(selector);
-    this.render(parentSelection);
   }
 
   updateNodeTitleAndValueById(nodeId, nodeTitle, nodeValue) {

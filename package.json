@@ -19,5 +19,8 @@
   "homepage": "https://github.com/ivanbelyj/causal-editor#readme",
   "devDependencies": {
     "electron": "^25.2.0"
+  },
+  "dependencies": {
+    "electron-context-menu": "^3.6.1"
   }
 }
