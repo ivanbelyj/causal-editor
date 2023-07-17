@@ -16,6 +16,16 @@ window.addEventListener("DOMContentLoaded", () => {
       ipcRenderer.send("node-leave");
     });
   }
+
+  const causalViews = document.getElementsByClassName("causal-view");
+  for (const node of causalViews) {
+    node.addEventListener("mouseenter", () => {
+      ipcRenderer.send("causal-view-enter");
+    });
+    node.addEventListener("mouseleave", () => {
+      ipcRenderer.send("causal-view-leave");
+    });
+  }
 });
 
 ipcRenderer.on("create-node", (event, data) => {

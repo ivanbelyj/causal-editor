@@ -4,7 +4,7 @@ const { setMenu } = require("./set-menu.js");
 const { setContextMenu } = require("./set-context-menu.js");
 
 // Creates the browser window
-function createWindow() {
+function createWindow(appLocale) {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -17,6 +17,16 @@ function createWindow() {
   mainWindow.loadFile("index.html");
 
   // mainWindow.webContents.openDevTools();
+
+  // Spellcheck settings
+  // const possibleLanguages =
+  //   mainWindow.webContents.session.availableSpellCheckerLanguages;
+
+  const languages = [appLocale, "en-US"];
+  console.log(languages);
+
+  mainWindow.webContents.session.setSpellCheckerLanguages(languages);
+
   return mainWindow;
 }
 
@@ -26,7 +36,8 @@ let mainWindow;
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  mainWindow = createWindow();
+  const appLocale = app.getLocale();
+  mainWindow = createWindow(appLocale);
   setMenu(mainWindow);
   setContextMenu(mainWindow);
 
