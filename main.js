@@ -10,6 +10,7 @@ function createWindow(appLocale) {
     height: 600,
     webPreferences: {
       contextIsolation: true,
+      sandbox: true,
       preload: path.join(__dirname, "preload.js"),
       spellcheck: true,
     },

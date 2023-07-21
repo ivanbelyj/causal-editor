@@ -1,5 +1,5 @@
-import { initCausalView } from "./causal-view/init-causal-view.js";
-import { initNodeView } from "./init-node-view.js";
+import { CausalView } from "./causal-view/causal-view.js";
+import { NodeView } from "./node-view.js";
 
 const defaultConfig = {
   content: [
@@ -31,8 +31,6 @@ const defaultConfig = {
   ],
 };
 
-let causalView = null;
-
 export const initLayout = () => {
   const layout = new GoldenLayout(defaultConfig);
   layout.registerComponent(
@@ -42,8 +40,11 @@ export const initLayout = () => {
   layout.registerComponent("Causal View", causalViewComponent);
   layout.registerComponent("Node Value", nodeValueComponent);
   layout.on("initialised", () => {
-    causalView = initCausalView();
-    initNodeView(causalView);
+    const causalView = new CausalView();
+    causalView.init();
+
+    const nodeView = new NodeView();
+    nodeView.init(causalView);
   });
   layout.on("itemCreated", function (item) {});
   layout.init();
