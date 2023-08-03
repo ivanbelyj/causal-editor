@@ -2,29 +2,47 @@ import { CausalViewStructure } from "./causal-view-structure.js";
 import { factsCollection } from "../test-data.js";
 import { CausalViewSelection } from "./causal-view-selection.js";
 
+import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+
+// Pascal case because of causal model format
+const newNodeTemplate = {
+  Id: null,
+  ProbabilityNest: {
+    CausesExpression: {
+      $type: "factor",
+      Edge: {
+        Probability: 1,
+      },
+    },
+  },
+  NodeValue: "New Fact",
+};
+
 export class CausalView {
   structure = null;
   selection = null;
 
   init() {
-    const causalModelNodes = JSON.parse(factsCollection);
-    this.structure = new CausalViewStructure(causalModelNodes);
-
     const api = window.api;
 
+    this.structure = new CausalViewStructure();
     // causalView.addEventListener("nodeClicked", (event) =>
     //   builder.onNodeClicked(event)
     // );
     this.structure.addEventListener("nodeEnter", () => api.sendNodeEnter());
     this.structure.addEventListener("nodeLeave", () => api.sendNodeLeave());
 
-    api.receiveCreateNode(this.onCreateNode);
-    api.receiveRemoveNode(this.onRemoveNode);
+    api.receiveCreateNode(this.onCreateNode.bind(this));
+    api.receiveRemoveNode(this.onRemoveNode.bind(this));
 
     const causalViewElement = d3.select(".causal-view");
     causalViewElement.on("mouseenter", () => api.sendCausalViewEnter());
     causalViewElement.on("mouseleave", () => api.sendCausalViewLeave());
-    this.structure.render(causalViewElement);
+
+    const causalModelNodes = JSON.parse(factsCollection);
+
+    this.structure.init(causalViewElement, causalModelNodes);
+    // this.structure.render();
 
     // Todo: независимость от вызова render
     this.selection = new CausalViewSelection(this.structure);
@@ -46,7 +64,17 @@ export class CausalView {
     );
     if (!causalViewElement) return;
 
+    const newNode = this.createNode();
+    console.log(newNode);
+    this.structure.render();
+
     console.log("clicked on causal-view. create node");
+  }
+
+  createNode() {
+    const newNode = Object.assign({}, newNodeTemplate);
+    newNode.Id = crypto.randomUUID();
+    return newNode;
   }
 
   onRemoveNode(event, data) {

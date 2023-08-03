@@ -1,4 +1,5 @@
 import { CausalViewStructure } from "./causal-view-structure.js";
+import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const nodeSelectionStrokeWidth = 12;
 
@@ -8,10 +9,11 @@ export class CausalViewSelection {
 
   constructor(structure) {
     this._structure = structure;
-    const selection = this;
-    structure.addEventListener("nodeClicked", (event) =>
-      this.onNodeClicked(selection, event)
-    );
+    // const selection = this;
+    // structure.addEventListener("nodeClicked", (event) =>
+    //   this.onNodeClicked(selection, event)
+    // );
+    structure.addEventListener("nodeClicked", this.onNodeClicked.bind(this));
 
     structure.addEventListener("zoomed", () => {
       d3.selectAll(".node__rect_selected").attr("stroke-width", () =>
@@ -21,11 +23,14 @@ export class CausalViewSelection {
   }
 
   selectNode(nodeId) {
-    const selection = this;
+    const causalViewSelection = this;
     d3.select(CausalViewStructure.getNodeIdClassByNodeId(nodeId))
       .raise()
       .select("rect")
-      .attr("stroke-width", selection.getSelectionStrokeWidthIgnoreZoom())
+      .attr(
+        "stroke-width",
+        causalViewSelection.getSelectionStrokeWidthIgnoreZoom()
+      )
       .attr("stroke", "#F5AE00")
       .classed("node__rect_selected", true);
   }
@@ -44,12 +49,12 @@ export class CausalViewSelection {
       .classed("node__rect_selected", false);
   }
 
-  onNodeClicked(selection, event) {
-    const prevSelectedNodeId = selection.currentSelectedNodeId;
+  onNodeClicked(event) {
+    const prevSelectedNodeId = this.currentSelectedNodeId;
     const nodeData = event.data.i.data;
-    selection.currentSelectedNodeId = nodeData["Id"];
+    this.currentSelectedNodeId = nodeData["Id"];
 
-    selection.selectNode(selection.currentSelectedNodeId);
-    if (prevSelectedNodeId) selection.deselectNode(prevSelectedNodeId);
+    this.selectNode(this.currentSelectedNodeId);
+    if (prevSelectedNodeId) this.deselectNode(prevSelectedNodeId);
   }
 }

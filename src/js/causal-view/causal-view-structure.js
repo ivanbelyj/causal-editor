@@ -1,42 +1,47 @@
-// Displays causal view elements
-export class CausalViewStructure extends EventTarget {
-  // _causalModelNodes = null;
-  _dag = null;
+// import * as d3 from "../../../node_modules/d3/dist/d3.js";
+// import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7";
+import * as d3 from "d3";
 
-  // Список id ребер-реализаций требуется для их особого отображения
-  _implementationEdgesSet = null;
+// import * as d3dag from "https://cdn.skypack.dev/d3-dag@1.0.0-1";
+// import * as d3dag from "../../../node_modules/d3-dag/bundle/d3-dag.esm.min.js";
+import * as d3dag from "d3-dag";
+
+// Displays interactive causal view elements
+export class CausalViewStructure extends EventTarget {
+  // _causalModelNodes ;
+  _dag;
+
+  // Set of implementation edges is required for their special rendering
+  _implementationEdgesSet;
 
   _nodeWidth = 140;
   _nodeHeight = 40;
 
   // Линия для отображения ребер может потребоваться на разных этапах
-  _line = null;
-  _nodeIdsAndColors = null;
+  _line;
+  _nodeIdsAndColors;
 
-  svg = null;
-  svgChild = null;
+  svg;
+  svgChild;
 
   _nodesParent;
 
   // События, вызываемые узлами, создаваемыми renderer-ом
-  nodeClicked = null;
-  nodeEnter = null;
-  nodeLeave = null;
-  zoomed = null;
+  nodeClicked;
+  nodeEnter;
+  nodeLeave;
+  zoomed;
 
   // get causalModelNodes() {
   //   return this._causalModelNodes;
   // }
 
-  constructor(causalModelNodes) {
-    super();
-
+  init(svgParent, causalModelNodes) {
     this.nodeClicked = new Event("nodeClicked");
     this.nodeEnter = new Event("nodeEnter");
     this.nodeLeave = new Event("nodeLeave");
     this.zoomed = new Event("zoomed");
 
-    // this._causalModelNodes = causalModelNodes;
     this.setDag(causalModelNodes);
 
     this._line = d3
@@ -44,6 +49,33 @@ export class CausalViewStructure extends EventTarget {
       .curve(d3.curveCatmullRom)
       .x((d) => d.x)
       .y((d) => d.y);
+
+    const layout = d3dag
+      .sugiyama() // base layout
+      .decross(d3dag.decrossOpt()) // minimize number of crossings
+      // set node size instead of constraining to fit
+      .nodeSize((node) => [
+        (node ? 1.3 : 0) * this._nodeWidth,
+        3 * this._nodeHeight,
+      ]);
+    const { width: dagWidth, height: dagHeight } = layout(this._dag);
+
+    const width = parseFloat(svgParent.style("width"));
+    const height = parseFloat(svgParent.style("height"));
+
+    this.svg = svgParent
+      .append("svg")
+      .attr("width", "100%")
+      .attr("height", "100%");
+
+    this.svg.attr("viewBox", [0, 0, dagWidth, height].join(" "));
+    const svgChild = this.svg.append("g");
+    this.svgChild = svgChild;
+    this.addZoom(this.svg, svgChild, width, height);
+
+    this._nodesParent = svgChild.append("g").selectAll("g");
+
+    this.render(causalModelNodes);
   }
 
   // Changes displaying text of node
@@ -72,18 +104,21 @@ export class CausalViewStructure extends EventTarget {
   // получения набора ребер-реализаций абстрактных фактов в виде строк
   setDag(causalModelNodes) {
     this._implementationEdgesSet = new Set();
-    const renderer = this;
-    this._dag = d3
-      .dagStratify()
+    const structure = this;
+    this._dag = d3dag
+      .graphStratify()
       .id(({ Id: id }) => id)
       .parentIds((node) => {
-        return renderer.addNodeParents(node, renderer._implementationEdgesSet);
+        return structure.addNodeParentsToSet(
+          node,
+          structure._implementationEdgesSet
+        );
       })(causalModelNodes);
   }
 
   // Причинно-следственные связи преобразуются в id-based parent data,
   // предназначенные для отображения
-  addNodeParents(node, implementationEdgesSet) {
+  addNodeParentsToSet(node, implementationEdgesSet) {
     const res = this.findCauseIds(node["ProbabilityNest"]);
     const abstractFactId = node["AbstractFactId"];
     if (abstractFactId) {
@@ -95,36 +130,13 @@ export class CausalViewStructure extends EventTarget {
     return res;
   }
 
-  render(svgParent) {
-    const layout = d3
-      .sugiyama() // base layout
-      .decross(d3.decrossOpt()) // minimize number of crossings
-      // set node size instead of constraining to fit
-      .nodeSize((node) => [
-        (node ? 1.3 : 0) * this._nodeWidth,
-        3 * this._nodeHeight,
-      ]);
-    const { width: dagWidth, height: dagHeight } = layout(this._dag);
-
-    const width = parseFloat(svgParent.style("width"));
-    const height = parseFloat(svgParent.style("height"));
-
-    // Rendering
-    this.svg = svgParent
-      .append("svg")
-      .attr("width", "100%")
-      .attr("height", "100%");
-
-    this.svg.attr("viewBox", [0, 0, dagWidth, height].join(" "));
-    const svgChild = this.svg.append("g");
-    this.svgChild = svgChild;
-    this.addZoom(this.svg, svgChild, width, height);
-
-    this._nodesParentSelection = svgChild.append("g").selectAll("g");
-
-    this.setColorsForNodes();
-    this.renderNodes(this._dag.descendants());
-    this.renderEdges(svgChild);
+  render(nodes) {
+    this.setColorsForNodes(nodes); // this._dag.nodes());
+    console.log("nodes", nodes);
+    console.log("_dag.nodes", this._dag.nodes());
+    console.log("dag", this._dag);
+    this.renderNodes(this._dag.nodes());
+    this.renderEdges(this.svgChild);
   }
 
   addZoom(svg, svgChild, width, height) {
@@ -138,12 +150,13 @@ export class CausalViewStructure extends EventTarget {
   }
 
   // Map colors to nodes
-  setColorsForNodes() {
+  setColorsForNodes(nodes) {
     const interp = d3.interpolateRainbow;
     if (!this._nodeIdsAndColors) this._nodeIdsAndColors = new Map();
-    for (const node of this._dag.idescendants()) {
-      const rndStep = Math.random() * this._dag.size();
-      this._nodeIdsAndColors.set(node.data["Id"], interp(rndStep));
+
+    for (const node of nodes) {
+      const rndStep = Math.random() * nodes.length;
+      this._nodeIdsAndColors.set(node["Id"], interp(rndStep));
     }
   }
 
@@ -187,10 +200,13 @@ export class CausalViewStructure extends EventTarget {
   }
 
   renderNodes(data) {
-    const nodesParentSelection = this._nodesParentSelection
-      .data(data)
-      .append("g");
-    const nodesSelection = nodesParentSelection
+    const nodesParent = this._nodesParent;
+    // .data(data)
+    // .append("g");
+
+    nodesParent.exit().remove();
+
+    const nodesSelection = nodesParent
       .enter()
       .data(data)
       .enter()
@@ -277,7 +293,6 @@ export class CausalViewStructure extends EventTarget {
     }
   }
 
-  // Updates all edges in causal view
   updateEdges(edgePathsSelection) {
     const nodeWidth = this._nodeWidth;
     const nodeHeight = this._nodeHeight;
@@ -294,18 +309,28 @@ export class CausalViewStructure extends EventTarget {
     return `id-${source}--${target}`;
   }
 
-  renderEdges(selection) {
-    const defs = selection.append("defs"); // For gradients
+  initEdges() {}
 
-    const edgePathSelection = selection
-      .append("g")
+  _edgesParent;
+  _edgesDefs;
+  renderEdges() {
+    let defs = this._edgesDefs;
+    if (!this._edgesDefs) {
+      defs = this._edgesDefs = this.svgChild.append("defs"); // For gradients
+    }
+
+    if (!this._edgesParent) {
+      this._edgesParent = this.svgChild.append("g");
+    }
+    const edgePathSelection = this._edgesParent
       .selectAll("path")
       .data(this._dag.links())
       .enter()
       .append("path")
       .attr("class", "edge");
 
-    this.updateEdges(edgePathSelection)
+    this.updateEdges(edgePathSelection);
+    edgePathSelection
       .attr("fill", "none")
       .attr("stroke-width", 3)
       .attr("stroke", ({ source, target }) => {
