@@ -24,9 +24,8 @@ export class CausalViewStructure extends EventTarget {
   svg;
   svgChild;
 
-  _nodesParent;
+  // _nodesParent;
 
-  // События, вызываемые узлами, создаваемыми renderer-ом
   nodeClicked;
   nodeEnter;
   nodeLeave;
@@ -73,9 +72,10 @@ export class CausalViewStructure extends EventTarget {
     this.svgChild = svgChild;
     this.addZoom(this.svg, svgChild, width, height);
 
-    this._nodesParent = svgChild.append("g").selectAll("g");
+    // this._nodesParent =
+    svgChild.append("g").attr("class", "nodes-parent"); //.selectAll("g");
 
-    this.render(causalModelFacts);
+    this.render();
   }
 
   // Changes displaying text of node
@@ -149,9 +149,6 @@ export class CausalViewStructure extends EventTarget {
   }
 
   render() {
-    const causalModelFacts = Array.from(this._dag.nodes()).map((x) => x.data);
-    // this.setColorsForNodes(causalModelFacts); // this._dag.nodes());
-    // console.log("_dag.nodes()", Array.from(this._dag.nodes()));
     this.renderNodes();
     this.renderEdges(this.svgChild);
   }
@@ -207,9 +204,6 @@ export class CausalViewStructure extends EventTarget {
 
   renderNodes() {
     const nodes = Array.from(this._dag.nodes());
-
-    const nodesParent = this._nodesParent;
-
     // nodesParent.exit().remove();
 
     // Set missing color fields
@@ -221,43 +215,54 @@ export class CausalViewStructure extends EventTarget {
       }
     }
 
-    nodesParent.data(nodes).join(
-      function (enter) {
-        const nodesSelection = enter
-          .append("g")
-          .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
-          .attr("class", (d) => {
-            return `node id-${d.data.Id}`;
-          })
-          .on("click", (d, i) => {
-            this.nodeClicked.data = { d, i };
-            this.dispatchEvent(this.nodeClicked);
-          })
-          .on("mouseenter", (d, i) => {
-            this.nodeEnter.data = { d, i };
-            this.dispatchEvent(this.nodeEnter);
-          })
-          .on("mouseleave", (d, i) => {
-            this.nodeLeave.data = { d, i };
-            this.dispatchEvent(this.nodeLeave);
-          });
+    d3.select(".nodes-parent")
+      .selectAll("g")
+      .data(nodes, (node) => node.data.Id)
+      .join(
+        function (enter) {
+          console.log("enter", Array.from(enter));
+          const nodesSelection = enter
+            .append("g")
+            .attr("class", (d) => {
+              return `node id-${d.data.Id}`;
+            })
+            .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
+            .on("click", (d, i) => {
+              this.nodeClicked.data = { d, i };
+              this.dispatchEvent(this.nodeClicked);
+            })
+            .on("mouseenter", (d, i) => {
+              this.nodeEnter.data = { d, i };
+              this.dispatchEvent(this.nodeEnter);
+            })
+            .on("mouseleave", (d, i) => {
+              this.nodeLeave.data = { d, i };
+              this.dispatchEvent(this.nodeLeave);
+            });
 
-        nodesSelection
-          .append("rect")
-          .attr("width", this._nodeWidth)
-          .attr("height", this._nodeHeight)
-          .attr("rx", 5)
-          .attr("ry", 5)
-          .attr("fill", (n) => n.data.color ?? "#aaa");
+          nodesSelection
+            .append("rect")
+            .attr("width", this._nodeWidth)
+            .attr("height", this._nodeHeight)
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .attr("fill", (n) => n.data.color ?? "#aaa");
 
-        this.addText(
-          nodesSelection,
-          (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
-        );
+          this.addText(
+            nodesSelection,
+            (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
+          );
 
-        this.addNodesDrag(nodesSelection);
-      }.bind(this)
-    );
+          this.addNodesDrag(nodesSelection);
+        }.bind(this),
+        function (update) {
+          console.log("update", Array.from(update));
+        }.bind(this),
+        function (exit) {
+          console.log("exit", Array.from(exit));
+          exit.remove();
+        }.bind(this)
+      );
   }
 
   addText(selection, getText) {

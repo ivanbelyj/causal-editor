@@ -22,7 +22,8 @@ body,
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
-  background-color: #f5f5f5;
+  /* background-color: #f5f5f5; */
+  background-color: #222;
 }
 
 /* body .lm_content {
