@@ -66,6 +66,10 @@ export class CausalView {
 
     const newNode = this.createNode();
     console.log(newNode);
+
+    console.log("data", data);
+
+    this.structure.addNode(newNode, { x: data.x, y: data.y });
     this.structure.render();
 
     console.log("clicked on causal-view. create node");
@@ -78,8 +82,10 @@ export class CausalView {
   }
 
   onRemoveNode(event, data) {
-    if (CausalView.nodeElementFromPoint(data, "node"))
-      console.log("remove node");
+    const nodeElement = CausalView.nodeElementFromPoint(data, "node");
+    // if (!nodeElement) return;
+    const node = d3.select(nodeElement).data()[0];
+    this.structure.removeNode(node.data.Id);
   }
 
   static elementWithClassFrom(pos, className) {
