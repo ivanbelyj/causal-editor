@@ -166,17 +166,6 @@ export class CausalViewStructure extends EventTarget {
     );
   }
 
-  // Map colors to nodes
-  // setColorsForNodes(nodes) {
-  //   const interp = d3.interpolateRainbow;
-  //   if (!this._nodeIdsAndColors) this._nodeIdsAndColors = new Map();
-
-  //   for (const node of nodes) {
-  //     const rndStep = Math.random() * nodes.length;
-  //     this._nodeIdsAndColors.set(node["Id"], interp(rndStep));
-  //   }
-  // }
-
   // addArrows() {
   //   const arrow = d3
   //     .arrow1()
@@ -226,52 +215,49 @@ export class CausalViewStructure extends EventTarget {
     // Set missing color fields
     const interp = d3.interpolateRainbow;
     for (const node of nodes) {
-      console.log(node);
       if (!node.data.color) {
         const rndStep = Math.random() * nodes.length;
         node.data.color = interp(rndStep);
       }
     }
 
-    const nodesSelection = nodesParent
-      // .enter()
-      .data(nodes)
-      .enter()
-      .append("g")
-      .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
-      .attr("cursor", "grab")
-      .attr("class", (d) => {
-        return `node id-${d.data.Id}`;
-      })
-      .on("click", (d, i) => {
-        this.nodeClicked.data = { d, i };
-        this.dispatchEvent(this.nodeClicked);
-      })
-      .on("mouseenter", (d, i) => {
-        this.nodeEnter.data = { d, i };
-        this.dispatchEvent(this.nodeEnter);
-      })
-      .on("mouseleave", (d, i) => {
-        this.nodeLeave.data = { d, i };
-        this.dispatchEvent(this.nodeLeave);
-      });
+    nodesParent.data(nodes).join(
+      function (enter) {
+        const nodesSelection = enter
+          .append("g")
+          .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
+          .attr("class", (d) => {
+            return `node id-${d.data.Id}`;
+          })
+          .on("click", (d, i) => {
+            this.nodeClicked.data = { d, i };
+            this.dispatchEvent(this.nodeClicked);
+          })
+          .on("mouseenter", (d, i) => {
+            this.nodeEnter.data = { d, i };
+            this.dispatchEvent(this.nodeEnter);
+          })
+          .on("mouseleave", (d, i) => {
+            this.nodeLeave.data = { d, i };
+            this.dispatchEvent(this.nodeLeave);
+          });
 
-    nodesSelection
-      .append("rect")
-      .attr("width", this._nodeWidth)
-      .attr("height", this._nodeHeight)
-      .attr("rx", 5)
-      .attr("ry", 5)
-      // .attr("fill", (n) => this._nodeIdsAndColors.get(n.data["Id"]) ?? "#eee");
-      .attr("fill", (n) => n.data.color ?? "#aaa");
+        nodesSelection
+          .append("rect")
+          .attr("width", this._nodeWidth)
+          .attr("height", this._nodeHeight)
+          .attr("rx", 5)
+          .attr("ry", 5)
+          .attr("fill", (n) => n.data.color ?? "#aaa");
 
-    this.addText(
-      nodesSelection,
-      (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
+        this.addText(
+          nodesSelection,
+          (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
+        );
+
+        this.addNodesDrag(nodesSelection);
+      }.bind(this)
     );
-    // addText(nodes, "test string for node");
-
-    this.addNodesDrag(nodesSelection);
   }
 
   addText(selection, getText) {
@@ -293,13 +279,15 @@ export class CausalViewStructure extends EventTarget {
   // Делает узлы, переданные в выборке, перетаскиваемыми. line требуется для обновления линий svg
   // (совпадает с line, использованным при отображении графа до перетаскиваний)
   addNodesDrag(nodesSelection) {
-    nodesSelection.call(
-      d3
-        .drag()
-        .on("start", dragStarted)
-        .on("drag", dragged)
-        .on("end", dragEnded)
-    );
+    nodesSelection
+      .attr("cursor", "grab")
+      .call(
+        d3
+          .drag()
+          .on("start", dragStarted)
+          .on("drag", dragged)
+          .on("end", dragEnded)
+      );
 
     function dragStarted() {
       d3.select(this).attr("cursor", "grabbing");

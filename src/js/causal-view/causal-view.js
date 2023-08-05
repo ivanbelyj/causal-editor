@@ -69,10 +69,25 @@ export class CausalView {
 
     console.log("data", data);
 
-    this.structure.addNode(newNode, { x: data.x, y: data.y });
+    this.structure.addNode(
+      newNode,
+      this.screenPointToSvg({ x: data.x, y: data.y })
+    );
     this.structure.render();
 
     console.log("clicked on causal-view. create node");
+  }
+
+  screenPointToSvg({ x, y }) {
+    const svg = d3.select("svg");
+    const g = svg.select("g");
+    const point = svg.node().createSVGPoint();
+    point.x = x;
+    point.y = y;
+    const { x: svgX, y: svgY } = point.matrixTransform(
+      g.node().getScreenCTM().inverse()
+    );
+    return { x: svgX, y: svgY };
   }
 
   createNode() {
