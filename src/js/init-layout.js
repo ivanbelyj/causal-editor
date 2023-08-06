@@ -1,5 +1,6 @@
 import { CausalView } from "./causal-view/causal-view.js";
-import { NodeView } from "./node-view.js";
+import { CausesComponent } from "./components/causes-component.js";
+import { NodeValueComponent } from "./components/node-value-component.js";
 
 const defaultConfig = {
   content: [
@@ -21,8 +22,8 @@ const defaultConfig = {
             },
             {
               type: "component",
-              componentName: "Test Component",
-              componentState: { label: "Hello world" },
+              componentName: "Causes",
+              // componentState: { label: "Hello world" },
             },
           ],
         },
@@ -33,48 +34,48 @@ const defaultConfig = {
 
 export const initLayout = () => {
   const layout = new GoldenLayout(defaultConfig);
-  layout.registerComponent(
-    "Test Component",
-    function (container, componentState) {}
-  );
+  layout.registerComponent("Causes", causesComponent);
   layout.registerComponent("Causal View", causalViewComponent);
   layout.registerComponent("Node Value", nodeValueComponent);
   layout.on("initialised", () => {
     const causalView = new CausalView();
     causalView.init();
 
-    const nodeView = new NodeView();
-    nodeView.init(causalView);
+    const nodeValueComponent = new NodeValueComponent();
+    nodeValueComponent.init(causalView);
+
+    const probabilityNest = {
+      CausesExpression: {
+        $type: "factor",
+        Edge: {
+          Probability: 0.5,
+          CauseId: "62560E8F-FDC8-4F15-8EF2-5CE6BADCB7BE",
+        },
+      },
+    };
+
+    const causesComponent = new CausesComponent(
+      ".causes-component",
+      probabilityNest
+    );
+    causesComponent.init();
   });
   layout.on("itemCreated", function (item) {});
   layout.init();
 };
 
-const causalViewComponent = function (container, componentState) {
-  const parentDiv = $("<div>").addClass("causal-view");
-  $("label");
+function causesComponent(container, componentState) {
+  const className = "causes-component";
+  const parentDiv = $("<div>").addClass(className);
   container.getElement().append(parentDiv);
-};
+}
 
-const nodeValueComponent = function (container, componentState) {
-  const element = $(`
-    <div class="component">
-      <div class="text-input text-input_readonly">
-        <label class="text-input__label">Id</label>
-        <input class="text-input__input" type="text"
-          placeholder="Id" id="node-id-input" readonly />
-      </div>
-      <div class="text-input">
-        <label class="text-input__label">Title</label>
-        <input class="text-input__input" type="text"
-          placeholder="Title" id="node-title-input" />
-      </div>
-      <div class="text-input">
-        <label class="text-input__label">Node Value</label>
-        <textarea class="textarea text-input__input"
-          placeholder="Node Value" id="node-value-input"></textarea>
-      </div>
-      <button class="button" id="update-btn">Update</button>
-    </div>`);
-  container.getElement().append(element);
-};
+function causalViewComponent(container, componentState) {
+  const parentDiv = $("<div>").addClass("causal-view");
+  container.getElement().append(parentDiv);
+}
+
+function nodeValueComponent(container, componentState) {
+  const parentDiv = $("<div>").addClass("node-value-component");
+  container.getElement().append(parentDiv);
+}

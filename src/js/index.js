@@ -12,16 +12,6 @@ import * as d3 from "d3";
     console.log("Theme is changed: ", e.matches);
     updateTheme(e.matches);
   });
-
-  // const api = window.api;
-  // api.receiveSwitchTheme((event, theme) => {
-  //   console.log("Theme is switched to", theme);
-  //   const link = d3.select("#goldenlayout-theme-link");
-  //   if (theme === "dark" || theme === "light" || theme === "system") {
-  //     const isDarkMode = console.log();
-  //     // link.attr("href", `src/css/goldenlayout-${theme}-theme.css`);
-  //   }
-  // });
 })();
 
 function updateTheme(isDarkMode) {
