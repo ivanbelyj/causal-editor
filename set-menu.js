@@ -1,4 +1,4 @@
-const { Menu } = require("electron");
+const { Menu, nativeTheme } = require("electron");
 
 module.exports = {
   setMenu: (mainWindow) => {
@@ -102,8 +102,38 @@ module.exports = {
           },
         ],
       },
+      {
+        label: "Theme",
+        submenu: [
+          {
+            label: "System",
+            type: "radio",
+            click: () => {
+              switchTheme("system", mainWindow);
+            },
+          },
+          {
+            label: "Light",
+            type: "radio",
+            click: () => {
+              switchTheme("light", mainWindow);
+            },
+          },
+          {
+            label: "Dark",
+            type: "radio",
+            click: () => {
+              switchTheme("dark", mainWindow);
+            },
+          },
+        ],
+      },
     ];
     const menu = Menu.buildFromTemplate(menuTemplate);
     Menu.setApplicationMenu(menu);
   },
 };
+
+function switchTheme(theme, mainWindow) {
+  nativeTheme.themeSource = theme;
+}
