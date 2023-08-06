@@ -72,8 +72,8 @@ export class CausalViewStructure extends EventTarget {
     this.svgChild = svgChild;
     this.addZoom(this.svg, svgChild, width, height);
 
-    // this._nodesParent =
-    svgChild.append("g").attr("class", "nodes-parent"); //.selectAll("g");
+    svgChild.append("g").attr("class", "edges-parent");
+    svgChild.append("g").attr("class", "nodes-parent");
 
     this.render();
   }
@@ -150,7 +150,7 @@ export class CausalViewStructure extends EventTarget {
 
   render() {
     this.renderNodes();
-    this.renderEdges(this.svgChild);
+    this.renderEdges();
   }
 
   addZoom(svg, svgChild, width, height) {
@@ -162,24 +162,6 @@ export class CausalViewStructure extends EventTarget {
       })
     );
   }
-
-  // addArrows() {
-  //   const arrow = d3
-  //     .arrow1()
-  //     .id("my-arrow")
-  //     .attr("fill", "steelblue")
-  //     .attr("stroke", "steelblue");
-  //   this._svgSelection.call(arrow);
-  //   this._svgSelection
-  //     .append("polyline")
-  //     .attr("marker-end", "url(#my-arrow)")
-  //     .attr("points", [
-  //       [5, 10],
-  //       [55, 10],
-  //     ])
-  //     .attr("stroke", "steelblue")
-  //     .attr("stroke-width", 2);
-  // }
 
   findCauseIds(obj) {
     let edgeProps = new Set();
@@ -204,7 +186,6 @@ export class CausalViewStructure extends EventTarget {
 
   renderNodes() {
     const nodes = Array.from(this._dag.nodes());
-    // nodesParent.exit().remove();
 
     // Set missing color fields
     const interp = d3.interpolateRainbow;
@@ -220,7 +201,7 @@ export class CausalViewStructure extends EventTarget {
       .data(nodes, (node) => node.data.Id)
       .join(
         function (enter) {
-          console.log("enter", Array.from(enter));
+          // console.log("enter", Array.from(enter));
           const nodesSelection = enter
             .append("g")
             .attr("class", (d) => {
@@ -256,10 +237,10 @@ export class CausalViewStructure extends EventTarget {
           this.addNodesDrag(nodesSelection);
         }.bind(this),
         function (update) {
-          console.log("update", Array.from(update));
+          // console.log("update", Array.from(update));
         }.bind(this),
         function (exit) {
-          console.log("exit", Array.from(exit));
+          // console.log("exit", Array.from(exit));
           exit.remove();
         }.bind(this)
       );
@@ -314,95 +295,138 @@ export class CausalViewStructure extends EventTarget {
     }
   }
 
+  // Edges are identified by source and target ids
+  sourceAndTargetIdsToEdgeId(source, target) {
+    // encodeURIComponents for spaces, hope id doesn't have a `--` in it
+    return encodeURIComponent(`id-${source}--${target}`);
+  }
+
+  _edgesDefs;
+  renderEdges() {
+    const edgePathsSelection = d3
+      .select(".edges-parent")
+      .selectAll("path")
+      .data(this._dag.links());
+
+    // For edges gradients
+    let defs = this._edgesDefs;
+    if (!this._edgesDefs) {
+      defs = this._edgesDefs = this.svgChild.append("defs");
+    }
+
+    edgePathsSelection.join(
+      function (enter) {
+        console.log("enter", Array.from(enter));
+        enter
+          .append("path")
+          .attr("class", "edge")
+          .attr("fill", "none")
+          .attr("stroke-width", 3)
+          .attr("stroke", ({ source, target }) => {
+            // Edges gradients
+            const gradId = this.sourceAndTargetIdsToEdgeId(
+              source.data["Id"],
+              target.data["Id"]
+            );
+            const grad = defs
+              .append("linearGradient")
+              .attr("id", gradId)
+              .attr("gradientUnits", "userSpaceOnUse");
+            // .attr("x1", source.x)
+            // .attr("x2", target.x)
+            // .attr("y1", source.y)
+            // .attr("y2", target.y);
+            grad
+              .append("stop")
+              .attr("offset", "0%")
+              .attr("stop-color", source.data.color ?? "#aaa");
+            grad
+              .append("stop")
+              .attr("offset", "100%")
+              .attr("stop-color", target.data.color ?? "#aaa");
+            return `url(#${gradId})`;
+            //
+          })
+          .attr("stroke-dasharray", ({ source, target }) => {
+            const edgeId = this.sourceAndTargetIdsToEdgeId(
+              source.data["Id"],
+              target.data["Id"]
+            );
+            const isEdgeImplementation =
+              this._implementationEdgesSet.has(edgeId);
+            return isEdgeImplementation ? "" : "5,5";
+          })
+          .attr("marker-end", "url(#arrowId)");
+
+        // Add arrows
+        this.svgChild
+          .selectAll("marker")
+          .data(["end"]) // Different link / path types can be defined here
+          .enter()
+          .append("svg:marker") // This section adds in the arrows
+          .attr("id", "arrowId")
+          .attr("viewBox", "0 -5 10 10")
+          .attr("refX", 25)
+          .attr("refY", 0)
+          .attr("markerWidth", 4)
+          .attr("markerHeight", 4)
+          .attr("orient", "auto")
+          .append("svg:path")
+          .attr("d", "M0,-5L10,0L0,5")
+          .attr("fill", "#222");
+      }.bind(this),
+      function (update) {
+        console.log("update", Array.from(update));
+        // this.updateEdges(update);
+      }.bind(this),
+      function (exit) {
+        console.log("exit", Array.from(exit));
+      }
+    );
+    this.updateEdges(d3.selectAll(".edge"));
+  }
+
+  // updateEdges(edgePathsSelection) {
+  //   console.log("update edges", edgePathsSelection);
+  //   const nodeWidth = this._nodeWidth;
+  //   const nodeHeight = this._nodeHeight;
+  //   console.log(edgePathsSelection.attr("d"));
+  //   return edgePathsSelection.attr(
+  //     "d",
+  //     function (d) {
+  //       return this._line([
+  //         { x: d.source.x + nodeWidth / 2, y: d.source.y + nodeHeight / 2 },
+  //         { x: d.target.x + nodeWidth / 2, y: d.target.y + nodeHeight / 2 },
+  //       ]);
+  //     }.bind(this)
+  //   );
+  // }
+
   updateEdges(edgePathsSelection) {
     const nodeWidth = this._nodeWidth;
     const nodeHeight = this._nodeHeight;
-    return edgePathsSelection.attr("d", (d) => {
+    edgePathsSelection.attr("d", (d) => {
       return this._line([
         { x: d.source.x + nodeWidth / 2, y: d.source.y + nodeHeight / 2 },
         { x: d.target.x + nodeWidth / 2, y: d.target.y + nodeHeight / 2 },
       ]);
     });
-  }
 
-  // Ребра идентифицируются по id источника и цели
-  sourceAndTargetIdsToEdgeId(source, target) {
-    return `id-${source}--${target}`;
-  }
+    // Gradients
+    edgePathsSelection.attr("stroke", ({ source, target }) => {
+      const gradId = this.sourceAndTargetIdsToEdgeId(
+        source.data["Id"],
+        target.data["Id"]
+      );
+      d3.select(`#${gradId}`)
+        .attr("x1", source.x)
+        .attr("x2", target.x)
+        .attr("y1", source.y)
+        .attr("y2", target.y);
+      return `url(#${gradId})`;
+    });
 
-  initEdges() {}
-
-  _edgesParent;
-  _edgesDefs;
-  renderEdges() {
-    let defs = this._edgesDefs;
-    if (!this._edgesDefs) {
-      defs = this._edgesDefs = this.svgChild.append("defs"); // For gradients
-    }
-
-    if (!this._edgesParent) {
-      this._edgesParent = this.svgChild.append("g");
-    }
-    const edgePathSelection = this._edgesParent
-      .selectAll("path")
-      .data(this._dag.links())
-      .enter()
-      .append("path")
-      .attr("class", "edge");
-
-    this.updateEdges(edgePathSelection);
-    edgePathSelection
-      .attr("fill", "none")
-      .attr("stroke-width", 3)
-      .attr("stroke", ({ source, target }) => {
-        // encodeURIComponents for spaces, hope id doesn't have a `--` in it
-        const gradId = encodeURIComponent(
-          `${source.data["Id"]}--${target.data["Id"]}`
-        );
-        const grad = defs
-          .append("linearGradient")
-          .attr("id", gradId)
-          .attr("gradientUnits", "userSpaceOnUse")
-          .attr("x1", source.x)
-          .attr("x2", target.x)
-          .attr("y1", source.y)
-          .attr("y2", target.y);
-        grad
-          .append("stop")
-          .attr("offset", "0%")
-          .attr("stop-color", source.data.color ?? "#aaa");
-        grad
-          .append("stop")
-          .attr("offset", "100%")
-          .attr("stop-color", target.data.color ?? "#aaa");
-        return `url(#${gradId})`;
-      })
-      .attr("stroke-dasharray", ({ source, target }) => {
-        const edgeId = this.sourceAndTargetIdsToEdgeId(
-          source.data["Id"],
-          target.data["Id"]
-        );
-        const isEdgeImplementation = this._implementationEdgesSet.has(edgeId);
-        return isEdgeImplementation ? "" : "5,5";
-      })
-      .attr("marker-end", "url(#arrowId)");
-
-    // Add arrows
-    this.svgChild
-      .selectAll("marker")
-      .data(["end"]) // Different link / path types can be defined here
-      .enter()
-      .append("svg:marker") // This section adds in the arrows
-      .attr("id", "arrowId")
-      .attr("viewBox", "0 -5 10 10")
-      .attr("refX", 25)
-      .attr("refY", 0)
-      .attr("markerWidth", 4)
-      .attr("markerHeight", 4)
-      .attr("orient", "auto")
-      .append("svg:path")
-      .attr("d", "M0,-5L10,0L0,5")
-      .attr("fill", "#222");
+    return edgePathsSelection;
   }
 
   // addArrows(selection, colorMap) {

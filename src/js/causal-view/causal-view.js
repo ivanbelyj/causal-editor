@@ -101,6 +101,7 @@ export class CausalView {
     // if (!nodeElement) return;
     const node = d3.select(nodeElement).data()[0];
     this.structure.removeNode(node.data.Id);
+    this.structure.render();
   }
 
   static elementWithClassFrom(pos, className) {
