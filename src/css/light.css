@@ -1,6 +1,9 @@
 :root {
-  --color: #777;
+  --color: #222;
   --background-color: #e1e1e1;
   --pale-background: #fafafa;
   --disabled-text: #a5a5a5;
+
+  --filter_hover: invert(5%);
+  --filter_click: invert(10%);
 }

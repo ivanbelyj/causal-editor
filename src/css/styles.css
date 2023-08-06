@@ -69,6 +69,14 @@ body,
   cursor: pointer;
 }
 
+.button:hover {
+  filter: var(--filter_hover);
+}
+
+.button:active {
+  filter: var(--filter_click);
+}
+
 .textarea {
   resize: vertical;
 }
@@ -97,5 +105,13 @@ body,
 /* Borders */
 .text-input__input,
 .button {
-  border: 1px solid #aaa;
+  border: 1px solid #949494;
+}
+
+img[src*=".svg"]:hover {
+  filter: var(--filter_hover);
+}
+
+img[src*=".svg"]:active {
+  filter: var(--filter_hover);
 }

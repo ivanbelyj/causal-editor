@@ -68,7 +68,9 @@ export class CausalViewStructure extends EventTarget {
       .attr("height", "100%");
 
     this.svg.attr("viewBox", [0, 0, dagWidth, height].join(" "));
-    const svgChild = this.svg.append("g");
+    const svgChild = this.svg
+      .append("g")
+      .attr("class", "causal-view__svg-child");
     this.svgChild = svgChild;
     this.addZoom(this.svg, svgChild, width, height);
 
@@ -259,7 +261,7 @@ export class CausalViewStructure extends EventTarget {
         `translate(${this._nodeWidth / 2}, ${this._nodeHeight / 2})`
       )
       // .attr("dominant-baseline", "hanging")
-      .attr("fill", "white");
+      .attr("fill", "#222");
   }
 
   // Делает узлы, переданные в выборке, перетаскиваемыми. line требуется для обновления линий svg

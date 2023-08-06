@@ -3,4 +3,16 @@
   --background-color: #222;
   --pale-background: #2f2f2f;
   --disabled-text: #ababab;
+
+  --icon-filter: invert(100%);
+  --filter_hover: invert(10%);
+  --filter_click: invert(20%);
+}
+
+img[src*=".svg"] {
+  filter: var(--icon-filter);
+}
+
+.causal-view__svg-child {
+  filter: var(--icon-filter);
 }
