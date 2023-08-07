@@ -12,7 +12,12 @@ export class CausesComponent {
     const rootSelection = this.component
       .append("div")
       .attr("class", "input-item");
-    const rootCauseItem = new CausesItem(rootSelection.node(), null);
+    const rootCauseItem = new CausesItem({
+      selector: rootSelection.node(),
+      isRemovable: false,
+      onRemove: null,
+      isRoot: true,
+    });
     rootCauseItem.init();
   }
 }

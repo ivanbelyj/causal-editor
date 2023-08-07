@@ -132,6 +132,11 @@ img[src*=".svg"]:hover {
   border-radius: 3px;
 }
 
+/* In some cases inner items padding-right can be reduced to save space */
+.causes-item__inner-item > * {
+  padding-right: 1em;
+}
+
 .causes-item__content {
   /* padding: 0 1em; */
   padding-left: 1em;
