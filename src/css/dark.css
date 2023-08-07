@@ -5,14 +5,17 @@
   --disabled-text: #ababab;
 
   --icon-filter: invert(100%);
-  --filter_hover: invert(10%);
-  --filter_click: invert(20%);
+  --icon-filter_hover: invert(40%);
+
+  --filter_hover: invert(15%);
+  --filter_click: invert(30%);
 }
 
 img[src*=".svg"] {
   filter: var(--icon-filter);
 }
 
-.causal-view__svg-child {
-  filter: var(--icon-filter);
-}
+/* .causal-view__svg-child rect,
+.causal-view__svg-child path {
+  filter: grayscale(30%) brightness(40%);
+} */

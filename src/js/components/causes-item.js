@@ -1,22 +1,34 @@
 import * as d3 from "d3";
 
-export class CauseItem {
-  constructor(selector, probabilityNest) {
+export class CausesItem {
+  constructor(selector, probabilityNest, isInnerItem, onRemove) {
     this.component = d3.select(selector);
     this.data = probabilityNest;
+    this.isInnerItem = isInnerItem ?? false;
+    this.onRemove = onRemove ?? null;
   }
 
   init() {
     // this.component.attr("class", "causes-component component");
 
-    const selectElem = this.component
+    const itemTop = this.component
+      .append("div")
+      .attr("class", "causes-item__item-top");
+
+    const selectElem = itemTop
       .append("select")
       .attr("class", "input-item input-item__input");
 
-    selectElem
-      .append("option")
-      .attr("value", "not selected")
-      .text("Not selected");
+    if (this.isInnerItem) {
+      // itemTop.append("button").attr("class", "button").text("Remove");
+      itemTop
+        .append("img")
+        .attr("src", "images/bin.svg")
+        .attr("class", "causes-item__remove-icon")
+        .on("click", this.onRemove);
+    }
+
+    selectElem.append("option").attr("value", "not selected").text("None");
     selectElem.append("option").attr("value", "factor").text("Factor");
     selectElem.append("option").attr("value", "and").text("And");
     selectElem.append("option").attr("value", "or").text("Or");
@@ -34,11 +46,14 @@ export class CauseItem {
   updateComponent(type) {
     // обновляем $type в данных
     // this.data.CausesExpression.$type = type;
-    if (this.content) this.content.html("");
-    this.content = this.component.append("div");
+    if (!this.content) this.content = this.component.append("div");
+    this.content.html("");
 
     switch (type) {
       case "factor":
+        if (this.isInnerItem) {
+          this.content.style("padding-right", "1em");
+        }
         this.createFactorComponent();
         break;
       case "and":
@@ -86,34 +101,30 @@ export class CauseItem {
     // создаем элементы для добавления новых операндов
     var addButton = this.content
       .append("button")
-      .attr("class", "button input-item")
+      .attr("class", "button input-item cause-item__add-button")
       .text("Add Operand");
 
     let listParent; // Created only after click
 
     // добавляем обработчик событий на клик по кнопке
     addButton.on("click", () => {
-      // добавляем новый операнд
-      //   this.data.Operands.push({
-      //     $type: "factor",
-      //     Edge: {
-      //       Probability: 0,
-      //       CauseId: "",
-      //     },
-      //   });
       if (!listParent)
         listParent = this.content
           .append("ul")
-          .attr("class", "causes-item__inner-items");
+          .attr("class", "causes-item__content");
 
       const newItem = listParent
         .append("li")
         .attr("class", "causes-item__inner-item");
 
       // создаем новый компонент для нового операнда
-      var operandComponent = new CauseItem(
+      var operandComponent = new CausesItem(
         newItem.node(),
-        null
+        null,
+        true,
+        () => {
+          newItem.remove();
+        }
         // this.data.Operands[this.data.Operands.length - 1]
       );
       operandComponent.init();

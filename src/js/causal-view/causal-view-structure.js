@@ -231,12 +231,12 @@ export class CausalViewStructure extends EventTarget {
             .attr("ry", 5)
             .attr("fill", (n) => n.data.color ?? "#aaa");
 
-          this.addText(
+          this.appendText(
             nodesSelection,
             (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
           );
 
-          this.addNodesDrag(nodesSelection);
+          this.appendNodesDrag(nodesSelection);
         }.bind(this),
         function (update) {
           // console.log("update", Array.from(update));
@@ -248,7 +248,7 @@ export class CausalViewStructure extends EventTarget {
       );
   }
 
-  addText(selection, getText) {
+  appendText(selection, getText) {
     selection
       .append("text")
       .text(getText)
@@ -261,12 +261,10 @@ export class CausalViewStructure extends EventTarget {
         `translate(${this._nodeWidth / 2}, ${this._nodeHeight / 2})`
       )
       // .attr("dominant-baseline", "hanging")
-      .attr("fill", "#222");
+      .attr("fill", "var(--color)");
   }
 
-  // Делает узлы, переданные в выборке, перетаскиваемыми. line требуется для обновления линий svg
-  // (совпадает с line, использованным при отображении графа до перетаскиваний)
-  addNodesDrag(nodesSelection) {
+  appendNodesDrag(nodesSelection) {
     nodesSelection
       .attr("cursor", "grab")
       .call(
@@ -375,7 +373,7 @@ export class CausalViewStructure extends EventTarget {
           .attr("orient", "auto")
           .append("svg:path")
           .attr("d", "M0,-5L10,0L0,5")
-          .attr("fill", "#222");
+          .attr("fill", "var(--color)");
       }.bind(this),
       function (update) {
         console.log("update", Array.from(update));

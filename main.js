@@ -18,7 +18,8 @@ function createWindow(appLocale) {
 
   mainWindow.loadFile("index.html");
 
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
+  mainWindow.maximize();
 
   // Spellcheck settings
   // const possibleLanguages =
