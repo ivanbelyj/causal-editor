@@ -9,7 +9,6 @@ import * as d3 from "d3";
   updateTheme(mediaQuery.matches);
 
   mediaQuery.addEventListener("change", (e) => {
-    console.log("Theme is changed: ", e.matches);
     updateTheme(e.matches);
   });
 })();
@@ -18,7 +17,9 @@ function updateTheme(isDarkMode) {
   const goldenLayoutlink = d3.select("#goldenlayout-theme-link");
   goldenLayoutlink.attr(
     "href",
-    `src/css/goldenlayout-${isDarkMode ? "dark" : "light"}-theme.css`
+    `src/css/golden-layout/goldenlayout-${
+      isDarkMode ? "dark" : "light"
+    }-theme.css`
   );
 
   const link = d3.select("#theme-link");

@@ -1,0 +1,41 @@
+/* Styles applied to unspecified document elements */
+
+:root {
+  color-scheme: light dark;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  height: 100%;
+  color: var(--color);
+  background-color: var(--background-color);
+
+  /* --duration: 0.3s;
+    --timing: ease;
+  
+    transition: color var(--duration) var(--timing),
+      background-color var(--duration) var(--timing); */
+}
+
+select {
+  color: inherit;
+}
+
+ul,
+li {
+  padding: 0;
+  margin: 0;
+  list-style-type: none;
+}
+
+img[src*=".svg"]:hover {
+  filter: var(--icon-filter_hover);
+}
+
+body .lm_content {
+  overflow: auto;
+}

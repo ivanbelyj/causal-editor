@@ -53,16 +53,13 @@ export class CausesItem {
 
   // updates item itself (for some types may create inner items)
   updateItem(type) {
-    // обновляем $type в данных
-    // this.data.CausesExpression.$type = type;
-    // if (!this.contentParent) {
-    //   this.contentParent = this.component.append("div");
-    // }
-    // this.contentParent.html("");
     if (this.content) {
       this.content.remove();
     }
     this.content = this.component.append("div");
+    if (this.listParent) {
+      this.listParent = null;
+    }
 
     switch (type) {
       case "factor":
@@ -121,22 +118,15 @@ export class CausesItem {
       .attr("class", "button input-item cause-item__add-button")
       .text("Add Operand");
 
-    let listParent; // Created only after click
+    addButton.on("click", this.appendInnerItemChild.bind(this));
+  }
 
-    // добавляем обработчик событий на клик по кнопке
-    addButton.on(
-      "click",
-      function () {
-        if (!listParent)
-          listParent = this.content
-            .append("ul")
-            .attr("class", "causes-item__content");
+  appendInnerItemChild() {
+    if (!this.listParent) this.listParent = this.content.append("ul");
+    // .attr("class", "causes-item__content");
 
-        const newItem = listParent.append("li");
-        // создаем новый компонент для нового операнда
-        this.createInnerItem(newItem.node(), true);
-      }.bind(this)
-    );
+    const newItem = this.listParent.append("li");
+    this.createInnerItem(newItem.node(), true);
   }
 
   // Inner item is visually separated from outer (borders and padding)

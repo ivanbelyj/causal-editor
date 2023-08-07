@@ -19,5 +19,11 @@ export class CausesComponent {
       isRoot: true,
     });
     rootCauseItem.init();
+
+    this.createWeightsNest();
+  }
+
+  createWeightsNest() {
+    this.component.append("Weights");
   }
 }
