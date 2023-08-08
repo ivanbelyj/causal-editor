@@ -36,7 +36,5 @@ export class CausesComponent {
   //   }
   // }
 
-  createWeightsNest() {
-    this.component.append("Weights");
-  }
+  createWeightsNest() {}
 }

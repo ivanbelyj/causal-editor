@@ -1,5 +1,8 @@
 import * as d3 from "d3";
 
+// CausesItem is a UI element representing causes expression.
+// It includes top (with type dropdown) and content that can include
+// another CausesItem inner elements
 export class CausesItem {
   constructor({ selector, isRemovable, onRemove, isRoot, causesExpression }) {
     this.selector = selector;
@@ -25,9 +28,9 @@ export class CausesItem {
       itemTop.style("padding-right", "0");
     }
 
-    const selectElem = itemTop
+    const typeDropdown = (this.typeDropdown = itemTop
       .append("select")
-      .attr("class", "input-item input-item__input");
+      .attr("class", "input-item input-item__input"));
 
     if (this.isRemovable) {
       // itemTop.append("button").attr("class", "button").text("Remove");
@@ -38,42 +41,49 @@ export class CausesItem {
         .on("click", this.onRemove);
     }
 
-    selectElem.append("option").attr("value", "not selected").text("None");
-    selectElem.append("option").attr("value", "factor").text("Factor");
-    selectElem.append("option").attr("value", "and").text("And");
-    selectElem.append("option").attr("value", "or").text("Or");
-    selectElem.append("option").attr("value", "not").text("Not");
+    typeDropdown.append("option").attr("value", "not selected").text("None");
+    typeDropdown.append("option").attr("value", "factor").text("Factor");
+    typeDropdown.append("option").attr("value", "and").text("And");
+    typeDropdown.append("option").attr("value", "or").text("Or");
+    typeDropdown.append("option").attr("value", "not").text("Not");
 
-    if (this.causesExpression) {
-      selectElem.property("value", this.causesExpression.$type);
-    }
-
-    selectElem.on(
+    typeDropdown.on(
       "change",
       function () {
-        var selectedValue = selectElem.node().value;
+        var selectedValue = typeDropdown.node().value;
         this.causesExpression = null;
         this.updateContent(selectedValue);
         // Todo: transform old causesExpression data to new type
       }.bind(this)
     );
 
-    if (this.causesExpression) {
-      CausesItem.createCausesItemFromCausesExpression(
-        this,
-        this.causesExpression
-      );
-    }
+    if (this.causesExpression) this.setCausalExpression(this.causesExpression);
   }
 
-  static createCausesItemFromCausesExpression(causeItem, expr) {
+  setCausalExpression(expr) {
+    CausesItem.setCausesExpressionForItem(this, expr);
+  }
+
+  static setCausesExpressionForItem(causeItem, expr) {
+    // Update top
+    causeItem.typeDropdown.property("value", expr.$type);
+
+    // Update content
     causeItem.updateContent(expr.$type);
 
     // Update inner items
-    if (expr.Operands) {
-      for (const operandExpr of expr.Operands) {
-        const newItem = causeItem.appendInnerItemChild(operandExpr);
-        this.createCausesItemFromCausesExpression(newItem, operandExpr);
+
+    const childrenExpr = [];
+    if (expr.Operands) childrenExpr.push(...expr.Operands);
+    else if (expr.CausesExpression) childrenExpr.push(expr.CausesExpression);
+    if (childrenExpr.length > 0) {
+      for (const operandExpr of childrenExpr) {
+        const newItem = causeItem.appendInnerItem(
+          expr.$type !== "not",
+          // Inner items are not removable only in inversion operation (there is always only an operand)
+          operandExpr
+        );
+        CausesItem.setCausesExpressionForItem(newItem, operandExpr);
       }
     }
   }
@@ -84,34 +94,26 @@ export class CausesItem {
       this.content.remove();
     }
     this.content = this.component.append("div");
-    if (this.listParent) {
-      this.listParent = null;
+    if (this.innerItemsParent) {
+      this.innerItemsParent = null;
     }
 
     switch (type) {
       case "factor":
-        this.createFactorItem();
+        this.createFactorItemContent();
         break;
       case "and":
       case "or":
-        this.createAndOrItem();
+        this.createAndOrItemContent();
         break;
       case "not":
-        this.createNotItem();
+        this.createNotItemContent();
+
       default:
     }
   }
 
-  createFactorItem() {
-    // this.content.html(function (d, i) {
-    //   return `
-    //     <div>
-    //         <input type="number" class="input-item text-input input-item__input" placeholder="Probability">
-    //         <input type="number" class="input-item text-input input-item__input" placeholder="CauseId">
-    //     </div>
-    //     `;
-    // });
-
+  createFactorItemContent() {
     const probabilityInput = this.content
       .append("input")
       .attr("type", "number")
@@ -126,7 +128,6 @@ export class CausesItem {
 
     if (this.causesExpression) {
       if (this.causesExpression.$type === "factor") {
-        console.log("set probability", this.causesExpression);
         probabilityInput.property(
           "value",
           this.causesExpression.Edge.Probability
@@ -153,7 +154,7 @@ export class CausesItem {
     });
   }
 
-  createAndOrItem() {
+  createAndOrItemContent() {
     this.content.style("padding-right", "0"); // reduced to save space
 
     // Button to add new items
@@ -162,36 +163,25 @@ export class CausesItem {
       .attr("class", "button input-item cause-item__add-button")
       .text("Add Operand");
 
-    addButton.on("click", this.appendInnerItemChild.bind(this));
-  }
-
-  appendInnerItemChild(causesExpression) {
-    if (!this.listParent) this.listParent = this.content.append("ul");
-    // .attr("class", "causes-item__content");
-
-    const newItem = this.listParent.append("li");
-    return this.createInnerItem(newItem.node(), true, causesExpression);
+    addButton.on("click", this.appendInnerItem.bind(this, true, null));
   }
 
   // Inner item is visually separated from outer (borders and padding)
-  createInnerItem(selector, isRemovable, causesExpression) {
-    if (!causesExpression) {
-      causesExpression = null;
-    }
+  appendInnerItem(isRemovable, causesExpression) {
+    if (!this.innerItemsParent)
+      this.innerItemsParent = this.content.append("div");
 
-    const itemSelection = d3
-      .select(selector)
-      .attr("class", "causes-item__inner-item");
-
-    // Every inner item reduces padding-right to save space
-    itemSelection.style("padding-right", "0");
+    const itemSelection = this.innerItemsParent
+      .append("div")
+      .attr("class", "causes-item__inner-item")
+      .style("padding-right", "0"); // Every inner item reduces padding-right to save space
 
     if (!this.isRoot) {
       itemSelection.style("border-right", "none");
     }
 
     const newItem = new CausesItem({
-      selector,
+      selector: itemSelection.node(),
       isRemovable,
       onRemove: isRemovable
         ? () => {
@@ -199,17 +189,17 @@ export class CausesItem {
           }
         : null,
       isRoot: false, // New inner item is not root item,
-      causesExpression,
+      causesExpression: causesExpression ?? null,
     });
     newItem.init();
 
     return newItem;
   }
 
-  createNotItem() {
+  createNotItemContent() {
     // const inner = this.content.append("div");
     this.content.style("padding-right", "0"); // reduced to save space
 
-    this.createInnerItem(this.content.node(), false);
+    if (!this.causesExpression) this.appendInnerItem(false, null); // Else it must be added recursively
   }
 }
