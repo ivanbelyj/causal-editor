@@ -44,50 +44,10 @@ export const initLayout = () => {
     const nodeValueComponent = new NodeValueComponent();
     nodeValueComponent.init(causalView);
 
-    const causalModelFact = {
-      Id: "F3DC5993-C431-4C97-9A7C-1EBED7FFF18C",
-      ProbabilityNest: {
-        CausesExpression: {
-          $type: "not",
-          CausesExpression: {
-            $type: "and",
-            Operands: [
-              {
-                $type: "factor",
-                Edge: {
-                  Probability: 1,
-                  CauseId: "62560E8F-FDC8-4F15-8EF2-5CE6BADCB7BE",
-                },
-              },
-              {
-                $type: "or",
-                Operands: [
-                  {
-                    $type: "factor",
-                    Edge: {
-                      Probability: 0.2,
-                      CauseId: "62560E8F-FDC8-4F15-8EF2-5CE6BADCB7BE",
-                    },
-                  },
-                  {
-                    $type: "factor",
-                    Edge: {
-                      Probability: 0.1,
-                      CauseId: "CB3A0E9E-8DDE-436A-9540-3E91F34CAF6D",
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-        },
-      },
-      NodeValue: "Biological war",
-    };
-
     const causesComponent = new CausesComponent(
       ".causes-component",
-      causalModelFact
+      null,
+      causalView
     );
     causesComponent.init();
   });

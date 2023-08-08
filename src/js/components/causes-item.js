@@ -57,22 +57,23 @@ export class CausesItem {
       }.bind(this)
     );
 
-    if (this.causesExpression) this.setCausalExpression(this.causesExpression);
+    if (this.causesExpression)
+      this.buildFromCausalExpression(this.causesExpression);
   }
 
-  setCausalExpression(expr) {
-    CausesItem.setCausesExpressionForItem(this, expr);
+  buildFromCausalExpression(expr) {
+    CausesItem.buildFromCausesExpression(this, expr);
   }
 
-  static setCausesExpressionForItem(causeItem, expr) {
+  static buildFromCausesExpression(causeItem, expr) {
     // Update top
-    causeItem.typeDropdown.property("value", expr.$type);
+    if (expr) causeItem.typeDropdown.property("value", expr.$type);
 
     // Update content
-    causeItem.updateContent(expr.$type);
+    causeItem.updateContent(expr?.$type);
 
+    if (!expr) return;
     // Update inner items
-
     const childrenExpr = [];
     if (expr.Operands) childrenExpr.push(...expr.Operands);
     else if (expr.CausesExpression) childrenExpr.push(expr.CausesExpression);
@@ -83,7 +84,7 @@ export class CausesItem {
           // Inner items are not removable only in inversion operation (there is always only an operand)
           operandExpr
         );
-        CausesItem.setCausesExpressionForItem(newItem, operandExpr);
+        CausesItem.buildFromCausesExpression(newItem, operandExpr);
       }
     }
   }
@@ -117,9 +118,11 @@ export class CausesItem {
     const probabilityInput = this.content
       .append("input")
       .attr("type", "number")
+      .attr("min", "0")
+      .attr("max", "1")
+      .attr("step", "0.01")
       .attr("class", "input-item text-input input-item__input")
       .attr("placeholder", "Probability");
-
     const causeIdInput = this.content
       .append("input")
       .attr("type", "text")

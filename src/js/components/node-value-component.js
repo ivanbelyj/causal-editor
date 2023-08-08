@@ -11,7 +11,7 @@ export class NodeValueComponent {
     causalView.structure.addEventListener(
       "nodeClicked",
       function (event) {
-        return this.onNodeClicked(event);
+        this.onNodeClicked(event);
       }.bind(this)
     );
   }
