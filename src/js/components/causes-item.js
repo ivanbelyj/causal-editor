@@ -1,7 +1,8 @@
 import * as d3 from "d3";
 
 export class CausesItem {
-  constructor({ selector, isRemovable, onRemove, isRoot }) {
+  constructor({ selector, isRemovable, onRemove, isRoot, causesExpression }) {
+    this.selector = selector;
     this.component = d3.select(selector);
     // this.data = probabilityNest;
     this.isRemovable = isRemovable ?? false;
@@ -9,6 +10,8 @@ export class CausesItem {
 
     // Knowing isRootItem is required to have only one right border for inner items
     this.isRoot = isRoot ?? false;
+
+    this.causesExpression = causesExpression;
   }
 
   init() {
@@ -41,18 +44,42 @@ export class CausesItem {
     selectElem.append("option").attr("value", "or").text("Or");
     selectElem.append("option").attr("value", "not").text("Not");
 
+    if (this.causesExpression) {
+      selectElem.property("value", this.causesExpression.$type);
+    }
+
     selectElem.on(
       "change",
       function () {
         var selectedValue = selectElem.node().value;
-
-        this.updateItem(selectedValue);
+        this.causesExpression = null;
+        this.updateContent(selectedValue);
+        // Todo: transform old causesExpression data to new type
       }.bind(this)
     );
+
+    if (this.causesExpression) {
+      CausesItem.createCausesItemFromCausesExpression(
+        this,
+        this.causesExpression
+      );
+    }
+  }
+
+  static createCausesItemFromCausesExpression(causeItem, expr) {
+    causeItem.updateContent(expr.$type);
+
+    // Update inner items
+    if (expr.Operands) {
+      for (const operandExpr of expr.Operands) {
+        const newItem = causeItem.appendInnerItemChild(operandExpr);
+        this.createCausesItemFromCausesExpression(newItem, operandExpr);
+      }
+    }
   }
 
   // updates item itself (for some types may create inner items)
-  updateItem(type) {
+  updateContent(type) {
     if (this.content) {
       this.content.remove();
     }
@@ -90,11 +117,28 @@ export class CausesItem {
       .attr("type", "number")
       .attr("class", "input-item text-input input-item__input")
       .attr("placeholder", "Probability");
+
     const causeIdInput = this.content
       .append("input")
       .attr("type", "text")
       .attr("class", "input-item text-input input-item__input")
       .attr("placeholder", "CauseId");
+
+    if (this.causesExpression) {
+      if (this.causesExpression.$type === "factor") {
+        console.log("set probability", this.causesExpression);
+        probabilityInput.property(
+          "value",
+          this.causesExpression.Edge.Probability
+        );
+        causeIdInput.property("value", this.causesExpression.Edge.CauseId);
+      } else {
+        console.error(
+          "Incorrect causesExpression for factor item creation: ",
+          this.causesExpression
+        );
+      }
+    }
 
     probabilityInput.on("change", (event) => {
       console.log("probability is changed");
@@ -121,16 +165,20 @@ export class CausesItem {
     addButton.on("click", this.appendInnerItemChild.bind(this));
   }
 
-  appendInnerItemChild() {
+  appendInnerItemChild(causesExpression) {
     if (!this.listParent) this.listParent = this.content.append("ul");
     // .attr("class", "causes-item__content");
 
     const newItem = this.listParent.append("li");
-    this.createInnerItem(newItem.node(), true);
+    return this.createInnerItem(newItem.node(), true, causesExpression);
   }
 
   // Inner item is visually separated from outer (borders and padding)
-  createInnerItem(selector, isRemovable) {
+  createInnerItem(selector, isRemovable, causesExpression) {
+    if (!causesExpression) {
+      causesExpression = null;
+    }
+
     const itemSelection = d3
       .select(selector)
       .attr("class", "causes-item__inner-item");
@@ -150,9 +198,12 @@ export class CausesItem {
             itemSelection.remove();
           }
         : null,
-      isRoot: false, // New inner item is not root item
+      isRoot: false, // New inner item is not root item,
+      causesExpression,
     });
     newItem.init();
+
+    return newItem;
   }
 
   createNotItem() {
