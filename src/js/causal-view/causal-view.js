@@ -91,7 +91,7 @@ export class CausalView {
   }
 
   createNode() {
-    const newNode = Object.assign({}, newNodeTemplate);
+    const newNode = structuredClone(newNodeTemplate);
     newNode.Id = crypto.randomUUID();
     return newNode;
   }

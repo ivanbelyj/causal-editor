@@ -136,6 +136,7 @@ export class CausalViewStructure extends EventTarget {
     const newNode = this._dag.node(causalModelFact);
     newNode.ux = nodeData.x;
     newNode.uy = nodeData.y;
+    return newNode;
   }
   removeNode(nodeId) {
     const nodeToRemove = Array.from(this._dag.nodes()).find(
@@ -198,12 +199,13 @@ export class CausalViewStructure extends EventTarget {
       }
     }
 
+    console.log("nodes");
     d3.select(".nodes-parent")
       .selectAll("g")
       .data(nodes, (node) => node.data.Id)
       .join(
         function (enter) {
-          // console.log("enter", Array.from(enter));
+          console.log("enter", Array.from(enter));
           const nodesSelection = enter
             .append("g")
             .attr("class", (d) => {
@@ -239,10 +241,10 @@ export class CausalViewStructure extends EventTarget {
           this.appendNodesDrag(nodesSelection);
         }.bind(this),
         function (update) {
-          // console.log("update", Array.from(update));
+          console.log("update", Array.from(update));
         }.bind(this),
         function (exit) {
-          // console.log("exit", Array.from(exit));
+          console.log("exit", Array.from(exit));
           exit.remove();
         }.bind(this)
       );
@@ -314,9 +316,10 @@ export class CausalViewStructure extends EventTarget {
       defs = this._edgesDefs = this.svgChild.append("defs");
     }
 
+    // console.log("edges");
     edgePathsSelection.join(
       function (enter) {
-        console.log("enter", Array.from(enter));
+        // console.log("enter", Array.from(enter));
         enter
           .append("path")
           .attr("class", "edge")
@@ -376,11 +379,11 @@ export class CausalViewStructure extends EventTarget {
           .attr("fill", "var(--color)");
       }.bind(this),
       function (update) {
-        console.log("update", Array.from(update));
+        // console.log("update", Array.from(update));
         // this.updateEdges(update);
       }.bind(this),
       function (exit) {
-        console.log("exit", Array.from(exit));
+        // console.log("exit", Array.from(exit));
       }
     );
     this.updateEdges(d3.selectAll(".edge"));
