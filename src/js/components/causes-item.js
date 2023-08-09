@@ -8,10 +8,11 @@ export class CausesItem {
   // Selector for item is constant (the item is always in the same place in DOM).
   // It does not depend on the causesExpression whether the element can be deleted or not
   // so isRemovable and isRoot are also constant.
-  constructor({ selector, isRemovable, isRoot }) {
+  constructor({ selector, isRemovable, onRemove, isRoot }) {
     this.selector = selector;
     this.component = d3.select(selector);
     this.isRemovable = isRemovable ?? false;
+    this.onRemove = onRemove;
 
     // Knowing isRootItem is required to have only one right border for inner items
     this.isRoot = isRoot ?? false;
@@ -43,28 +44,54 @@ export class CausesItem {
           "click",
           function () {
             this.component.remove();
+            this.onRemove?.(this.causesExpression);
           }.bind(this)
         );
     }
 
-    typeDropdown.append("option").attr("value", "not selected").text("None");
+    typeDropdown.append("option").attr("value", "none").text("None");
     typeDropdown.append("option").attr("value", "factor").text("Factor");
     typeDropdown.append("option").attr("value", "and").text("And");
     typeDropdown.append("option").attr("value", "or").text("Or");
     typeDropdown.append("option").attr("value", "not").text("Not");
 
+    this.expressionType = "none";
+
     typeDropdown.on(
       "change",
-      function () {
-        const selectedValue = this.typeDropdown.node().value;
+      function (e) {
+        const newType = this.typeDropdown.node().value;
 
-        this.causesExpression.$type = selectedValue;
+        const prevType = this.expressionType;
 
-        // Add a child that has not been selected yet, but is required
-        if (selectedValue == "not") this.causesExpression.CausesExpression = {};
+        if (
+          (prevType == "and" && newType == "or") ||
+          (prevType == "or" && newType == "and")
+        ) {
+          // To change $type is enough (next)
+        } else {
+          const expr = this.causesExpression;
+          // We should mutate this.causesExpression instead of creating a new one
+          for (const key in expr) {
+            delete expr[`${key}`];
+          }
+          if (newType == "and" || newType == "or") {
+            expr.Operands = [];
+          }
+          if (newType == "not") {
+            // Add a child that has not been defined yet, but is required
+            expr.CausesExpression = {};
+          }
+          if (newType == "factor") {
+            console.log("item type is changed to factor");
+            expr.Edge = {
+              Probability: 1,
+            };
+          }
+        }
+        this.causesExpression.$type = newType;
 
-        // Todo: bring this.causesExpression in to the correct state accordingly to the new type
-
+        this.expressionType = newType;
         this.reset(this.causesExpression);
       }.bind(this)
     );
@@ -75,13 +102,16 @@ export class CausesItem {
   }
 
   reset(causesExpression) {
+    if (!causesExpression)
+      console.error("causes expression can't be ", causesExpression);
+
     this.causesExpression = causesExpression;
     CausesItem.resetCausesItem(this, this.causesExpression);
   }
 
   static resetCausesItem(causeItem, expr) {
     // Update top
-    if (expr) causeItem.typeDropdown.property("value", expr.$type);
+    causeItem.typeDropdown.property("value", expr?.$type ?? "none");
 
     // Reset content and remove inner items
     causeItem.resetContent(expr?.$type);
@@ -161,17 +191,23 @@ export class CausesItem {
       }
     }
 
-    probabilityInput.on("change", (event) => {
-      console.log("probability is changed");
-      //   this.data.Edge.Probability = parseFloat(
-      //     d3.select(event.target).property("value")
-      //   );
-    });
+    probabilityInput.on(
+      "change",
+      function (event) {
+        this.causesExpression.Edge.Probability = parseFloat(
+          d3.select(event.target).property("value")
+        );
+      }.bind(this)
+    );
 
-    causeIdInput.on("change", (event) => {
-      console.log("causeId is changed");
-      //   this.data.Edge.CauseId = d3.select(event.target).property("value");
-    });
+    causeIdInput.on(
+      "change",
+      function (event) {
+        this.causesExpression.Edge.CauseId = d3
+          .select(event.target)
+          .property("value");
+      }.bind(this)
+    );
   }
 
   setAndOrItemContent() {
@@ -183,14 +219,21 @@ export class CausesItem {
       .attr("class", "button input-item cause-item__add-button")
       .text("Add Operand");
 
-    addButton.on("click", this.appendInnerItem.bind(this, true, null));
+    addButton.on(
+      "click",
+      function (event) {
+        const newItem = {};
+        this.causesExpression.Operands.push(newItem);
+        this.appendInnerItem(true, newItem);
+      }.bind(this)
+    );
   }
 
   setNotItemContent() {
     // const inner = this.content.append("div");
     this.content.style("padding-right", "0"); // reduced to save space
 
-    // if (!this.causesExpression) this.appendInnerItem(false, null); // Else it will be added recursively
+    // if (!this.causesExpression) this.appendInnerItem(false, {}); // Else it will be added recursively
   }
 
   // Inner item is visually separated from outer (borders and padding)
@@ -210,6 +253,13 @@ export class CausesItem {
     const newItem = new CausesItem({
       selector: itemSelection.node(),
       isRemovable,
+      onRemove: function (removingExpr) {
+        const removeIndex =
+          this.causesExpression.Operands.indexOf(removingExpr);
+        console.log("operands are", this.causesExpression.Operands);
+        console.log("removing on ", removeIndex);
+        this.causesExpression.Operands.splice(removeIndex, 1);
+      }.bind(this),
       isRoot: false, // Inner item can't be a root
     });
     newItem.init(causesExpression);
