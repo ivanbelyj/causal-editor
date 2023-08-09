@@ -46,7 +46,6 @@ export const initLayout = () => {
 
     const causesComponent = new CausesComponent(
       ".causes-component",
-      null,
       causalView
     );
     causesComponent.init();

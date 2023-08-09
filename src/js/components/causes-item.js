@@ -4,41 +4,47 @@ import * as d3 from "d3";
 // It includes top (with type dropdown) and content that can include
 // another CausesItem inner elements
 export class CausesItem {
-  constructor({ selector, isRemovable, onRemove, isRoot, causesExpression }) {
+  // There are some properties that don't change after reset. They are set in constructor.
+  // Selector for item is constant (the item is always in the same place in DOM).
+  // It does not depend on the causesExpression whether the element can be deleted or not
+  // so isRemovable and isRoot are also constant.
+  constructor({ selector, isRemovable, isRoot }) {
     this.selector = selector;
     this.component = d3.select(selector);
-    // this.data = probabilityNest;
     this.isRemovable = isRemovable ?? false;
-    this.onRemove = onRemove ?? null;
 
     // Knowing isRootItem is required to have only one right border for inner items
     this.isRoot = isRoot ?? false;
-
-    this.causesExpression = causesExpression;
   }
 
-  init() {
-    // every causes-item has item top (for select type or remove item)
-    const itemTop = this.component
+  // Actions that are relevant to CausesItem regardless of causesExpression structure.
+  // init() must be called only once
+  init(causesExpression) {
+    // Every causes-item has item top (for selecting the type or removing the item)
+    this.itemTop = this.component
       .append("div")
       .attr("class", "causes-item__item-top");
 
     // Removable item has remove-icon instead of padding
     if (this.isRemovable) {
-      itemTop.style("padding-right", "0");
+      this.itemTop.style("padding-right", "0");
     }
 
-    const typeDropdown = (this.typeDropdown = itemTop
+    const typeDropdown = (this.typeDropdown = this.itemTop
       .append("select")
       .attr("class", "input-item input-item__input"));
 
     if (this.isRemovable) {
-      // itemTop.append("button").attr("class", "button").text("Remove");
-      itemTop
+      this.itemTop
         .append("img")
         .attr("src", "images/bin.svg")
         .attr("class", "causes-item__remove-icon")
-        .on("click", this.onRemove);
+        .on(
+          "click",
+          function () {
+            this.component.remove();
+          }.bind(this)
+        );
     }
 
     typeDropdown.append("option").attr("value", "not selected").text("None");
@@ -50,47 +56,58 @@ export class CausesItem {
     typeDropdown.on(
       "change",
       function () {
-        var selectedValue = typeDropdown.node().value;
-        this.causesExpression = null;
-        this.updateContent(selectedValue);
-        // Todo: transform old causesExpression data to new type
+        const selectedValue = this.typeDropdown.node().value;
+
+        this.causesExpression.$type = selectedValue;
+
+        // Add a child that has not been selected yet, but is required
+        if (selectedValue == "not") this.causesExpression.CausesExpression = {};
+
+        // Todo: bring this.causesExpression in to the correct state accordingly to the new type
+
+        this.reset(this.causesExpression);
       }.bind(this)
     );
 
-    if (this.causesExpression)
-      this.buildFromCausalExpression(this.causesExpression);
+    if (causesExpression) {
+      this.reset(causesExpression);
+    }
   }
 
-  buildFromCausalExpression(expr) {
-    CausesItem.buildFromCausesExpression(this, expr);
+  reset(causesExpression) {
+    this.causesExpression = causesExpression;
+    CausesItem.resetCausesItem(this, this.causesExpression);
   }
 
-  static buildFromCausesExpression(causeItem, expr) {
+  static resetCausesItem(causeItem, expr) {
     // Update top
     if (expr) causeItem.typeDropdown.property("value", expr.$type);
 
-    // Update content
-    causeItem.updateContent(expr?.$type);
+    // Reset content and remove inner items
+    causeItem.resetContent(expr?.$type);
 
     if (!expr) return;
-    // Update inner items
+
+    // Create actual inner items
     const childrenExpr = [];
     if (expr.Operands) childrenExpr.push(...expr.Operands);
     else if (expr.CausesExpression) childrenExpr.push(expr.CausesExpression);
     if (childrenExpr.length > 0) {
-      for (const operandExpr of childrenExpr) {
+      for (const childExpr of childrenExpr) {
         const newItem = causeItem.appendInnerItem(
           expr.$type !== "not",
           // Inner items are not removable only in inversion operation (there is always only an operand)
-          operandExpr
+          childExpr
         );
-        CausesItem.buildFromCausesExpression(newItem, operandExpr);
+        // Create item from expression
+        CausesItem.resetCausesItem(newItem, childExpr);
       }
     }
   }
 
-  // updates item itself (for some types may create inner items)
-  updateContent(type) {
+  // After removing all content including inner items resetContent() creates
+  // only item content itself (without inner items)
+  resetContent(type) {
     if (this.content) {
       this.content.remove();
     }
@@ -101,20 +118,20 @@ export class CausesItem {
 
     switch (type) {
       case "factor":
-        this.createFactorItemContent();
+        this.setFactorItemContent();
         break;
       case "and":
       case "or":
-        this.createAndOrItemContent();
+        this.setAndOrItemContent();
         break;
       case "not":
-        this.createNotItemContent();
+        this.setNotItemContent();
 
       default:
     }
   }
 
-  createFactorItemContent() {
+  setFactorItemContent() {
     const probabilityInput = this.content
       .append("input")
       .attr("type", "number")
@@ -157,7 +174,7 @@ export class CausesItem {
     });
   }
 
-  createAndOrItemContent() {
+  setAndOrItemContent() {
     this.content.style("padding-right", "0"); // reduced to save space
 
     // Button to add new items
@@ -167,6 +184,13 @@ export class CausesItem {
       .text("Add Operand");
 
     addButton.on("click", this.appendInnerItem.bind(this, true, null));
+  }
+
+  setNotItemContent() {
+    // const inner = this.content.append("div");
+    this.content.style("padding-right", "0"); // reduced to save space
+
+    // if (!this.causesExpression) this.appendInnerItem(false, null); // Else it will be added recursively
   }
 
   // Inner item is visually separated from outer (borders and padding)
@@ -186,23 +210,10 @@ export class CausesItem {
     const newItem = new CausesItem({
       selector: itemSelection.node(),
       isRemovable,
-      onRemove: isRemovable
-        ? () => {
-            itemSelection.remove();
-          }
-        : null,
-      isRoot: false, // New inner item is not root item,
-      causesExpression: causesExpression ?? null,
+      isRoot: false, // Inner item can't be a root
     });
-    newItem.init();
+    newItem.init(causesExpression);
 
     return newItem;
-  }
-
-  createNotItemContent() {
-    // const inner = this.content.append("div");
-    this.content.style("padding-right", "0"); // reduced to save space
-
-    if (!this.causesExpression) this.appendInnerItem(false, null); // Else it must be added recursively
   }
 }

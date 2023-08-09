@@ -2,13 +2,14 @@ import * as d3 from "d3";
 import { CausesItem } from "./causes-item.js";
 
 export class CausesComponent {
-  constructor(selector, causalModelFact, causalView) {
+  constructor(selector, causalView) {
     this.component = d3.select(selector);
-    this.causalModelFact = causalModelFact;
     this.causalView = causalView;
   }
 
-  init() {
+  // Actions that are relevant to CausesComponent regardless of causalModelFact structure.
+  // init() must be called only once
+  init(causalModelFact) {
     this.component.attr("class", "causes-component component");
     this.content = this.component.append("div").attr("class", "input-item");
 
@@ -20,33 +21,41 @@ export class CausesComponent {
       }.bind(this)
     );
 
-    this.buildRoot();
+    if (causalModelFact) this.reset(causalModelFact);
   }
 
   reset(causalModelFact) {
     this.causalModelFact = causalModelFact;
-    d3.select(this.rootCausesItem.selector).html("");
-    this.buildRoot();
+    // d3.select(this.rootCausesItem.selector).html("");
+    // this.buildRoot();
+    if (!this.rootCausesItem) {
+      const rootCausesItem = (this.rootCausesItem = new CausesItem({
+        selector: this.content.node(),
+        isRemovable: false,
+        isRoot: true,
+      }));
+      rootCausesItem.init();
+    }
+    this.rootCausesItem.reset(
+      causalModelFact?.ProbabilityNest?.CausesExpression
+    );
   }
 
-  buildRoot() {
+  createRoot() {
     const rootCausesItem = (this.rootCausesItem = new CausesItem({
       selector: this.content.node(),
       isRemovable: false,
-      onRemove: null,
       isRoot: true,
-      causesExpression: this.causalModelFact?.ProbabilityNest?.CausesExpression,
     }));
     rootCausesItem.init();
+    // this.causalModelFact?.ProbabilityNest?.CausesExpression
 
-    this.createWeightsNest();
-
-    const probabilityNest = this.causalModelFact?.ProbabilityNest;
-    if (probabilityNest) {
-      this.rootCausesItem.buildFromCausalExpression(
-        probabilityNest.CausesExpression
-      );
-    }
+    // const probabilityNest = this.causalModelFact?.ProbabilityNest;
+    // if (probabilityNest) {
+    //   this.rootCausesItem.buildFromCausalExpression(
+    //     probabilityNest.CausesExpression
+    //   );
+    // }
   }
 
   createWeightsNest() {}
