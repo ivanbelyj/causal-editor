@@ -83,7 +83,6 @@ export class CausesItem {
             expr.CausesExpression = {};
           }
           if (newType == "factor") {
-            console.log("item type is changed to factor");
             expr.Edge = {
               Probability: 1,
             };
@@ -256,8 +255,6 @@ export class CausesItem {
       onRemove: function (removingExpr) {
         const removeIndex =
           this.causesExpression.Operands.indexOf(removingExpr);
-        console.log("operands are", this.causesExpression.Operands);
-        console.log("removing on ", removeIndex);
         this.causesExpression.Operands.splice(removeIndex, 1);
       }.bind(this),
       isRoot: false, // Inner item can't be a root

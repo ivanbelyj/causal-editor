@@ -56,6 +56,5 @@ export class CausalViewSelection {
 
     this.selectNode(this.currentSelectedNodeId);
     if (prevSelectedNodeId) this.deselectNode(prevSelectedNodeId);
-    console.log("selected is ", nodeData);
   }
 }

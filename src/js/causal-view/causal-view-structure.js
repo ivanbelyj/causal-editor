@@ -199,13 +199,13 @@ export class CausalViewStructure extends EventTarget {
       }
     }
 
-    console.log("nodes");
+    // console.log("nodes");
     d3.select(".nodes-parent")
       .selectAll("g")
       .data(nodes, (node) => node.data.Id)
       .join(
         function (enter) {
-          console.log("enter", Array.from(enter));
+          // console.log("enter", Array.from(enter));
           const nodesSelection = enter
             .append("g")
             .attr("class", (d) => {
@@ -241,10 +241,10 @@ export class CausalViewStructure extends EventTarget {
           this.appendNodesDrag(nodesSelection);
         }.bind(this),
         function (update) {
-          console.log("update", Array.from(update));
+          // console.log("update", Array.from(update));
         }.bind(this),
         function (exit) {
-          console.log("exit", Array.from(exit));
+          // console.log("exit", Array.from(exit));
           exit.remove();
         }.bind(this)
       );

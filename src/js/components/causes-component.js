@@ -39,7 +39,6 @@ export class CausesComponent {
     this.rootCausesItem.reset(
       causalModelFact?.ProbabilityNest?.CausesExpression
     );
-    console.log("reset with ", this.rootCausesItem.causesExpression);
   }
 
   createRoot() {

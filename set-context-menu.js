@@ -53,6 +53,7 @@ module.exports = {
           label: "Remove Node",
           visible: isNodeEntered,
           click: () => {
+            isNodeEntered = false; // entered node is removed
             mainWindow.webContents.send("remove-node", {
               x: parameters.x,
               y: parameters.y,

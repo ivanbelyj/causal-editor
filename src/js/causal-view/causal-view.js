@@ -65,17 +65,12 @@ export class CausalView {
     if (!causalViewElement) return;
 
     const newNode = this.createNode();
-    console.log(newNode);
-
-    console.log("data", data);
 
     this.structure.addNode(
       newNode,
       this.screenPointToSvg({ x: data.x, y: data.y })
     );
     this.structure.render();
-
-    console.log("clicked on causal-view. create node");
   }
 
   screenPointToSvg({ x, y }) {
