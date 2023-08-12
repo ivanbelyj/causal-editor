@@ -31,10 +31,6 @@ export class CausalViewStructure extends EventTarget {
   nodeLeave;
   zoomed;
 
-  // get causalModelNodes() {
-  //   return this._causalModelNodes;
-  // }
-
   init(svgParent, causalModelFacts) {
     this.nodeClicked = new Event("nodeClicked");
     this.nodeEnter = new Event("nodeEnter");
@@ -78,6 +74,10 @@ export class CausalViewStructure extends EventTarget {
     svgChild.append("g").attr("class", "nodes-parent");
 
     this.render();
+  }
+
+  getNodes() {
+    return Array.from(this._dag.nodes());
   }
 
   // Changes displaying text of node
@@ -139,9 +139,7 @@ export class CausalViewStructure extends EventTarget {
     return newNode;
   }
   removeNode(nodeId) {
-    const nodeToRemove = Array.from(this._dag.nodes()).find(
-      (x) => x.data.Id == nodeId
-    );
+    const nodeToRemove = this.getNodes().find((x) => x.data.Id == nodeId);
     if (!nodeToRemove) {
       console.error("Node to remove is not found. ", nodeToRemove);
       return;
@@ -188,7 +186,7 @@ export class CausalViewStructure extends EventTarget {
   }
 
   renderNodes() {
-    const nodes = Array.from(this._dag.nodes());
+    const nodes = this.getNodes();
 
     // Set missing color fields
     const interp = d3.interpolateRainbow;

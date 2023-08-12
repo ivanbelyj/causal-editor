@@ -22,9 +22,7 @@ export class CausalView {
   structure = null;
   selection = null;
 
-  init() {
-    const api = window.api;
-
+  init(api) {
     this.structure = new CausalViewStructure();
     // causalView.addEventListener("nodeClicked", (event) =>
     //   builder.onNodeClicked(event)
@@ -32,8 +30,13 @@ export class CausalView {
     this.structure.addEventListener("nodeEnter", () => api.sendNodeEnter());
     this.structure.addEventListener("nodeLeave", () => api.sendNodeLeave());
 
-    api.receiveCreateNode(this.onCreateNode.bind(this));
-    api.receiveRemoveNode(this.onRemoveNode.bind(this));
+    api.onCreateNode(this.onCreateNode.bind(this));
+    api.onRemoveNode(this.onRemoveNode.bind(this));
+    api.onGetNodesRequest(
+      function () {
+        api.sendNodes(this.nodes());
+      }.bind(this)
+    );
 
     const causalViewElement = d3.select(".causal-view");
     causalViewElement.on("mouseenter", () => api.sendCausalViewEnter());
@@ -44,18 +47,12 @@ export class CausalView {
     this.structure.init(causalViewElement, causalModelNodes);
     // this.structure.render();
 
-    // Todo: независимость от вызова render
     this.selection = new CausalViewSelection(this.structure);
   }
 
-  // onNodeClicked(event) {
-  //   const prevSelectedNodeId = currentSelectedNodeId;
-  //   const nodeData = event.data.i.data;
-  //   currentSelectedNodeId = nodeData["Id"];
-
-  //   this._causalView.selectNode(currentSelectedNodeId);
-  //   if (prevSelectedNodeId) this._causalView.deselectNode(prevSelectedNodeId);
-  // }
+  nodes() {
+    return this.structure.getNodes();
+  }
 
   onCreateNode(event, data) {
     const causalViewElement = CausalView.elementWithClassFrom(

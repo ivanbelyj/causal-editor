@@ -1,5 +1,12 @@
 const { Menu, nativeTheme } = require("electron");
+const { FilesManager } = require("./files-manager.js");
 
+const filesManager = new FilesManager();
+
+const getInitiateActionCallback = (actionName) => () =>
+  filesManager.initiateAction(actionName);
+
+// Todo: export only template
 module.exports = {
   setMenu: (mainWindow) => {
     const isMac = process.platform === "darwin";
@@ -26,7 +33,30 @@ module.exports = {
       // { role: 'fileMenu' }
       {
         label: "File",
-        submenu: [isMac ? { role: "close" } : { role: "quit" }],
+        submenu: [
+          {
+            label: "New",
+            accelerator: "CmdOrCtrl+S",
+            click: getInitiateActionCallback("new"),
+          },
+          {
+            label: "Open",
+            accelerator: "CmdOrCtrl+O",
+            click: getInitiateActionCallback("open"),
+          },
+          {
+            label: "Save",
+            accelerator: "CmdOrCtrl+S",
+            click: getInitiateActionCallback("save"),
+          },
+          {
+            label: "Save as...",
+            accelerator: "CmdOrCtrl+Shift+S",
+            click: getInitiateActionCallback("save-as"),
+          },
+
+          isMac ? { role: "close" } : { role: "quit" },
+        ],
       },
       // { role: 'editMenu' }
       {

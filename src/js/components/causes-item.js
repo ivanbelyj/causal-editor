@@ -68,6 +68,7 @@ export class CausesItem {
           (prevType == "and" && newType == "or") ||
           (prevType == "or" && newType == "and")
         ) {
+          // To fix: в некоторых случах вложенные элементы все равно убираются
           // To change $type is enough (next)
         } else {
           const expr = this.causesExpression;

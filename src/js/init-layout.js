@@ -39,7 +39,7 @@ export const initLayout = () => {
   layout.registerComponent("Node Value", nodeValueComponent);
   layout.on("initialised", () => {
     const causalView = new CausalView();
-    causalView.init();
+    causalView.init(window.api);
 
     const nodeValueComponent = new NodeValueComponent();
     nodeValueComponent.init(causalView);

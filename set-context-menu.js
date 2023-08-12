@@ -27,18 +27,6 @@ module.exports = {
       showSelectAll: false,
       showCopyImage: false,
       prepend: (defaultActions, parameters, browserWindow) => [
-        // {
-        //   label: "Search Google for “{selection}”",
-        //   // Only show it when right-clicking text
-        //   visible: parameters.selectionText.trim().length > 0,
-        //   click: () => {
-        //     shell.openExternal(
-        //       `https://google.com/search?q=${encodeURIComponent(
-        //         parameters.selectionText
-        //       )}`
-        //     );
-        //   },
-        // },
         {
           label: "Create Node",
           visible: isCausalViewEntered,

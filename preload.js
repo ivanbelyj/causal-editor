@@ -12,14 +12,17 @@ contextBridge.exposeInMainWorld("api", {
   sendNodeLeave: () => send("node-leave"),
   sendCausalViewEnter: () => send("causal-view-enter"),
   sendCausalViewLeave: () => send("causal-view-leave"),
-  receiveCreateNode: (func) => receive("create-node", func),
-  receiveRemoveNode: (func) => receive("remove-node", func),
+  // Todo: rename all to onSomething
+  sendNodes: (nodes) => send("send-nodes", nodes),
+  onGetNodesRequest: (func) => on("get-nodes-request", func),
+  onCreateNode: (func) => on("create-node", func),
+  onRemoveNode: (func) => on("remove-node", func),
 });
 
 function send(channelName, data) {
   ipcRenderer.send(channelName, data);
 }
 
-function receive(channelName, func) {
+function on(channelName, func) {
   ipcRenderer.on(channelName, (event, ...args) => func(event, ...args));
 }
