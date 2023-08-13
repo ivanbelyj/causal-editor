@@ -1,14 +1,39 @@
+import * as d3 from "d3";
+
 export class NodeValueComponent {
   causalView = null;
-  init(causalView) {
+  selector = null;
+
+  constructor(selector, causalView) {
+    this.selector = selector;
+    this.component = d3.select(selector);
     this.causalView = causalView;
+  }
 
-    $(".node-value-component").append(this.toDOMElement());
+  init() {
+    this.component.attr("class", "component");
 
-    document.getElementById("update-btn").onclick = function (...data) {
-      this.onUpdateButtonClick(causalView, ...data);
-    }.bind(this);
-    causalView.structure.addEventListener(
+    this.idInput = this.appendInputItem({
+      name: "Id",
+      inputId: "node-id-input",
+      isReadonly: true,
+    });
+    this.titleInput = this.appendInputItem({
+      name: "Title",
+      inputId: "node-title-input",
+    });
+    this.valueInput = this.appendInputItem({
+      name: "Node Value",
+      inputId: "node-id-input",
+      isReadonly: false,
+      useTextArea: true,
+    });
+
+    this.titleInput
+      .merge(this.valueInput)
+      .on("change", this.onChange.bind(this));
+
+    this.causalView.structure.addEventListener(
       "nodeClicked",
       function (event) {
         this.onNodeClicked(event);
@@ -16,48 +41,54 @@ export class NodeValueComponent {
     );
   }
 
-  toDOMElement() {
-    return $(`
-    <div class="component">
-      <div class="input-item">
-        <label class="input-item__label">Id</label>
-        <input class="text-input input-item__input" type="text"
-          placeholder="Id" id="node-id-input" readonly />
-      </div>
-      <div class="input-item">
-        <label class="input-item__label">Title</label>
-        <input class="text-input input-item__input" type="text"
-          placeholder="Title" id="node-title-input" />
-      </div>
-      <div class="input-item">
-        <label class="input-item__label">Node Value</label>
-        <textarea class="textarea input-item__input"
-          placeholder="Node Value" id="node-value-input"></textarea>
-      </div>
-      <button class="button" id="update-btn">Update</button>
-    </div>`);
+  buildStructure() {}
+
+  // Returns input (or textarea) containing in input-item
+  appendInputItem({ name, inputId, isReadonly, useTextArea }) {
+    const inputItem = this.component.append("div").attr("class", "input-item");
+    inputItem.append("label").attr("class", "input-item__label").text(name);
+    const input = inputItem
+      .append(useTextArea ? "textarea" : "input")
+      .attr(
+        "class",
+        "input-item__input " + (useTextArea ? "textarea" : "text-input")
+      )
+      .attr("placeholder", name)
+      .attr("id", inputId);
+
+    if (!useTextArea) {
+      input.attr("type", "text");
+    }
+    if (isReadonly) input.attr("readonly", true);
+    return input;
   }
 
+  // Todo: single node selected event
   onNodeClicked(event) {
     const nodeData = event.data.i.data;
 
-    const nodeValue = nodeData["NodeValue"];
-    document.getElementById("node-id-input").value =
-      this.causalView.selection.currentSelectedNodeId;
-    document.getElementById("node-title-input").value =
-      nodeData["NodeTitle"] || nodeValue;
-    document.getElementById("node-value-input").value = nodeValue;
+    this.idInput.property("value", nodeData["Id"]);
+    this.titleInput.property("value", nodeData["NodeTitle"] ?? "");
+    this.valueInput.property("value", nodeData["NodeValue"] ?? "");
   }
 
-  onUpdateButtonClick(causalView) {
-    const currentSelectedNodeId = causalView.selection.currentSelectedNodeId;
+  onChange() {
+    console.log("node-value-component changed");
+    const currentSelectedNodeId =
+      this.causalView.selection.currentSelectedNodeId;
     if (!currentSelectedNodeId) return;
-    const nodeTitleInput = document.getElementById("node-title-input").value;
-    const nodeValueInput = document.getElementById("node-value-input").value;
-    causalView.structure.updateNodeTitleById(
+    const nodeTitleInput = this.titleInput.property("value");
+    const nodeValueInput = this.valueInput.property("value");
+    this.causalView.structure.updateNodeTitleAndValueById(
       currentSelectedNodeId,
       nodeTitleInput,
       nodeValueInput
     );
+  }
+
+  reset() {
+    this.idInput.property("value", "");
+    this.titleInput.property("value", "");
+    this.valueInput.property("value", "");
   }
 }

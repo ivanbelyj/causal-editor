@@ -80,22 +80,15 @@ export class CausalViewStructure extends EventTarget {
     return Array.from(this._dag.nodes());
   }
 
-  // Changes displaying text of node
-  updateNodeTitleById(nodeId, nodeTitle) {
-    d3.select(CausalViewStructure.getNodeIdClassByNodeId(nodeId))
-      .select("text")
-      .text((d) => nodeTitle);
-    // const index = this._causalModelNodes.findIndex(
-    //   (node) => node.Id === nodeId
-    // );
-    // if (index !== -1) {
-    //   this._causalModelNodes[index].NodeTitle = nodeTitle;
-    //   this._causalModelNodes[index].NodeValue = nodeValue;
+  updateNodeTitleAndValueById(nodeId, nodeTitle, nodeValue) {
+    const node = this.getNodes().find((node) => node.data.Id === nodeId);
+    if (node) {
+      console.log("found node: ", node);
+      node.data.NodeTitle = nodeTitle ?? "";
+      node.data.NodeValue = nodeValue ?? "";
 
-    //   d3.select(CausalViewStructure.getNodeIdClassByNodeId(nodeId))
-    //     .select("text")
-    //     .text((d) => nodeTitle);
-    // }
+      this.render();
+    }
   }
 
   static getNodeIdClassByNodeId(nodeId) {
@@ -197,14 +190,14 @@ export class CausalViewStructure extends EventTarget {
       }
     }
 
-    // console.log("nodes");
+    console.log("nodes");
     d3.select(".nodes-parent")
       .selectAll("g")
       .data(nodes, (node) => node.data.Id)
       .join(
         function (enter) {
-          // console.log("enter", Array.from(enter));
-          const nodesSelection = enter
+          console.log("enter", Array.from(enter));
+          const enterNodesSelection = enter
             .append("g")
             .attr("class", (d) => {
               return `node id-${d.data.Id}`;
@@ -223,7 +216,7 @@ export class CausalViewStructure extends EventTarget {
               this.dispatchEvent(this.nodeLeave);
             });
 
-          nodesSelection
+          enterNodesSelection
             .append("rect")
             .attr("width", this._nodeWidth)
             .attr("height", this._nodeHeight)
@@ -231,26 +224,38 @@ export class CausalViewStructure extends EventTarget {
             .attr("ry", 5)
             .attr("fill", (n) => n.data.color ?? "#aaa");
 
-          this.appendText(
-            nodesSelection,
-            (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
-          );
+          enterNodesSelection.append("text");
+          // this.appendText(
+          //   nodesSelection,
+          //   (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
+          // );
 
-          this.appendNodesDrag(nodesSelection);
+          this.appendNodesDrag(enterNodesSelection);
         }.bind(this),
         function (update) {
-          // console.log("update", Array.from(update));
+          console.log("update", Array.from(update));
         }.bind(this),
         function (exit) {
-          // console.log("exit", Array.from(exit));
+          console.log("exit", Array.from(exit));
           exit.remove();
         }.bind(this)
       );
+    this.updateNodes();
   }
 
-  appendText(selection, getText) {
-    selection
-      .append("text")
+  updateNodes() {
+    console.log(
+      "update nodes",
+      d3.select(".nodes-parent").selectAll("g").select("text")
+    );
+    this.updateNodeText(
+      d3.select(".nodes-parent").selectAll("g").select("text"),
+      (d) => d.data["NodeTitle"] || d.data["NodeValue"] || d.data["Id"]
+    );
+  }
+
+  updateNodeText(textSelection, getText) {
+    textSelection
       .text(getText)
       .attr("font-weight", "bold")
       .attr("font-family", "sans-serif")
@@ -260,7 +265,6 @@ export class CausalViewStructure extends EventTarget {
         "transform",
         `translate(${this._nodeWidth / 2}, ${this._nodeHeight / 2})`
       )
-      // .attr("dominant-baseline", "hanging")
       .attr("fill", "var(--color)");
   }
 
@@ -287,7 +291,7 @@ export class CausalViewStructure extends EventTarget {
         )
         .raise();
 
-      causalView.updateEdges(d3.selectAll(".edge"));
+      causalView.updateEdges();
     }
 
     function dragEnded() {
@@ -306,7 +310,9 @@ export class CausalViewStructure extends EventTarget {
     const edgePathsSelection = d3
       .select(".edges-parent")
       .selectAll("path")
-      .data(this._dag.links());
+      .data(this._dag.links(), (d) =>
+        this.sourceAndTargetIdsToEdgeId(d.source.Id, d.target.Id)
+      );
 
     // For edges gradients
     let defs = this._edgesDefs;
@@ -314,10 +320,10 @@ export class CausalViewStructure extends EventTarget {
       defs = this._edgesDefs = this.svgChild.append("defs");
     }
 
-    // console.log("edges");
+    console.log("edges");
     edgePathsSelection.join(
       function (enter) {
-        // console.log("enter", Array.from(enter));
+        console.log("enter", Array.from(enter));
         enter
           .append("path")
           .attr("class", "edge")
@@ -333,10 +339,6 @@ export class CausalViewStructure extends EventTarget {
               .append("linearGradient")
               .attr("id", gradId)
               .attr("gradientUnits", "userSpaceOnUse");
-            // .attr("x1", source.x)
-            // .attr("x2", target.x)
-            // .attr("y1", source.y)
-            // .attr("y2", target.y);
             grad
               .append("stop")
               .attr("offset", "0%")
@@ -377,35 +379,21 @@ export class CausalViewStructure extends EventTarget {
           .attr("fill", "var(--color)");
       }.bind(this),
       function (update) {
-        // console.log("update", Array.from(update));
-        // this.updateEdges(update);
+        console.log("update", Array.from(update));
       }.bind(this),
       function (exit) {
-        // console.log("exit", Array.from(exit));
+        console.log("exit", Array.from(exit));
+        exit.remove();
       }
     );
-    this.updateEdges(d3.selectAll(".edge"));
+    this.updateEdges();
   }
 
-  // updateEdges(edgePathsSelection) {
-  //   console.log("update edges", edgePathsSelection);
-  //   const nodeWidth = this._nodeWidth;
-  //   const nodeHeight = this._nodeHeight;
-  //   console.log(edgePathsSelection.attr("d"));
-  //   return edgePathsSelection.attr(
-  //     "d",
-  //     function (d) {
-  //       return this._line([
-  //         { x: d.source.x + nodeWidth / 2, y: d.source.y + nodeHeight / 2 },
-  //         { x: d.target.x + nodeWidth / 2, y: d.target.y + nodeHeight / 2 },
-  //       ]);
-  //     }.bind(this)
-  //   );
-  // }
-
-  updateEdges(edgePathsSelection) {
+  updateEdges() {
     const nodeWidth = this._nodeWidth;
     const nodeHeight = this._nodeHeight;
+
+    const edgePathsSelection = d3.selectAll(".edge");
     edgePathsSelection.attr("d", (d) => {
       return this._line([
         { x: d.source.x + nodeWidth / 2, y: d.source.y + nodeHeight / 2 },
@@ -429,36 +417,4 @@ export class CausalViewStructure extends EventTarget {
 
     return edgePathsSelection;
   }
-
-  // addArrows(selection, colorMap) {
-  //   const arrowSize = (this._nodeWidth * this._nodeWidth) / 50.0;
-  //   const arrowLen = Math.sqrt((4 * arrowSize) / Math.sqrt(3));
-  //   const arrow = d3.symbol().type(d3.symbolTriangle).size(arrowSize);
-  //   selection
-  //     .append("g")
-  //     .selectAll("path")
-  //     .data(this._dag.links())
-  //     .enter()
-  //     .append("path")
-  //     .attr("d", arrow)
-  //     .attr("transform", ({ source, target, points }) => {
-  //       const [end, start] = points.slice().reverse();
-  //       // This sets the arrows the node radius (20) + a little bit (3) away from the node center,
-  //       // on the last line segment of the edge. This means that edges that only span ine level
-  //       // will work perfectly, but if the edge bends, this will be a little off.
-  //       const dx = start.x - end.x;
-  //       const dy = start.y - end.y;
-  //       const scale = (this._nodeWidth * 1.15) / Math.sqrt(dx * dx + dy * dy);
-  //       // This is the angle of the last line segment
-  //       const angle = (Math.atan2(-dy, -dx) * 180) / Math.PI + 90;
-  //       // console.log(angle, dx, dy);
-  //       return `translate(${end.x + dx * scale}, ${
-  //         end.y + dy * scale
-  //       }) rotate(${angle})`;
-  //     })
-  //     .attr("fill", ({ target }) => colorMap[target.data["Id"]])
-  //     .attr("stroke", "white")
-  //     .attr("stroke-width", 1.5)
-  //     .attr("stroke-dasharray", `${arrowLen},${arrowLen}`);
-  // }
 }

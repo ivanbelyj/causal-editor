@@ -41,8 +41,11 @@ export const initLayout = () => {
     const causalView = new CausalView();
     causalView.init(window.api);
 
-    const nodeValueComponent = new NodeValueComponent();
-    nodeValueComponent.init(causalView);
+    const nodeValueComponent = new NodeValueComponent(
+      ".node-value-component",
+      causalView
+    );
+    nodeValueComponent.init();
 
     const causesComponent = new CausesComponent(
       ".causes-component",
