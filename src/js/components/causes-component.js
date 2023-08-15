@@ -26,36 +26,23 @@ export class CausesComponent {
 
   reset(causalModelFact) {
     this.causalModelFact = causalModelFact;
-    // d3.select(this.rootCausesItem.selector).html("");
-    // this.buildRoot();
     if (!this.rootCausesItem) {
       const rootCausesItem = (this.rootCausesItem = new CausesItem({
         selector: this.content.node(),
         isRemovable: false,
         isRoot: true,
+        onCausesRemove: function (removedCauseIds) {
+          console.log("removed cause ids: ", removedCauseIds);
+        },
+        onCauseIdChange: function (oldId, newId) {
+          console.log("cause id is changed. old: ", oldId, "new: ", newId);
+        },
       }));
       rootCausesItem.init();
     }
     this.rootCausesItem.reset(
       causalModelFact?.ProbabilityNest?.CausesExpression
     );
-  }
-
-  createRoot() {
-    const rootCausesItem = (this.rootCausesItem = new CausesItem({
-      selector: this.content.node(),
-      isRemovable: false,
-      isRoot: true,
-    }));
-    rootCausesItem.init();
-    // this.causalModelFact?.ProbabilityNest?.CausesExpression
-
-    // const probabilityNest = this.causalModelFact?.ProbabilityNest;
-    // if (probabilityNest) {
-    //   this.rootCausesItem.buildFromCausalExpression(
-    //     probabilityNest.CausesExpression
-    //   );
-    // }
   }
 
   createWeightsNest() {}

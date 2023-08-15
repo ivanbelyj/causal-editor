@@ -5,6 +5,7 @@ import * as d3 from "d3";
 // import * as d3dag from "https://cdn.skypack.dev/d3-dag@1.0.0-1";
 // import * as d3dag from "../../../node_modules/d3-dag/bundle/d3-dag.esm.min.js";
 import * as d3dag from "d3-dag";
+import { CausalModelUtils } from "./causal-model-utils.js";
 
 // Displays interactive causal view elements
 export class CausalViewStructure extends EventTarget {
@@ -32,6 +33,7 @@ export class CausalViewStructure extends EventTarget {
   zoomed;
 
   init(svgParent, causalModelFacts) {
+    // Todo: create not here?
     this.nodeClicked = new Event("nodeClicked");
     this.nodeEnter = new Event("nodeEnter");
     this.nodeLeave = new Event("nodeLeave");
@@ -114,7 +116,7 @@ export class CausalViewStructure extends EventTarget {
   // Причинно-следственные связи преобразуются в id-based parent data,
   // предназначенные для отображения
   addNodeParentsToSet(node, implementationEdgesSet) {
-    const res = this.findCauseIds(node["ProbabilityNest"]);
+    const res = CausalModelUtils.findCauseIds(node["ProbabilityNest"]);
     const abstractFactId = node["AbstractFactId"];
     if (abstractFactId) {
       if (!res.includes(abstractFactId)) res.push(abstractFactId);
@@ -155,27 +157,6 @@ export class CausalViewStructure extends EventTarget {
         structure.dispatchEvent(structure.zoomed);
       })
     );
-  }
-
-  findCauseIds(obj) {
-    let edgeProps = new Set();
-    for (let prop in obj) {
-      if (prop === "Edge") {
-        if (
-          obj[prop].hasOwnProperty("CauseId") &&
-          !edgeProps.has(obj[prop]["CauseId"])
-        )
-          edgeProps.add(obj[prop]["CauseId"]);
-      }
-      if (typeof obj[prop] === "object") {
-        const nestedEdgeProps = this.findCauseIds(obj[prop]);
-        // for (const nestedEdgeProp in nestedEdgeProps) {
-        //   if (!edgeProps.has(nestedEdgeProp)) edgeProps.add(nestedEdgeProp);
-        // }
-        edgeProps = new Set(Array.from(edgeProps).concat(nestedEdgeProps));
-      }
-    }
-    return [...edgeProps];
   }
 
   renderNodes() {

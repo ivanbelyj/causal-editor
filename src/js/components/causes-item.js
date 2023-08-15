@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import { CausalModelUtils } from "../causal-view/causal-model-utils.js";
 
 // CausesItem is a UI element representing causes expression.
 // It includes top (with type dropdown) and content that can include
@@ -8,11 +9,25 @@ export class CausesItem {
   // Selector for item is constant (the item is always in the same place in DOM).
   // It does not depend on the causesExpression whether the element can be deleted or not
   // so isRemovable and isRoot are also constant.
-  constructor({ selector, isRemovable, onRemove, isRoot }) {
+  constructor({
+    selector,
+    isRemovable,
+    onRemoveClick,
+
+    onCausesRemove,
+    onCauseIdChange,
+
+    isRoot,
+  }) {
     this.selector = selector;
     this.component = d3.select(selector);
     this.isRemovable = isRemovable ?? false;
-    this.onRemove = onRemove;
+    this.onRemoveClick = onRemoveClick;
+
+    // Necessary to update changes in CausalView because d3 tracks flat data,
+    // not nested and mutating
+    this.onCausesRemove = onCausesRemove;
+    this.onCauseIdChange = onCauseIdChange;
 
     // Knowing isRootItem is required to have only one right border for inner items
     this.isRoot = isRoot ?? false;
@@ -44,7 +59,7 @@ export class CausesItem {
           "click",
           function () {
             this.component.remove();
-            this.onRemove?.(this.causesExpression);
+            this.onRemoveClick?.(this.causesExpression);
           }.bind(this)
         );
     }
@@ -55,23 +70,24 @@ export class CausesItem {
     typeDropdown.append("option").attr("value", "or").text("Or");
     typeDropdown.append("option").attr("value", "not").text("Not");
 
-    this.expressionType = "none";
-
     typeDropdown.on(
       "change",
       function (e) {
-        const newType = this.typeDropdown.node().value;
+        const newType = e.target.value;
+        const prevType = this.causesExpression?.$type;
 
-        const prevType = this.expressionType;
-
+        let removedCauseIds;
         if (
           (prevType == "and" && newType == "or") ||
           (prevType == "or" && newType == "and")
         ) {
           // To fix: в некоторых случах вложенные элементы все равно убираются
           // To change $type is enough (next)
+          console.log("causesExpression will not modified");
         } else {
           const expr = this.causesExpression;
+          removedCauseIds = CausalModelUtils.findCauseIds(expr);
+
           // We should mutate this.causesExpression instead of creating a new one
           for (const key in expr) {
             delete expr[`${key}`];
@@ -91,7 +107,10 @@ export class CausesItem {
         }
         this.causesExpression.$type = newType;
 
-        this.expressionType = newType;
+        // Tracked to update causal view
+        if (removedCauseIds) this.onCausesRemove(removedCauseIds);
+
+        // In most cases new CausesItem structure is not similar to previous
         this.reset(this.causesExpression);
       }.bind(this)
     );
@@ -203,9 +222,13 @@ export class CausesItem {
     causeIdInput.on(
       "change",
       function (event) {
+        const oldCauseId = this.causesExpression.Edge.CauseId;
         this.causesExpression.Edge.CauseId = d3
           .select(event.target)
           .property("value");
+
+        // this.fireCauseIdChange(oldCauseId, this.causesExpression.Edge.CauseId);
+        this.onCauseIdChange(oldCauseId, this.causesExpression.Edge.CauseId);
       }.bind(this)
     );
   }
@@ -224,16 +247,14 @@ export class CausesItem {
       function (event) {
         const newItem = {};
         this.causesExpression.Operands.push(newItem);
+        // New operand is empty so cause change will be handled on change type
         this.appendInnerItem(true, newItem);
       }.bind(this)
     );
   }
 
   setNotItemContent() {
-    // const inner = this.content.append("div");
     this.content.style("padding-right", "0"); // reduced to save space
-
-    // if (!this.causesExpression) this.appendInnerItem(false, {}); // Else it will be added recursively
   }
 
   // Inner item is visually separated from outer (borders and padding)
@@ -253,10 +274,15 @@ export class CausesItem {
     const newItem = new CausesItem({
       selector: itemSelection.node(),
       isRemovable,
-      onRemove: function (removingExpr) {
+      onCausesRemove: this.onCausesRemove,
+      onCauseIdChange: this.onCauseIdChange,
+      onRemoveClick: function (removingExpr) {
         const removeIndex =
           this.causesExpression.Operands.indexOf(removingExpr);
         this.causesExpression.Operands.splice(removeIndex, 1);
+
+        // Pass removed causes to update causal-view
+        this.onCausesRemove(CausalModelUtils.findCauseIds(removingExpr));
       }.bind(this),
       isRoot: false, // Inner item can't be a root
     });
