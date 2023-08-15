@@ -281,13 +281,27 @@ export class CausesItem {
           this.causesExpression.Operands.indexOf(removingExpr);
         this.causesExpression.Operands.splice(removeIndex, 1);
 
+        const causesToRemove = this.getCauseIdsToRemove(removingExpr);
         // Pass removed causes to update causal-view
-        this.onCausesRemove(CausalModelUtils.findCauseIds(removingExpr));
+        this.onCausesRemove(causesToRemove);
       }.bind(this),
       isRoot: false, // Inner item can't be a root
     });
     newItem.init(causesExpression);
 
     return newItem;
+  }
+
+  getCauseIdsToRemove(removingExpr) {
+    const causeIdsNotToRemove = CausalModelUtils.findCauseIds(
+      this.causesExpression // There are no removed expr in causesExpression
+    );
+    const causeIdsFromRemovedExpr = CausalModelUtils.findCauseIds(removingExpr);
+    // But some cause ids from causesExpression (not to remove)
+    // could be in removed expr
+
+    return causeIdsFromRemovedExpr.filter(
+      (x) => !causeIdsNotToRemove.includes(x)
+    );
   }
 }

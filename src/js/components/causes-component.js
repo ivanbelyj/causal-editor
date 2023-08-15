@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { CausesItem } from "./causes-item.js";
+import { CausalModelUtils } from "../causal-view/causal-model-utils.js";
 
 export class CausesComponent {
   constructor(selector, causalView) {
@@ -31,18 +32,38 @@ export class CausesComponent {
         selector: this.content.node(),
         isRemovable: false,
         isRoot: true,
-        onCausesRemove: function (removedCauseIds) {
-          console.log("removed cause ids: ", removedCauseIds);
-        },
-        onCauseIdChange: function (oldId, newId) {
-          console.log("cause id is changed. old: ", oldId, "new: ", newId);
-        },
+        onCausesRemove: this.onCausesRemove.bind(this),
+        onCauseIdChange: this.onCauseIdChange.bind(this),
       }));
       rootCausesItem.init();
     }
     this.rootCausesItem.reset(
       causalModelFact?.ProbabilityNest?.CausesExpression
     );
+  }
+
+  // toEdgeIds(targetIds) {
+  //   return targetIds.map((id) =>
+  //     CausalModelUtils.sourceAndTargetIdsToEdgeId(this.causalModelFact.Id, id)
+  //   );
+  // }
+
+  onCausesRemove(removedCauseIds) {
+    console.log("removing cause ids", removedCauseIds);
+    for (const removedCauseId of removedCauseIds) {
+      this.causalView.structure.removeLink(
+        removedCauseId,
+        this.causalModelFact.Id
+      );
+      this.causalView.structure.render();
+    }
+  }
+  onCauseIdChange(oldId, newId) {
+    if (oldId)
+      this.causalView.structure.removeLink(oldId, this.causalModelFact.Id);
+    if (newId)
+      this.causalView.structure.addLink(newId, this.causalModelFact.Id);
+    if (oldId || newId) this.causalView.structure.render();
   }
 
   createWeightsNest() {}

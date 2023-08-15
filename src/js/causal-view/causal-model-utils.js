@@ -19,4 +19,14 @@ export class CausalModelUtils {
     }
     return [...edgeProps];
   }
+
+  // Edges are identified by source and target ids
+  static sourceAndTargetIdsToEdgeId(source, target) {
+    // encodeURIComponents for spaces, hope id doesn't have a `--` in it
+    return encodeURIComponent(`id-${source}--${target}`);
+  }
+
+  static getNodeIdClassByNodeId(nodeId) {
+    return `.id-${nodeId}`;
+  }
 }

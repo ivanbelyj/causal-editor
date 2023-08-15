@@ -9,6 +9,8 @@ import { CausalModelUtils } from "./causal-model-utils.js";
 
 // Displays interactive causal view elements
 export class CausalViewStructure extends EventTarget {
+  showDebugMessages = false;
+
   // MutGraph
   _dag;
 
@@ -83,9 +85,9 @@ export class CausalViewStructure extends EventTarget {
   }
 
   updateNodeTitleAndValueById(nodeId, nodeTitle, nodeValue) {
-    const node = this.getNodes().find((node) => node.data.Id === nodeId);
+    // Todo: do it in another place
+    const node = this.getNodeById(nodeId);
     if (node) {
-      console.log("found node: ", node);
       node.data.NodeTitle = nodeTitle ?? "";
       node.data.NodeValue = nodeValue ?? "";
 
@@ -93,8 +95,8 @@ export class CausalViewStructure extends EventTarget {
     }
   }
 
-  static getNodeIdClassByNodeId(nodeId) {
-    return `.id-${nodeId}`;
+  getNodeById(nodeId) {
+    return this.getNodes().find((node) => node.data.Id === nodeId);
   }
 
   // Устанавливает dag на основе каузальной модели, а также способ
@@ -121,7 +123,7 @@ export class CausalViewStructure extends EventTarget {
     if (abstractFactId) {
       if (!res.includes(abstractFactId)) res.push(abstractFactId);
       implementationEdgesSet.add(
-        this.sourceAndTargetIdsToEdgeId(abstractFactId, node["Id"])
+        CausalModelUtils.sourceAndTargetIdsToEdgeId(abstractFactId, node["Id"])
       );
     }
     return res;
@@ -139,9 +141,30 @@ export class CausalViewStructure extends EventTarget {
       console.error("Node to remove is not found. ", nodeToRemove);
       return;
     }
-    // console.log("before delete: ", this._dag.nnodes());
     nodeToRemove.delete();
-    // console.log("after delete: ", this._dag.nnodes());
+  }
+
+  addLink(sourceId, targetId) {
+    console.log(
+      "before link adding. links are ",
+      Array.from(this._dag.links())
+    );
+    const [source, target] = [sourceId, targetId].map(this.getNodeById, this);
+    console.log("source and target are", source, target);
+
+    this._dag.link(source, target);
+    console.log("link added. now links are ", Array.from(this._dag.links()));
+  }
+
+  getLinkBySourceAndTargetIds(sourceId, targetId) {
+    return Array.from(this._dag.links()).find(
+      (link) =>
+        link.source.data.Id == sourceId && link.target.data.Id == targetId
+    );
+  }
+
+  removeLink(sourceId, targetId) {
+    this.getLinkBySourceAndTargetIds(sourceId, targetId).delete();
   }
 
   render() {
@@ -171,13 +194,14 @@ export class CausalViewStructure extends EventTarget {
       }
     }
 
-    console.log("nodes");
+    const showLog = this.showDebugMessages;
+    if (showLog) console.log("nodes");
     d3.select(".nodes-parent")
       .selectAll("g")
       .data(nodes, (node) => node.data.Id)
       .join(
         function (enter) {
-          console.log("enter", Array.from(enter));
+          if (showLog) console.log("enter", Array.from(enter));
           const enterNodesSelection = enter
             .append("g")
             .attr("class", (d) => {
@@ -214,10 +238,10 @@ export class CausalViewStructure extends EventTarget {
           this.appendNodesDrag(enterNodesSelection);
         }.bind(this),
         function (update) {
-          console.log("update", Array.from(update));
+          if (showLog) console.log("update", Array.from(update));
         }.bind(this),
         function (exit) {
-          console.log("exit", Array.from(exit));
+          if (showLog) console.log("exit", Array.from(exit));
           exit.remove();
         }.bind(this)
       );
@@ -225,10 +249,6 @@ export class CausalViewStructure extends EventTarget {
   }
 
   updateNodes() {
-    console.log(
-      "update nodes",
-      d3.select(".nodes-parent").selectAll("g").select("text")
-    );
     this.updateNodeText(
       d3.select(".nodes-parent").selectAll("g").select("text"),
       (d) => d.data["NodeTitle"] || d.data["NodeValue"] || d.data["Id"]
@@ -280,19 +300,13 @@ export class CausalViewStructure extends EventTarget {
     }
   }
 
-  // Edges are identified by source and target ids
-  sourceAndTargetIdsToEdgeId(source, target) {
-    // encodeURIComponents for spaces, hope id doesn't have a `--` in it
-    return encodeURIComponent(`id-${source}--${target}`);
-  }
-
   _edgesDefs;
   renderEdges() {
     const edgePathsSelection = d3
       .select(".edges-parent")
       .selectAll("path")
       .data(this._dag.links(), (d) =>
-        this.sourceAndTargetIdsToEdgeId(d.source.Id, d.target.Id)
+        CausalModelUtils.sourceAndTargetIdsToEdgeId(d.source.Id, d.target.Id)
       );
 
     // For edges gradients
@@ -301,10 +315,11 @@ export class CausalViewStructure extends EventTarget {
       defs = this._edgesDefs = this.svgChild.append("defs");
     }
 
-    console.log("edges");
+    const showLog = this.showDebugMessages;
+    if (showLog) console.log("edges");
     edgePathsSelection.join(
       function (enter) {
-        console.log("enter", Array.from(enter));
+        if (showLog) console.log("enter", Array.from(enter));
         enter
           .append("path")
           .attr("class", "edge")
@@ -312,7 +327,7 @@ export class CausalViewStructure extends EventTarget {
           .attr("stroke-width", 3)
           .attr("stroke", ({ source, target }) => {
             // Edges gradients
-            const gradId = this.sourceAndTargetIdsToEdgeId(
+            const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
               source.data["Id"],
               target.data["Id"]
             );
@@ -332,7 +347,7 @@ export class CausalViewStructure extends EventTarget {
             //
           })
           .attr("stroke-dasharray", ({ source, target }) => {
-            const edgeId = this.sourceAndTargetIdsToEdgeId(
+            const edgeId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
               source.data["Id"],
               target.data["Id"]
             );
@@ -360,10 +375,10 @@ export class CausalViewStructure extends EventTarget {
           .attr("fill", "var(--color)");
       }.bind(this),
       function (update) {
-        console.log("update", Array.from(update));
+        if (showLog) console.log("update", Array.from(update));
       }.bind(this),
       function (exit) {
-        console.log("exit", Array.from(exit));
+        if (showLog) console.log("exit", Array.from(exit));
         exit.remove();
       }
     );
@@ -384,7 +399,7 @@ export class CausalViewStructure extends EventTarget {
 
     // Gradients
     edgePathsSelection.attr("stroke", ({ source, target }) => {
-      const gradId = this.sourceAndTargetIdsToEdgeId(
+      const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
         source.data["Id"],
         target.data["Id"]
       );

@@ -1,4 +1,4 @@
-import { CausalViewStructure } from "./causal-view-structure.js";
+import { CausalModelUtils } from "./causal-model-utils.js";
 import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const nodeSelectionStrokeWidth = 12;
@@ -24,7 +24,7 @@ export class CausalViewSelection {
 
   selectNode(nodeId) {
     const causalViewSelection = this;
-    d3.select(CausalViewStructure.getNodeIdClassByNodeId(nodeId))
+    d3.select(CausalModelUtils.getNodeIdClassByNodeId(nodeId))
       .raise()
       .select("rect")
       .attr(
@@ -43,7 +43,7 @@ export class CausalViewSelection {
   }
 
   deselectNode(nodeId) {
-    d3.select(CausalViewStructure.getNodeIdClassByNodeId(nodeId))
+    d3.select(CausalModelUtils.getNodeIdClassByNodeId(nodeId))
       .select("rect")
       .attr("stroke", "none")
       .classed("node__rect_selected", false);
