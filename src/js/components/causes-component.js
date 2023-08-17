@@ -27,6 +27,9 @@ export class CausesComponent {
 
   reset(causalModelFact) {
     this.causalModelFact = causalModelFact;
+
+    const rootCausesExpr =
+      this.causalModelFact?.ProbabilityNest?.CausesExpression;
     if (!this.rootCausesItem) {
       const rootCausesItem = (this.rootCausesItem = new CausesItem({
         selector: this.content.node(),
@@ -34,12 +37,11 @@ export class CausesComponent {
         isRoot: true,
         onCausesRemove: this.onCausesRemove.bind(this),
         onCauseIdChange: this.onCauseIdChange.bind(this),
+        rootCausesExpression: rootCausesExpr,
       }));
       rootCausesItem.init();
     }
-    this.rootCausesItem.reset(
-      causalModelFact?.ProbabilityNest?.CausesExpression
-    );
+    this.rootCausesItem.reset(rootCausesExpr);
   }
 
   // toEdgeIds(targetIds) {
@@ -51,6 +53,12 @@ export class CausesComponent {
   onCausesRemove(removedCauseIds) {
     console.log("removing cause ids", removedCauseIds);
     for (const removedCauseId of removedCauseIds) {
+      // if (
+      //   this.causalView.structure.getLinkBySourceAndTargetIds(
+      //     removedCauseId,
+      //     this.causalModelFact.Id
+      //   )
+      // )
       this.causalView.structure.removeLink(
         removedCauseId,
         this.causalModelFact.Id

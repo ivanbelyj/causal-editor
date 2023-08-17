@@ -18,6 +18,7 @@ export class CausesItem {
     onCauseIdChange,
 
     isRoot,
+    rootCausesExpression,
   }) {
     this.selector = selector;
     this.component = d3.select(selector);
@@ -31,6 +32,7 @@ export class CausesItem {
 
     // Knowing isRootItem is required to have only one right border for inner items
     this.isRoot = isRoot ?? false;
+    this.rootCausesExpression = rootCausesExpression;
   }
 
   // Actions that are relevant to CausesItem regardless of causesExpression structure.
@@ -286,6 +288,7 @@ export class CausesItem {
         this.onCausesRemove(causesToRemove);
       }.bind(this),
       isRoot: false, // Inner item can't be a root
+      rootCausesExpression: this.rootCausesExpression,
     });
     newItem.init(causesExpression);
 
@@ -294,9 +297,12 @@ export class CausesItem {
 
   getCauseIdsToRemove(removingExpr) {
     const causeIdsNotToRemove = CausalModelUtils.findCauseIds(
-      this.causesExpression // There are no removed expr in causesExpression
+      this.rootCausesExpression // There are no removed expr in root causesExpression
     );
+    console.log("all cause ids: ", causeIdsNotToRemove);
+
     const causeIdsFromRemovedExpr = CausalModelUtils.findCauseIds(removingExpr);
+    console.log("ids from removed expr: ", causeIdsFromRemovedExpr);
     // But some cause ids from causesExpression (not to remove)
     // could be in removed expr
 
