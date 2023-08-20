@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { CausalModelUtils } from "../causal-view/causal-model-utils.js";
+import { CausalModelUtils } from "../../causal-view/causal-model-utils.js";
 
 // CausesItem is a UI element representing causes expression.
 // It includes top (with type dropdown) and content that can include
@@ -41,7 +41,7 @@ export class CausesItem {
     // Every causes-item has item top (for selecting the type or removing the item)
     this.itemTop = this.component
       .append("div")
-      .attr("class", "causes-item__item-top");
+      .attr("class", "component__inner-item-top");
 
     // Removable item has remove-icon instead of padding
     if (this.isRemovable) {
@@ -56,7 +56,7 @@ export class CausesItem {
       this.itemTop
         .append("img")
         .attr("src", "images/bin.svg")
-        .attr("class", "causes-item__remove-icon")
+        .attr("class", "component__remove-icon")
         .on(
           "click",
           function () {
@@ -239,9 +239,9 @@ export class CausesItem {
     this.content.style("padding-right", "0"); // reduced to save space
 
     // Button to add new items
-    var addButton = this.content
+    const addButton = this.content
       .append("button")
-      .attr("class", "button input-item cause-item__add-button")
+      .attr("class", "button input-item")
       .text("Add Operand");
 
     addButton.on(
@@ -266,7 +266,7 @@ export class CausesItem {
 
     const itemSelection = this.innerItemsParent
       .append("div")
-      .attr("class", "causes-item__inner-item")
+      .attr("class", "component__inner-item")
       .style("padding-right", "0"); // Every inner item reduces padding-right to save space
 
     if (!this.isRoot) {

@@ -1,6 +1,7 @@
 import { CausalView } from "./causal-view/causal-view.js";
-import { CausesComponent } from "./components/causes-component.js";
+import { CausesComponent } from "./components/causes-component/causes-component.js";
 import { NodeValueComponent } from "./components/node-value-component.js";
+import { WeightsComponent } from "./components/weight-component/weights-component.js";
 
 const defaultConfig = {
   content: [
@@ -18,12 +19,17 @@ const defaultConfig = {
             {
               type: "component",
               componentName: "Node Value",
-              height: 55,
+              height: 40,
             },
             {
               type: "component",
               componentName: "Causes",
               // componentState: { label: "Hello world" },
+            },
+            {
+              type: "component",
+              componentName: "Weights",
+              height: 30,
             },
           ],
         },
@@ -34,9 +40,11 @@ const defaultConfig = {
 
 export const initLayout = () => {
   const layout = new GoldenLayout(defaultConfig);
-  layout.registerComponent("Causes", causesComponent);
-  layout.registerComponent("Causal View", causalViewComponent);
-  layout.registerComponent("Node Value", nodeValueComponent);
+  registerComponent(layout, "Causes", "causes-component");
+  registerComponent(layout, "Causal View", "causal-view");
+  registerComponent(layout, "Node Value", "node-value-component");
+  registerComponent(layout, "Weights", "weights-component");
+
   layout.on("initialised", () => {
     const causalView = new CausalView();
     causalView.init(window.api);
@@ -52,23 +60,20 @@ export const initLayout = () => {
       causalView
     );
     causesComponent.init();
+
+    const weightsComponent = new WeightsComponent(
+      ".weights-component",
+      causalView
+    );
+    weightsComponent.init();
   });
   layout.on("itemCreated", function (item) {});
   layout.init();
 };
 
-function causesComponent(container, componentState) {
-  const className = "causes-component";
-  const parentDiv = $("<div>").addClass(className);
-  container.getElement().append(parentDiv);
-}
-
-function causalViewComponent(container, componentState) {
-  const parentDiv = $("<div>").addClass("causal-view");
-  container.getElement().append(parentDiv);
-}
-
-function nodeValueComponent(container, componentState) {
-  const parentDiv = $("<div>").addClass("node-value-component");
-  container.getElement().append(parentDiv);
+function registerComponent(layout, componentName, componentClass) {
+  layout.registerComponent(componentName, function (container, componentState) {
+    const parentDiv = $("<div>").addClass(componentClass);
+    container.getElement().append(parentDiv);
+  });
 }

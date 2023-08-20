@@ -15,13 +15,42 @@ body,
 
 /**/
 .component {
-  display: flex;
-  flex-direction: column;
+  /* display: flex;
+  flex-direction: column; */
   padding: 1em;
 
   /* background-color: #f2f2f2; */
   /* border: 1px solid #ccc; */
   /* border-radius: 5px; */
+}
+
+.component__inner-item {
+  /* display: flex;
+  flex-direction: column; */
+  padding: 1em 0 1em 1em;
+  /* padding: 1em; */
+  border-radius: 3px;
+}
+
+.component__inner-item-top {
+  display: flex;
+  flex-direction: row;
+}
+
+.component__remove-icon {
+  width: 1em;
+  height: 1em;
+
+  padding: 0.75em;
+}
+
+.component__inner-text-input {
+  margin-right: 1em;
+}
+
+/* In some cases inner items padding-right can be reduced to save space */
+.component__inner-item > * {
+  padding-right: 1em;
 }
 
 .button {
@@ -69,6 +98,6 @@ body,
 
 .text-input,
 .button,
-.causes-item__inner-item {
+.component__inner-item {
   border: 1px solid #949494;
 }

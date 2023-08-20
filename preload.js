@@ -12,7 +12,6 @@ contextBridge.exposeInMainWorld("api", {
   sendNodeLeave: () => send("node-leave"),
   sendCausalViewEnter: () => send("causal-view-enter"),
   sendCausalViewLeave: () => send("causal-view-leave"),
-  // Todo: rename all to onSomething
   sendNodes: (nodes) => send("send-nodes", nodes),
   onGetNodesRequest: (func) => on("get-nodes-request", func),
   onCreateNode: (func) => on("create-node", func),
