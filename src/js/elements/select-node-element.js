@@ -1,27 +1,30 @@
 import * as d3 from "d3";
 
 export class SelectNodeElement {
-  constructor(selector, causalView) {
+  constructor(selector, causalView, onNodeIdSelected) {
     this.component = d3.select(selector);
     this.causalView = causalView;
+    this.onNodeIdSelected = onNodeIdSelected;
   }
 
-  init() {
-    this.onNodeSelected = this.onNodeClicked.bind(this);
+  init(initialId) {
+    this.onNodeClicked = this.onNodeClicked.bind(this);
+
+    this.component.attr("class", "input-item select-node-element");
 
     this.idInput = this.component
       .append("input")
       .attr("type", "text")
-      .attr("class", "input-item text-input input-item__input")
-      .attr("placeholder", "CauseId");
+      .attr("class", "text-input input-item__input select-node-element__input")
+      .attr("placeholder", "CauseId")
+      .attr("readonly", true)
+      .property("value", initialId ?? "");
 
     const selectNodeButton = this.component
       .append("button")
       .attr("class", "button")
-      .text("Select Node")
+      .text("Select")
       .on("click", this.onClick.bind(this));
-
-    return { idInput: this.idInput, selectNodeButton };
   }
 
   onClick(event) {
@@ -45,6 +48,8 @@ export class SelectNodeElement {
       "nodeClicked",
       this.onNodeClicked // the same function as in addEventListener
     );
-    this.causalView.selectionManager.isSelectByClick = false;
+    this.causalView.selectionManager.isSelectByClick = true;
+
+    this.onNodeIdSelected?.(causalModelFact.Id);
   }
 }

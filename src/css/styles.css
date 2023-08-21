@@ -89,15 +89,21 @@ body,
   width: 100%;
 
   padding: 0.5em 0.75em;
-  /* border: 1px solid #ccc; */
   border-radius: 3px;
   background-color: var(--pale-background);
-  /* font-size: 0.75rem;
-  color: #ddd; */
 }
 
 .text-input,
 .button,
 .component__inner-item {
   border: 1px solid #949494;
+}
+
+.select-node-element {
+  display: flex;
+  flex-direction: row;
+}
+
+.select-node-element__input {
+  margin-right: 0.75em;
 }

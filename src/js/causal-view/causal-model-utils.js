@@ -29,4 +29,14 @@ export class CausalModelUtils {
   static getNodeIdClassByNodeId(nodeId) {
     return `.id-${nodeId}`;
   }
+
+  static createFactorExpression() {
+    return {
+      $type: "factor",
+      Edge: {
+        Probability: 1,
+        CauseId: null,
+      },
+    };
+  }
 }

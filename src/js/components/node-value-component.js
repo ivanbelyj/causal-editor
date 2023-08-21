@@ -62,10 +62,8 @@ export class NodeValueComponent {
   }
 
   onSingleNodeSelected(event) {
-    console.log("single node is selected! event is", event);
     const nodeData = event.data.node.data;
     this.causalModelFact = nodeData;
-    console.log(" selected causal model fact ", this.causalModelFact);
 
     this.update({
       id: nodeData["Id"],
@@ -75,7 +73,6 @@ export class NodeValueComponent {
   }
 
   onChange() {
-    console.log("node-value-component changed");
     if (!this.causalModelFact) return;
 
     this.causalModelFact.Title = this.titleInput.property("value");

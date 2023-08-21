@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import { SelectNodeElement } from "../../elements/select-node-element.js";
 
 // Block is used as a part of a component
 export class WeightsComponent {
@@ -109,22 +110,13 @@ export class WeightsComponent {
         }.bind(this)
       );
 
-    // Todo: almost the same as in causes-item
-    const causeIdInput = itemContent
-      .append("input")
-      .attr("type", "text")
-      .attr("class", "input-item text-input input-item__input")
-      .attr("placeholder", "CauseId")
-      .property("value", weightEdge.CauseId ?? "");
-
-    causeIdInput.on(
-      "change",
-      function (event) {
+    new SelectNodeElement(
+      itemContent.append("div").node(),
+      this.causalView,
+      function (id) {
         const oldCauseId = weightEdge.CauseId;
-        weightEdge.CauseId = d3.select(event.target).property("value");
-
-        this.onCauseIdChange?.(oldCauseId, weightEdge.CauseId);
+        weightEdge.CauseId = id;
       }.bind(this)
-    );
+    ).init(weightEdge.CauseId);
   }
 }

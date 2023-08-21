@@ -83,28 +83,30 @@ export class CausesItem {
         const newType = e.target.value;
         const prevType = this.causesExpression?.$type;
 
-        let removedCauseIds;
+        let removedExpr = null;
         if (
           (prevType == "and" && newType == "or") ||
           (prevType == "or" && newType == "and")
         ) {
-          // To fix: в некоторых случах вложенные элементы все равно убираются
           // To change $type is enough (next)
-          console.log("causesExpression will not modified");
+          console.log("causesExpression won't be modified");
+          // To fix: в некоторых случах вложенные элементы все равно убираются
         } else {
+          // Remove expression
           const expr = this.causesExpression;
-          removedCauseIds = CausalModelUtils.findCauseIds(expr);
+          removedExpr = structuredClone(expr);
 
           // We should mutate this.causesExpression instead of creating a new one
           for (const key in expr) {
             delete expr[`${key}`];
           }
+
           if (newType == "and" || newType == "or") {
             expr.Operands = [];
           }
           if (newType == "not") {
             // Add a child that has not been defined yet, but is required
-            expr.CausesExpression = {};
+            expr.CausesExpression = CausalModelUtils.createFactorExpression();
           }
           if (newType == "factor") {
             expr.Edge = {
@@ -115,7 +117,9 @@ export class CausesItem {
         this.causesExpression.$type = newType;
 
         // Tracked to update causal view
-        if (removedCauseIds) this.onCausesRemove(removedCauseIds);
+        if (removedExpr) {
+          this.onCausesExpressionRemove(removedExpr);
+        }
 
         // In most cases new CausesItem structure is not similar to previous
         this.reset(this.causesExpression);
@@ -188,6 +192,13 @@ export class CausesItem {
   }
 
   setFactorItemContent() {
+    if (this.causesExpression.$type != "factor") {
+      console.error(
+        "Incorrect causesExpression for factor item creation: ",
+        this.causesExpression
+      );
+    }
+
     const probabilityInput = this.content
       .append("input")
       .attr("type", "number")
@@ -195,48 +206,27 @@ export class CausesItem {
       .attr("max", "1")
       .attr("step", "0.01")
       .attr("class", "input-item text-input input-item__input")
-      .attr("placeholder", "Probability");
-    const causeIdInput = new SelectNodeElement(
+      .attr("placeholder", "Probability")
+      .property("value", this.causesExpression.Edge.Probability)
+      .on(
+        "change",
+        function (event) {
+          this.causesExpression.Edge.Probability = parseFloat(
+            d3.select(event.target).property("value")
+          );
+        }.bind(this)
+      );
+
+    new SelectNodeElement(
       this.content.append("div").node(),
-      this.causalView
-    ).init().idInput;
-
-    if (this.causesExpression) {
-      if (this.causesExpression.$type === "factor") {
-        probabilityInput.property(
-          "value",
-          this.causesExpression.Edge.Probability
-        );
-        causeIdInput.property("value", this.causesExpression.Edge.CauseId);
-      } else {
-        console.error(
-          "Incorrect causesExpression for factor item creation: ",
-          this.causesExpression
-        );
-      }
-    }
-
-    probabilityInput.on(
-      "change",
-      function (event) {
-        this.causesExpression.Edge.Probability = parseFloat(
-          d3.select(event.target).property("value")
-        );
-      }.bind(this)
-    );
-
-    causeIdInput.on(
-      "change",
-      function (event) {
+      this.causalView,
+      function (id) {
         const oldCauseId = this.causesExpression.Edge.CauseId;
-        this.causesExpression.Edge.CauseId = d3
-          .select(event.target)
-          .property("value");
+        this.causesExpression.Edge.CauseId = id;
 
-        // this.fireCauseIdChange(oldCauseId, this.causesExpression.Edge.CauseId);
         this.onCauseIdChange(oldCauseId, this.causesExpression.Edge.CauseId);
       }.bind(this)
-    );
+    ).init(this.causesExpression.Edge.CauseId);
   }
 
   setAndOrItemContent() {
@@ -251,7 +241,7 @@ export class CausesItem {
     addButton.on(
       "click",
       function (event) {
-        const newItem = {};
+        const newItem = CausalModelUtils.createFactorExpression();
         this.causesExpression.Operands.push(newItem);
         // New operand is empty so cause change will be handled on change type
         this.appendInnerItem(true, newItem);
@@ -287,9 +277,10 @@ export class CausesItem {
           this.causesExpression.Operands.indexOf(removingExpr);
         this.causesExpression.Operands.splice(removeIndex, 1);
 
-        const causesToRemove = this.getCauseIdsToRemove(removingExpr);
-        // Pass removed causes to update causal-view
-        this.onCausesRemove(causesToRemove);
+        // const causesToRemove = this.getCauseIdsToRemove(removingExpr);
+        // // Pass removed causes to update causal-view
+        // this.onCausesRemove(causesToRemove);
+        this.onCausesExpressionRemove(removingExpr);
       }.bind(this),
       isRoot: false, // Inner item can't be a root
       rootCausesExpression: this.rootCausesExpression,
@@ -298,6 +289,13 @@ export class CausesItem {
     newItem.init(causesExpression);
 
     return newItem;
+  }
+
+  onCausesExpressionRemove(expr) {
+    const causesToRemove = this.getCauseIdsToRemove(expr);
+
+    // Pass removed causes to update causal-view
+    this.onCausesRemove(causesToRemove);
   }
 
   getCauseIdsToRemove(removingExpr) {
@@ -312,7 +310,7 @@ export class CausesItem {
     // could be in removed expr
 
     return causeIdsFromRemovedExpr.filter(
-      (x) => !causeIdsNotToRemove.includes(x)
+      (x) => x && !causeIdsNotToRemove.includes(x)
     );
   }
 }
