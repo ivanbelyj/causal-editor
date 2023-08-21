@@ -3,16 +3,12 @@ import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const nodeSelectionStrokeWidth = 12;
 
-export class CausalViewSelection {
+export class CausalViewSelectionManager {
   currentSelectedNodeId = null;
   _structure = null;
 
   constructor(structure) {
     this._structure = structure;
-    // const selection = this;
-    // structure.addEventListener("nodeClicked", (event) =>
-    //   this.onNodeClicked(selection, event)
-    // );
     structure.addEventListener("nodeClicked", this.onNodeClicked.bind(this));
 
     structure.addEventListener("zoomed", () => {

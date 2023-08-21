@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { CausalModelUtils } from "../../causal-view/causal-model-utils.js";
+import { SelectNodeElement } from "../../elements/select-node-element.js";
 
 // CausesItem is a UI element representing causes expression.
 // It includes top (with type dropdown) and content that can include
@@ -19,6 +20,8 @@ export class CausesItem {
 
     isRoot,
     rootCausesExpression,
+
+    causalView,
   }) {
     this.selector = selector;
     this.component = d3.select(selector);
@@ -33,6 +36,8 @@ export class CausesItem {
     // Knowing isRootItem is required to have only one right border for inner items
     this.isRoot = isRoot ?? false;
     this.rootCausesExpression = rootCausesExpression;
+
+    this.causalView = causalView;
   }
 
   // Actions that are relevant to CausesItem regardless of causesExpression structure.
@@ -191,11 +196,10 @@ export class CausesItem {
       .attr("step", "0.01")
       .attr("class", "input-item text-input input-item__input")
       .attr("placeholder", "Probability");
-    const causeIdInput = this.content
-      .append("input")
-      .attr("type", "text")
-      .attr("class", "input-item text-input input-item__input")
-      .attr("placeholder", "CauseId");
+    const causeIdInput = new SelectNodeElement(
+      this.content.append("div").node(),
+      this.causalView
+    ).init().idInput;
 
     if (this.causesExpression) {
       if (this.causesExpression.$type === "factor") {
@@ -289,6 +293,7 @@ export class CausesItem {
       }.bind(this),
       isRoot: false, // Inner item can't be a root
       rootCausesExpression: this.rootCausesExpression,
+      causalView: this.causalView,
     });
     newItem.init(causesExpression);
 

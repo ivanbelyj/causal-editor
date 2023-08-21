@@ -1,13 +1,8 @@
-// import * as d3 from "../../../node_modules/d3/dist/d3.js";
-// import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7";
 import * as d3 from "d3";
-
-// import * as d3dag from "https://cdn.skypack.dev/d3-dag@1.0.0-1";
-// import * as d3dag from "../../../node_modules/d3-dag/bundle/d3-dag.esm.min.js";
 import * as d3dag from "d3-dag";
 import { CausalModelUtils } from "./causal-model-utils.js";
 
-// Displays interactive causal view elements
+// Displays interactive causal view elements and provides some of their common events (node click, enter, etc.)
 export class CausalViewStructure extends EventTarget {
   showDebugMessages = false;
 
@@ -20,27 +15,14 @@ export class CausalViewStructure extends EventTarget {
   _nodeWidth = 140;
   _nodeHeight = 40;
 
-  // Линия для отображения ребер может потребоваться на разных этапах
+  // The line for rendering edges may be required at different stages
   _line;
   _nodeIdsAndColors;
 
   svg;
   svgChild;
 
-  // _nodesParent;
-
-  nodeClicked;
-  nodeEnter;
-  nodeLeave;
-  zoomed;
-
   init(svgParent, causalModelFacts) {
-    // Todo: create not here?
-    this.nodeClicked = new Event("nodeClicked");
-    this.nodeEnter = new Event("nodeEnter");
-    this.nodeLeave = new Event("nodeLeave");
-    this.zoomed = new Event("zoomed");
-
     this.setDag(causalModelFacts);
 
     this._line = d3
@@ -173,12 +155,14 @@ export class CausalViewStructure extends EventTarget {
   }
 
   addZoom(svg, svgChild, width, height) {
-    const structure = this;
     svg.call(
-      d3.zoom().on("zoom", function () {
-        svgChild.attr("transform", () => d3.zoomTransform(this));
-        structure.dispatchEvent(structure.zoomed);
-      })
+      d3.zoom().on(
+        "zoom",
+        function () {
+          svgChild.attr("transform", () => d3.zoomTransform(this.svg.node()));
+          this.dispatchEvent(new Event("zoomed"));
+        }.bind(this)
+      )
     );
   }
 
@@ -209,16 +193,19 @@ export class CausalViewStructure extends EventTarget {
             })
             .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
             .on("click", (d, i) => {
-              this.nodeClicked.data = { d, i };
-              this.dispatchEvent(this.nodeClicked);
+              const nodeClickedEventData = new Event("nodeClicked");
+              nodeClickedEventData.data = { d, i };
+              this.dispatchEvent(nodeClickedEventData);
             })
             .on("mouseenter", (d, i) => {
-              this.nodeEnter.data = { d, i };
-              this.dispatchEvent(this.nodeEnter);
+              const nodeEnterEvent = new Event("nodeEnter");
+              nodeEnterEvent.data = { d, i };
+              this.dispatchEvent(nodeEnterEvent);
             })
             .on("mouseleave", (d, i) => {
-              this.nodeLeave.data = { d, i };
-              this.dispatchEvent(this.nodeLeave);
+              const nodeLeaveEvent = new Event("nodeLeave");
+              nodeLeaveEvent.data = { d, i };
+              this.dispatchEvent(nodeLeaveEvent);
             });
 
           enterNodesSelection

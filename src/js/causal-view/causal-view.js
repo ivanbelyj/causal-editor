@@ -1,35 +1,21 @@
 import { CausalViewStructure } from "./causal-view-structure.js";
 import { factsCollection } from "../test-data.js";
-import { CausalViewSelection } from "./causal-view-selection.js";
+import { CausalViewSelectionManager } from "./causal-view-selection-manager.js";
 
 import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { NodesManager } from "./nodes-manager.js";
 
-// Pascal case because of causal model format
-const newNodeTemplate = {
-  Id: null,
-  ProbabilityNest: {
-    CausesExpression: {
-      $type: "factor",
-      Edge: {
-        Probability: 1,
-      },
-    },
-  },
-  NodeValue: "New Fact",
-};
-
+// A component representing causal model
 export class CausalView {
   structure = null;
   selection = null;
 
   init(api) {
     this.structure = new CausalViewStructure();
-    // causalView.addEventListener("nodeClicked", (event) =>
-    //   builder.onNodeClicked(event)
-    // );
     this.structure.addEventListener("nodeEnter", () => api.sendNodeEnter());
     this.structure.addEventListener("nodeLeave", () => api.sendNodeLeave());
 
+    this.nodesManager = new NodesManager(this.structure);
     api.onCreateNode(this.onCreateNode.bind(this));
     api.onRemoveNode(this.onRemoveNode.bind(this));
     api.onGetNodesRequest(
@@ -45,9 +31,8 @@ export class CausalView {
     const causalModelNodes = JSON.parse(factsCollection);
 
     this.structure.init(causalViewElement, causalModelNodes);
-    // this.structure.render();
 
-    this.selection = new CausalViewSelection(this.structure);
+    this.selection = new CausalViewSelectionManager(this.structure);
   }
 
   nodes() {
@@ -55,73 +40,10 @@ export class CausalView {
   }
 
   onCreateNode(event, data) {
-    const causalViewElement = CausalView.elementWithClassFrom(
-      data,
-      "causal-view"
-    );
-    if (!causalViewElement) return;
-
-    const newNode = this.createNode();
-
-    this.structure.addNode(
-      newNode,
-      this.screenPointToSvg({ x: data.x, y: data.y })
-    );
-    this.structure.render();
-  }
-
-  screenPointToSvg({ x, y }) {
-    const svg = d3.select("svg");
-    const g = svg.select("g");
-    const point = svg.node().createSVGPoint();
-    point.x = x;
-    point.y = y;
-    const { x: svgX, y: svgY } = point.matrixTransform(
-      g.node().getScreenCTM().inverse()
-    );
-    return { x: svgX, y: svgY };
-  }
-
-  createNode() {
-    const newNode = structuredClone(newNodeTemplate);
-    newNode.Id = crypto.randomUUID();
-    return newNode;
+    this.nodesManager.createNode(data.x, data.y);
   }
 
   onRemoveNode(event, data) {
-    const nodeElement = CausalView.nodeElementFromPoint(data, "node");
-    // if (!nodeElement) return;
-    const node = d3.select(nodeElement).data()[0];
-    this.structure.removeNode(node.data.Id);
-    this.structure.render();
-  }
-
-  static elementWithClassFrom(pos, className) {
-    const elems = CausalView.getElementsByPos(pos);
-    for (const elem of elems) {
-      for (const curClassName of elem.classList) {
-        if (curClassName == className) {
-          return elem;
-        }
-      }
-    }
-    return null;
-  }
-  static getElementsByPos(pos) {
-    return document.elementsFromPoint(pos.x, pos.y);
-  }
-
-  // document.elementsFromPoint ignores <g> because it is used only for
-  // grouping, not displaying, so there is a hack, depending on node structure
-  static nodeElementFromPoint(pos) {
-    const elems = CausalView.getElementsByPos(pos);
-    for (const elem of elems) {
-      if (elem.tagName == "rect") {
-        if (elem.parentNode.classList.contains("node")) {
-          return elem.parentNode;
-        }
-      }
-    }
-    return null;
+    this.nodesManager.removeNode(data.x, data.y);
   }
 }
