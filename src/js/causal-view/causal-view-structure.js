@@ -66,17 +66,6 @@ export class CausalViewStructure extends EventTarget {
     return Array.from(this._dag.nodes());
   }
 
-  updateNodeTitleAndValueById(nodeId, nodeTitle, nodeValue) {
-    // Todo: do it in another place
-    const node = this.getNodeById(nodeId);
-    if (node) {
-      node.data.NodeTitle = nodeTitle ?? "";
-      node.data.NodeValue = nodeValue ?? "";
-
-      this.render();
-    }
-  }
-
   getNodeById(nodeId) {
     return this.getNodes().find((node) => node.data.Id === nodeId);
   }
@@ -217,10 +206,6 @@ export class CausalViewStructure extends EventTarget {
             .attr("fill", (n) => n.data.color ?? "#aaa");
 
           enterNodesSelection.append("text");
-          // this.appendText(
-          //   nodesSelection,
-          //   (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
-          // );
 
           this.appendNodesDrag(enterNodesSelection);
         }.bind(this),
@@ -238,7 +223,7 @@ export class CausalViewStructure extends EventTarget {
   updateNodes() {
     this.updateNodeText(
       d3.select(".nodes-parent").selectAll("g").select("text"),
-      (d) => d.data["NodeTitle"] || d.data["NodeValue"] || d.data["Id"]
+      (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
     );
   }
 

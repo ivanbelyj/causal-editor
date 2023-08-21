@@ -8,7 +8,7 @@ import { NodesManager } from "./nodes-manager.js";
 // A component representing causal model
 export class CausalView {
   structure = null;
-  selection = null;
+  selectionManager = null;
 
   init(api) {
     this.structure = new CausalViewStructure();
@@ -32,7 +32,7 @@ export class CausalView {
 
     this.structure.init(causalViewElement, causalModelNodes);
 
-    this.selection = new CausalViewSelectionManager(this.structure);
+    this.selectionManager = new CausalViewSelectionManager(this.structure);
   }
 
   nodes() {

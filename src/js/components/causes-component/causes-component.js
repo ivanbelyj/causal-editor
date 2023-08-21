@@ -20,10 +20,10 @@ export class CausesComponent {
 
     // this.weightsBlock = new WeightBlock(this.content.append("div").node());
 
-    this.causalView.structure.addEventListener(
-      "nodeClicked",
+    this.causalView.selectionManager.addEventListener(
+      "singleNodeSelected",
       function (event) {
-        const causalModelFact = event.data.i.data;
+        const causalModelFact = event.data.node.data;
         this.reset(causalModelFact);
       }.bind(this)
     );

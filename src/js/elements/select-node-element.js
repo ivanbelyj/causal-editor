@@ -7,7 +7,7 @@ export class SelectNodeElement {
   }
 
   init() {
-    this.onNodeSelected = this.onNodeSelected.bind(this);
+    this.onNodeSelected = this.onNodeClicked.bind(this);
 
     this.idInput = this.component
       .append("input")
@@ -27,20 +27,24 @@ export class SelectNodeElement {
   onClick(event) {
     console.log("select node button is clicked. event", event);
 
+    // The last click is to select the cause id, not to select the node to edit
+    this.causalView.selectionManager.isSelectByClick = false;
+
     this.causalView.structure.addEventListener(
       "nodeClicked",
-      this.onNodeSelected // already bound to this
+      this.onNodeClicked // already bound to this
     );
   }
 
-  onNodeSelected(event) {
+  onNodeClicked(event) {
     const causalModelFact = event.data.i.data;
 
     this.idInput.property("value", causalModelFact.Id);
 
     this.causalView.structure.removeEventListener(
       "nodeClicked",
-      this.onNodeSelected // the same function as in addEventListener
+      this.onNodeClicked // the same function as in addEventListener
     );
+    this.causalView.selectionManager.isSelectByClick = false;
   }
 }

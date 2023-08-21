@@ -33,15 +33,13 @@ export class NodeValueComponent {
       .merge(this.valueInput)
       .on("change", this.onChange.bind(this));
 
-    this.causalView.structure.addEventListener(
-      "nodeClicked",
+    this.causalView.selectionManager.addEventListener(
+      "singleNodeSelected",
       function (event) {
-        this.onNodeClicked(event);
+        this.onSingleNodeSelected(event);
       }.bind(this)
     );
   }
-
-  buildStructure() {}
 
   // Returns input (or textarea) containing in input-item
   appendInputItem({ name, inputId, isReadonly, useTextArea }) {
@@ -63,32 +61,32 @@ export class NodeValueComponent {
     return input;
   }
 
-  // Todo: single node selected event
-  onNodeClicked(event) {
-    const nodeData = event.data.i.data;
+  onSingleNodeSelected(event) {
+    console.log("single node is selected! event is", event);
+    const nodeData = event.data.node.data;
+    this.causalModelFact = nodeData;
+    console.log(" selected causal model fact ", this.causalModelFact);
 
-    this.idInput.property("value", nodeData["Id"]);
-    this.titleInput.property("value", nodeData["NodeTitle"] ?? "");
-    this.valueInput.property("value", nodeData["NodeValue"] ?? "");
+    this.update({
+      id: nodeData["Id"],
+      title: nodeData["Title"],
+      value: nodeData["NodeValue"],
+    });
   }
 
   onChange() {
     console.log("node-value-component changed");
-    const currentSelectedNodeId =
-      this.causalView.selection.currentSelectedNodeId;
-    if (!currentSelectedNodeId) return;
-    const nodeTitleInput = this.titleInput.property("value");
-    const nodeValueInput = this.valueInput.property("value");
-    this.causalView.structure.updateNodeTitleAndValueById(
-      currentSelectedNodeId,
-      nodeTitleInput,
-      nodeValueInput
-    );
+    if (!this.causalModelFact) return;
+
+    this.causalModelFact.Title = this.titleInput.property("value");
+    this.causalModelFact.NodeValue = this.valueInput.property("value");
+
+    this.causalView.structure.render();
   }
 
-  reset() {
-    this.idInput.property("value", "");
-    this.titleInput.property("value", "");
-    this.valueInput.property("value", "");
+  update({ id, title, value }) {
+    this.idInput.property("value", id ?? "");
+    this.titleInput.property("value", title ?? "");
+    this.valueInput.property("value", value ?? "");
   }
 }

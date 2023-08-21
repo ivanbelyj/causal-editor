@@ -11,10 +11,10 @@ export class WeightsComponent {
   init(causalModelFact) {
     this.component.attr("class", "component");
 
-    this.causalView.structure.addEventListener(
-      "nodeClicked",
+    this.causalView.selectionManager.addEventListener(
+      "singleNodeSelected",
       function (event) {
-        const causalModelFact = event.data.i.data;
+        const causalModelFact = event.data.node.data;
         this.reset(causalModelFact);
       }.bind(this)
     );
