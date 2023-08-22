@@ -13,7 +13,6 @@ export class CausalViewSelectionManager extends EventTarget {
   }
   set isSelectByClick(val) {
     this._isSelectByClick = val;
-    console.log("is select by click", this._isSelectByClick);
   }
 
   constructor(structure) {

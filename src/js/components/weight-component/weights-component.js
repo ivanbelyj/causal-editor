@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
+import { CausesChangeManager } from "../../causal-view/causes-change-manager.js";
 
 // Block is used as a part of a component
 export class WeightsComponent {
@@ -7,6 +8,7 @@ export class WeightsComponent {
     // Parent element
     this.component = d3.select(selector);
     this.causalView = causalView;
+    this.causesChangeManager = new CausesChangeManager(causalView);
   }
 
   init(causalModelFact) {
@@ -27,6 +29,7 @@ export class WeightsComponent {
     this.component.html("");
 
     this.causalModelFact = causalModelFact;
+    this.causesChangeManager.reset(causalModelFact);
 
     // Button to add new items
     const addButton = this.component
@@ -39,6 +42,8 @@ export class WeightsComponent {
           const newItem = {};
           this.weights.push(newItem);
           this.appendItem(newItem);
+          // Now the new item is empty so it's not necessary to track
+          // causes change
         }.bind(this)
       );
 
@@ -55,7 +60,6 @@ export class WeightsComponent {
     if (!this.causalModelFact.WeightNest?.Weights)
       this.causalModelFact.WeightNest = { Weights: [] };
     this.weights = this.causalModelFact.WeightNest.Weights;
-    // console.log("weights: ", this.weights);
 
     for (const weightEdge of this.weights) {
       this.appendItem(weightEdge);
@@ -101,21 +105,27 @@ export class WeightsComponent {
         "click",
         function (event) {
           item.remove();
-          // Todo: remove from this.weights
-          // console.log("to remove:", this.weights.indexOf());
-          console.log("weights", this.weights);
-          console.log("weight edge", weightEdge);
           const removeIndex = this.weights.indexOf(weightEdge);
-          this.weights.splice(removeIndex, 1);
+          if (removeIndex != -1) {
+            const removedItem = this.weights[removeIndex];
+            this.weights.splice(removeIndex, 1);
+            if (removedItem.CauseId)
+              this.causesChangeManager.onCausesRemove([removedItem.CauseId]);
+            else {
+            } // There is no reason to track causes change
+          } else {
+            console.error("trying to remove weight edge that doesn't exist");
+          }
         }.bind(this)
       );
 
     new SelectNodeElement(
       itemContent.append("div").node(),
       this.causalView,
-      function (id) {
+      function (newId) {
         const oldCauseId = weightEdge.CauseId;
-        weightEdge.CauseId = id;
+        weightEdge.CauseId = newId;
+        this.causesChangeManager.onCauseIdChange(oldCauseId, newId);
       }.bind(this)
     ).init(weightEdge.CauseId);
   }

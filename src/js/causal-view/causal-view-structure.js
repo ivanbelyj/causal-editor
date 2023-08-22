@@ -116,15 +116,9 @@ export class CausalViewStructure extends EventTarget {
   }
 
   addLink(sourceId, targetId) {
-    console.log(
-      "before link adding. links are ",
-      Array.from(this._dag.links())
-    );
     const [source, target] = [sourceId, targetId].map(this.getNodeById, this);
-    console.log("source and target are", source, target);
 
     this._dag.link(source, target);
-    console.log("link added. now links are ", Array.from(this._dag.links()));
   }
 
   getLinkBySourceAndTargetIds(sourceId, targetId) {

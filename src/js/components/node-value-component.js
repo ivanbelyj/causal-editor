@@ -13,11 +13,6 @@ export class NodeValueComponent {
   init() {
     this.component.attr("class", "component");
 
-    this.idInput = this.appendInputItem({
-      name: "Id",
-      inputId: "node-id-input",
-      isReadonly: true,
-    });
     this.titleInput = this.appendInputItem({
       name: "Title",
       inputId: "node-title-input",
@@ -27,6 +22,11 @@ export class NodeValueComponent {
       inputId: "node-id-input",
       isReadonly: false,
       useTextArea: true,
+    });
+    this.idInput = this.appendInputItem({
+      name: "Id",
+      inputId: "node-id-input",
+      isReadonly: true,
     });
 
     this.titleInput

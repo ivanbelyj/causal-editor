@@ -20,6 +20,31 @@ export class CausalModelUtils {
     return [...edgeProps];
   }
 
+  static getWeightsEdgesIds(causalModelFact) {
+    const weightEdges = causalModelFact.WeightNest?.Weights;
+    if (!weightEdges) return [];
+    const idsSet = new Set();
+    for (const weightEdge of weightEdges) {
+      const id = weightEdge.CauseId;
+      if (!idsSet.has(id)) {
+        idsSet.add(id);
+      }
+    }
+    return [...idsSet];
+  }
+
+  static getCausesIdsUnique(causalModelFact) {
+    return [
+      ...new Set(
+        CausalModelUtils.findCauseIds(
+          causalModelFact.ProbabilityNest.CausesExpression
+          // There are no removed expr in root causesExpression
+        ).concat(CausalModelUtils.getWeightsEdgesIds(causalModelFact))
+        // And there are no removed weight edges
+      ),
+    ];
+  }
+
   // Edges are identified by source and target ids
   static sourceAndTargetIdsToEdgeId(source, target) {
     // encodeURIComponents for spaces, hope id doesn't have a `--` in it

@@ -15,11 +15,12 @@ export class CausesItem {
     isRemovable,
     onRemoveClick,
 
-    onCausesRemove,
-    onCauseIdChange,
+    // onCausesRemove,
+    // onCauseIdChange,
+    causesChangeManager,
 
     isRoot,
-    rootCausesExpression,
+    // rootCausesExpression,
 
     causalView,
   }) {
@@ -30,12 +31,13 @@ export class CausesItem {
 
     // Necessary to update changes in CausalView because d3 tracks flat data,
     // not nested and mutating
-    this.onCausesRemove = onCausesRemove;
-    this.onCauseIdChange = onCauseIdChange;
+    // this.onCausesRemove = onCausesRemove;
+    // this.onCauseIdChange = onCauseIdChange;
+    this.causesChangeManager = causesChangeManager;
 
     // Knowing isRootItem is required to have only one right border for inner items
     this.isRoot = isRoot ?? false;
-    this.rootCausesExpression = rootCausesExpression;
+    // this.rootCausesExpression = rootCausesExpression;
 
     this.causalView = causalView;
   }
@@ -89,8 +91,6 @@ export class CausesItem {
           (prevType == "or" && newType == "and")
         ) {
           // To change $type is enough (next)
-          console.log("causesExpression won't be modified");
-          // To fix: в некоторых случах вложенные элементы все равно убираются
         } else {
           // Remove expression
           const expr = this.causesExpression;
@@ -118,7 +118,8 @@ export class CausesItem {
 
         // Tracked to update causal view
         if (removedExpr) {
-          this.onCausesExpressionRemove(removedExpr);
+          // this.onCausesExpressionRemove(removedExpr);
+          this.causesChangeManager.onCausesExpressionRemove(removedExpr);
         }
 
         // In most cases new CausesItem structure is not similar to previous
@@ -221,10 +222,13 @@ export class CausesItem {
       this.content.append("div").node(),
       this.causalView,
       function (id) {
-        const oldCauseId = this.causesExpression.Edge.CauseId;
+        const oldCauseId = this.causesExpression?.Edge?.CauseId;
         this.causesExpression.Edge.CauseId = id;
 
-        this.onCauseIdChange(oldCauseId, this.causesExpression.Edge.CauseId);
+        this.causesChangeManager.onCauseIdChange(
+          oldCauseId,
+          this.causesExpression.Edge.CauseId
+        );
       }.bind(this)
     ).init(this.causesExpression.Edge.CauseId);
   }
@@ -270,8 +274,9 @@ export class CausesItem {
     const newItem = new CausesItem({
       selector: itemSelection.node(),
       isRemovable,
-      onCausesRemove: this.onCausesRemove,
-      onCauseIdChange: this.onCauseIdChange,
+      // onCausesRemove: this.onCausesRemove,
+      // onCauseIdChange: this.onCauseIdChange,
+      causesChangeManager: this.causesChangeManager,
       onRemoveClick: function (removingExpr) {
         const removeIndex =
           this.causesExpression.Operands.indexOf(removingExpr);
@@ -280,37 +285,14 @@ export class CausesItem {
         // const causesToRemove = this.getCauseIdsToRemove(removingExpr);
         // // Pass removed causes to update causal-view
         // this.onCausesRemove(causesToRemove);
-        this.onCausesExpressionRemove(removingExpr);
+        this.causesChangeManager.onCausesExpressionRemove(removingExpr);
       }.bind(this),
       isRoot: false, // Inner item can't be a root
-      rootCausesExpression: this.rootCausesExpression,
+      // rootCausesExpression: this.rootCausesExpression,
       causalView: this.causalView,
     });
     newItem.init(causesExpression);
 
     return newItem;
-  }
-
-  onCausesExpressionRemove(expr) {
-    const causesToRemove = this.getCauseIdsToRemove(expr);
-
-    // Pass removed causes to update causal-view
-    this.onCausesRemove(causesToRemove);
-  }
-
-  getCauseIdsToRemove(removingExpr) {
-    const causeIdsNotToRemove = CausalModelUtils.findCauseIds(
-      this.rootCausesExpression // There are no removed expr in root causesExpression
-    );
-    console.log("all cause ids: ", causeIdsNotToRemove);
-
-    const causeIdsFromRemovedExpr = CausalModelUtils.findCauseIds(removingExpr);
-    console.log("ids from removed expr: ", causeIdsFromRemovedExpr);
-    // But some cause ids from causesExpression (not to remove)
-    // could be in removed expr
-
-    return causeIdsFromRemovedExpr.filter(
-      (x) => x && !causeIdsNotToRemove.includes(x)
-    );
   }
 }
