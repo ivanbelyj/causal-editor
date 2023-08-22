@@ -1,4 +1,3 @@
-// files-manager.js
 const { ipcMain, BrowserWindow } = require("electron");
 const { FileOperations } = require("./file-operations.js");
 const path = require("path");
