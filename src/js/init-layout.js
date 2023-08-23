@@ -2,6 +2,7 @@ import { CausalView } from "./causal-view/causal-view.js";
 import { CausesComponent } from "./components/causes-component/causes-component.js";
 import { NodeValueComponent } from "./components/node-value-component.js";
 import { WeightsComponent } from "./components/weight-component/weights-component.js";
+import { factsCollection } from "./test-data.js";
 
 const defaultConfig = {
   content: [
@@ -46,8 +47,9 @@ export const initLayout = () => {
   registerComponent(layout, "Weights", "weights-component");
 
   layout.on("initialised", () => {
-    const causalView = new CausalView();
-    causalView.init(window.api);
+    const causalView = new CausalView(".causal-view", window.api);
+    const causalModelFacts = JSON.parse(factsCollection);
+    causalView.init(causalModelFacts);
 
     const nodeValueComponent = new NodeValueComponent(
       ".node-value-component",

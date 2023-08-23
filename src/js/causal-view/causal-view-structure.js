@@ -2,68 +2,95 @@ import * as d3 from "d3";
 import * as d3dag from "d3-dag";
 import { CausalModelUtils } from "./causal-model-utils.js";
 
-// Displays interactive causal view elements and provides some of their common events (node click, enter, etc.)
+// Displays interactive causal view elements and provides some of their common events
+// (node click, enter, etc.)
 export class CausalViewStructure extends EventTarget {
-  showDebugMessages = false;
+  // ===== Set in constructor / init =====
+  showDebugMessages = true;
 
-  // MutGraph
-  _dag;
-
-  // Set of implementation edges is required for their special rendering
-  _implementationEdgesSet;
-
-  _nodeWidth = 140;
-  _nodeHeight = 40;
+  nodeWidth = 140;
+  nodeHeight = 40;
 
   // The line for rendering edges may be required at different stages
-  _line;
-  _nodeIdsAndColors;
+  line;
 
   svg;
   svgChild;
 
-  init(svgParent, causalModelFacts) {
-    this.setDag(causalModelFacts);
+  // ===== Set on reset =====
 
-    this._line = d3
+  mutGraph; // MutGraph
+  implementationEdgesSet; // Set of impl. edges is required for their special displaying
+
+  init(svgParent, causalModelFacts) {
+    this.line = d3
       .line()
       .curve(d3.curveCatmullRom)
       .x((d) => d.x)
       .y((d) => d.y);
 
-    const layout = d3dag
+    this.layout = d3dag
       .sugiyama() // base layout
       .decross(d3dag.decrossOpt()) // minimize number of crossings
       // set node size instead of constraining to fit
       .nodeSize((node) => [
-        (node ? 1.3 : 0) * this._nodeWidth,
-        3 * this._nodeHeight,
+        (node ? 1.3 : 0) * this.nodeWidth,
+        3 * this.nodeHeight,
       ]);
-    const { width: dagWidth, height: dagHeight } = layout(this._dag);
 
     const width = parseFloat(svgParent.style("width"));
-    const height = parseFloat(svgParent.style("height"));
+    const height = (this.svgParentInitialHeight = parseFloat(
+      svgParent.style("height")
+    ));
 
     this.svg = svgParent
       .append("svg")
       .attr("width", "100%")
       .attr("height", "100%");
 
-    this.svg.attr("viewBox", [0, 0, dagWidth, height].join(" "));
     const svgChild = this.svg
       .append("g")
       .attr("class", "causal-view__svg-child");
     this.svgChild = svgChild;
+
     this.addZoom(this.svg, svgChild, width, height);
 
-    svgChild.append("g").attr("class", "edges-parent");
-    svgChild.append("g").attr("class", "nodes-parent");
+    this.edgesParent = svgChild.append("g").attr("class", "edges-parent");
+    this.nodesParent = svgChild.append("g").attr("class", "nodes-parent");
+    this.edgesDefs = svgChild.append("defs");
+
+    if (causalModelFacts) {
+      this.reset(causalModelFacts);
+    }
+  }
+
+  addZoom(svg, svgChild, width, height) {
+    svg.call(
+      d3.zoom().on(
+        "zoom",
+        function () {
+          svgChild.attr("transform", () => d3.zoomTransform(this.svg.node()));
+          this.dispatchEvent(new Event("zoomed"));
+        }.bind(this)
+      )
+    );
+  }
+
+  reset(causalModelFacts) {
+    this.setDag(causalModelFacts);
+
+    const { width: dagWidth, height: dagHeight } = this.layout(this.mutGraph);
+    this.svg.attr("viewBox", [0, 0, dagWidth, dagHeight].join(" "));
+
+    this.nodesParent.html("");
+    this.edgesParent.html("");
+    this.edgesDefs.html("");
 
     this.render();
   }
 
   getNodes() {
-    return Array.from(this._dag.nodes());
+    return Array.from(this.mutGraph.nodes());
   }
 
   getNodeById(nodeId) {
@@ -72,18 +99,18 @@ export class CausalViewStructure extends EventTarget {
 
   // Устанавливает dag на основе каузальной модели, а также способ
   // получения набора ребер-реализаций абстрактных фактов в виде строк
-  setDag(causalModelNodes) {
-    this._implementationEdgesSet = new Set();
+  setDag(causalModelFacts) {
+    this.implementationEdgesSet = new Set();
     const structure = this;
-    this._dag = d3dag
+    this.mutGraph = d3dag
       .graphStratify()
       .id(({ Id: id }) => id)
       .parentIds((node) => {
         return structure.addNodeParentsToSet(
           node,
-          structure._implementationEdgesSet
+          structure.implementationEdgesSet
         );
-      })(causalModelNodes);
+      })(causalModelFacts);
   }
 
   // Причинно-следственные связи преобразуются в id-based parent data,
@@ -101,7 +128,7 @@ export class CausalViewStructure extends EventTarget {
   }
 
   addNode(causalModelFact, nodeData) {
-    const newNode = this._dag.node(causalModelFact);
+    const newNode = this.mutGraph.node(causalModelFact);
     newNode.ux = nodeData.x;
     newNode.uy = nodeData.y;
     return newNode;
@@ -118,11 +145,11 @@ export class CausalViewStructure extends EventTarget {
   addLink(sourceId, targetId) {
     const [source, target] = [sourceId, targetId].map(this.getNodeById, this);
 
-    this._dag.link(source, target);
+    this.mutGraph.link(source, target);
   }
 
   getLinkBySourceAndTargetIds(sourceId, targetId) {
-    return Array.from(this._dag.links()).find(
+    return Array.from(this.mutGraph.links()).find(
       (link) =>
         link.source.data.Id == sourceId && link.target.data.Id == targetId
     );
@@ -135,18 +162,6 @@ export class CausalViewStructure extends EventTarget {
   render() {
     this.renderNodes();
     this.renderEdges();
-  }
-
-  addZoom(svg, svgChild, width, height) {
-    svg.call(
-      d3.zoom().on(
-        "zoom",
-        function () {
-          svgChild.attr("transform", () => d3.zoomTransform(this.svg.node()));
-          this.dispatchEvent(new Event("zoomed"));
-        }.bind(this)
-      )
-    );
   }
 
   renderNodes() {
@@ -193,8 +208,8 @@ export class CausalViewStructure extends EventTarget {
 
           enterNodesSelection
             .append("rect")
-            .attr("width", this._nodeWidth)
-            .attr("height", this._nodeHeight)
+            .attr("width", this.nodeWidth)
+            .attr("height", this.nodeHeight)
             .attr("rx", 5)
             .attr("ry", 5)
             .attr("fill", (n) => n.data.color ?? "#aaa");
@@ -230,7 +245,7 @@ export class CausalViewStructure extends EventTarget {
       .attr("alignment-baseline", "middle")
       .attr(
         "transform",
-        `translate(${this._nodeWidth / 2}, ${this._nodeHeight / 2})`
+        `translate(${this.nodeWidth / 2}, ${this.nodeHeight / 2})`
       )
       .attr("fill", "var(--color)");
   }
@@ -266,20 +281,16 @@ export class CausalViewStructure extends EventTarget {
     }
   }
 
-  _edgesDefs;
   renderEdges() {
     const edgePathsSelection = d3
       .select(".edges-parent")
       .selectAll("path")
-      .data(this._dag.links(), (d) =>
+      .data(this.mutGraph.links(), (d) =>
         CausalModelUtils.sourceAndTargetIdsToEdgeId(d.source.Id, d.target.Id)
       );
 
     // For edges gradients
-    let defs = this._edgesDefs;
-    if (!this._edgesDefs) {
-      defs = this._edgesDefs = this.svgChild.append("defs");
-    }
+    const edgesDefs = this.edgesDefs;
 
     const showLog = this.showDebugMessages;
     if (showLog) console.log("edges");
@@ -291,13 +302,13 @@ export class CausalViewStructure extends EventTarget {
           .attr("class", "edge")
           .attr("fill", "none")
           .attr("stroke-width", 3)
-          .attr("stroke", ({ source, target }) => {
+          .attr("stroke", function ({ source, target }) {
             // Edges gradients
             const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
               source.data["Id"],
               target.data["Id"]
             );
-            const grad = defs
+            const grad = edgesDefs
               .append("linearGradient")
               .attr("id", gradId)
               .attr("gradientUnits", "userSpaceOnUse");
@@ -318,7 +329,7 @@ export class CausalViewStructure extends EventTarget {
               target.data["Id"]
             );
             const isEdgeImplementation =
-              this._implementationEdgesSet.has(edgeId);
+              this.implementationEdgesSet.has(edgeId);
             return isEdgeImplementation ? "" : "5,5";
           })
           .attr("marker-end", "url(#arrowId)");
@@ -352,12 +363,12 @@ export class CausalViewStructure extends EventTarget {
   }
 
   updateEdges() {
-    const nodeWidth = this._nodeWidth;
-    const nodeHeight = this._nodeHeight;
+    const nodeWidth = this.nodeWidth;
+    const nodeHeight = this.nodeHeight;
 
     const edgePathsSelection = d3.selectAll(".edge");
     edgePathsSelection.attr("d", (d) => {
-      return this._line([
+      return this.line([
         { x: d.source.x + nodeWidth / 2, y: d.source.y + nodeHeight / 2 },
         { x: d.target.x + nodeWidth / 2, y: d.target.y + nodeHeight / 2 },
       ]);

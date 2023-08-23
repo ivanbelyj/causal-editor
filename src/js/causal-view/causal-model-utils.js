@@ -55,6 +55,7 @@ export class CausalModelUtils {
     return `.id-${nodeId}`;
   }
 
+  // Pascal case due to the causal model format
   static createFactorExpression() {
     return {
       $type: "factor",
@@ -62,6 +63,22 @@ export class CausalModelUtils {
         Probability: 1,
         CauseId: null,
       },
+    };
+  }
+
+  static createNewFactWithFactor() {
+    return {
+      Id: null,
+      ProbabilityNest: {
+        CausesExpression: {
+          $type: "factor",
+          Edge: {
+            Probability: 1,
+            CauseId: null,
+          },
+        },
+      },
+      NodeValue: "New Fact",
     };
   }
 }
