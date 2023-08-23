@@ -16,6 +16,7 @@ export class NodeValueComponent {
     this.titleInput = this.appendInputItem({
       name: "Title",
       inputId: "node-title-input",
+      dontShowLabel: true,
     });
     this.valueInput = this.appendInputItem({
       name: "Node Value",
@@ -42,9 +43,11 @@ export class NodeValueComponent {
   }
 
   // Returns input (or textarea) containing in input-item
-  appendInputItem({ name, inputId, isReadonly, useTextArea }) {
+  appendInputItem({ name, inputId, isReadonly, useTextArea, dontShowLabel }) {
     const inputItem = this.component.append("div").attr("class", "input-item");
-    inputItem.append("label").attr("class", "input-item__label").text(name);
+
+    if (!dontShowLabel)
+      inputItem.append("label").attr("class", "input-item__label").text(name);
     const input = inputItem
       .append(useTextArea ? "textarea" : "input")
       .attr(

@@ -19,7 +19,7 @@ const defaultConfig = {
             {
               type: "component",
               componentName: "Node Value",
-              height: 25,
+              height: 22,
             },
             {
               type: "component",

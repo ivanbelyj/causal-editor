@@ -39,7 +39,7 @@ module.exports = {
       submenu: [
         {
           label: "New",
-          accelerator: "CmdOrCtrl+S",
+          accelerator: "CmdOrCtrl+N",
           click: getInitiateActionCallback("new"),
         },
         {
@@ -146,7 +146,7 @@ module.exports = {
       role: "help",
       submenu: [
         {
-          label: "GitHub",
+          label: "GitHub repository",
           click: async () => {
             await shell.openExternal(
               "https://github.com/ivanbelyj/causal-editor"
