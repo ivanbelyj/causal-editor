@@ -6,7 +6,7 @@ import { CausalModelUtils } from "./causal-model-utils.js";
 // (node click, enter, etc.)
 export class CausalViewStructure extends EventTarget {
   // ===== Set in constructor / init =====
-  showDebugMessages = true;
+  showDebugMessages = false;
 
   nodeWidth = 140;
   nodeHeight = 40;
@@ -39,9 +39,7 @@ export class CausalViewStructure extends EventTarget {
       ]);
 
     const width = parseFloat(svgParent.style("width"));
-    const height = (this.svgParentInitialHeight = parseFloat(
-      svgParent.style("height")
-    ));
+    const height = parseFloat(svgParent.style("height"));
 
     this.svg = svgParent
       .append("svg")
@@ -80,7 +78,7 @@ export class CausalViewStructure extends EventTarget {
     this.setDag(causalModelFacts);
 
     const { width: dagWidth, height: dagHeight } = this.layout(this.mutGraph);
-    this.svg.attr("viewBox", [0, 0, dagWidth, dagHeight].join(" "));
+    // this.svg.attr("viewBox", [0, 0, dagWidth, dagHeight].join(" "));
 
     this.nodesParent.html("");
     this.edgesParent.html("");
@@ -101,16 +99,14 @@ export class CausalViewStructure extends EventTarget {
   // получения набора ребер-реализаций абстрактных фактов в виде строк
   setDag(causalModelFacts) {
     this.implementationEdgesSet = new Set();
-    const structure = this;
     this.mutGraph = d3dag
       .graphStratify()
       .id(({ Id: id }) => id)
-      .parentIds((node) => {
-        return structure.addNodeParentsToSet(
-          node,
-          structure.implementationEdgesSet
-        );
-      })(causalModelFacts);
+      .parentIds(
+        function (node) {
+          return this.addNodeParentsToSet(node, this.implementationEdgesSet);
+        }.bind(this)
+      )(causalModelFacts);
   }
 
   // Причинно-следственные связи преобразуются в id-based parent data,
@@ -281,16 +277,38 @@ export class CausalViewStructure extends EventTarget {
     }
   }
 
+  edgeDataToString(d) {
+    return `edge (${d.source.data.NodeValue}, ${d.target.data.NodeValue})`;
+  }
+
+  printEdge(d) {
+    console.log(this.edgeDataToString(d));
+  }
+
+  // Todo: fix bug
+  // 1. create new (empty) causal model
+  // 2. create three nodes and two probability edges
+  // 3. the second edge has no gradient or color
+  // Ids of two linear gradients in defs are same
   renderEdges() {
+    console.log(
+      "render edges. links",
+      [...this.mutGraph.links()].map((d) => this.edgeDataToString(d), this)
+    );
     const edgePathsSelection = d3
       .select(".edges-parent")
       .selectAll("path")
-      .data(this.mutGraph.links(), (d) =>
-        CausalModelUtils.sourceAndTargetIdsToEdgeId(d.source.Id, d.target.Id)
-      );
+      .data(this.mutGraph.links(), (d) => {
+        return CausalModelUtils.sourceAndTargetIdsToEdgeId(
+          d.source.Id,
+          d.target.Id
+        );
+      });
 
     // For edges gradients
     const edgesDefs = this.edgesDefs;
+
+    const edgeDataToString = this.edgeDataToString;
 
     const showLog = this.showDebugMessages;
     if (showLog) console.log("edges");
@@ -303,11 +321,19 @@ export class CausalViewStructure extends EventTarget {
           .attr("fill", "none")
           .attr("stroke-width", 3)
           .attr("stroke", function ({ source, target }) {
+            // console.log(
+            //   "set stroke for edge",
+            //   edgeDataToString({ source, target })
+            // );
             // Edges gradients
             const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
               source.data["Id"],
               target.data["Id"]
             );
+            // console.log("id of new gradient", gradId);
+            // console.log("source", source);
+            // console.log("target", target);
+
             const grad = edgesDefs
               .append("linearGradient")
               .attr("id", gradId)
@@ -321,7 +347,6 @@ export class CausalViewStructure extends EventTarget {
               .attr("offset", "100%")
               .attr("stop-color", target.data.color ?? "#aaa");
             return `url(#${gradId})`;
-            //
           })
           .attr("stroke-dasharray", ({ source, target }) => {
             const edgeId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
@@ -367,6 +392,7 @@ export class CausalViewStructure extends EventTarget {
     const nodeHeight = this.nodeHeight;
 
     const edgePathsSelection = d3.selectAll(".edge");
+    // d3.select(".edges-parent").selectAll("path");
     edgePathsSelection.attr("d", (d) => {
       return this.line([
         { x: d.source.x + nodeWidth / 2, y: d.source.y + nodeHeight / 2 },
@@ -376,9 +402,10 @@ export class CausalViewStructure extends EventTarget {
 
     // Gradients
     edgePathsSelection.attr("stroke", ({ source, target }) => {
+      this.printEdge({ source, target });
       const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
-        source.data["Id"],
-        target.data["Id"]
+        source.data.Id,
+        target.data.Id
       );
       d3.select(`#${gradId}`)
         .attr("x1", source.x)
@@ -387,7 +414,5 @@ export class CausalViewStructure extends EventTarget {
         .attr("y2", target.y);
       return `url(#${gradId})`;
     });
-
-    return edgePathsSelection;
   }
 }

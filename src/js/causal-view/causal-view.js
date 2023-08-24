@@ -26,6 +26,12 @@ export class CausalView {
         api.sendNodes(this.nodes());
       }.bind(this)
     );
+    api.onOpenFile(
+      function (event, data) {
+        console.log("open data", data);
+        this.reset(data);
+      }.bind(this)
+    );
     this.api = api;
 
     const causalView = (this.component = d3.select(selector));
@@ -50,10 +56,10 @@ export class CausalView {
     // Test of reset
     setTimeout(
       function () {
-        console.log("reset with deleted!");
-        const facts = JSON.parse(factsCollection);
-        facts.splice(0, 6);
-        this.reset(facts);
+        // console.log("reset with deleted!");
+        // const facts = JSON.parse(factsCollection);
+        // facts.splice(0, 6);
+        // this.reset(facts);
       }.bind(this),
       500
     );

@@ -23,24 +23,28 @@ class FilesManager {
               this.currentFilePath = saveRes.filePath;
             }
             break;
-          case "open":
-            const { openDialogRes, data } = await FileOperations.open();
-            if (!openDialogRes.canceled) {
-              this.currentFilePath = openDialogRes.filePaths[0];
-              // Todo: set data to causal model
-            }
-            break;
           case "save":
             await FileOperations.save(this.currentFilePath, nodes);
             break;
-          case "new":
-          // Todo: reset current causal model and app
         }
 
-        if (this.action != "new" && this.currentFilePath)
+        if (/*this.action != "new" && */ this.currentFilePath)
           this.setTitleFromFullPath(this.currentFilePath);
       }.bind(this)
     );
+  }
+
+  static newFileData() {
+    return [];
+  }
+
+  static async openFileData() {
+    const { openDialogRes, data } = await FileOperations.open();
+    if (!openDialogRes.canceled) {
+      this.currentFilePath = openDialogRes.filePaths[0];
+      return data;
+    }
+    return null;
   }
 
   setTitleFromFullPath(fullPath) {
@@ -48,7 +52,7 @@ class FilesManager {
     BrowserWindow.getFocusedWindow().setTitle(`${pathBase} - Causal Editor`);
   }
 
-  initiateAction(actionName) {
+  initiateSaveAction(actionName) {
     this.action = actionName;
     BrowserWindow.getFocusedWindow().webContents.send("get-nodes-request");
   }

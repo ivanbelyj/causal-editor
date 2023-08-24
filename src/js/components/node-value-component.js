@@ -18,6 +18,8 @@ export class NodeValueComponent {
       inputId: "node-title-input",
       dontShowLabel: true,
     });
+    // Todo: fix bug
+    // Node value after changing textarea is not modified
     this.valueInput = this.appendInputItem({
       name: "Node Value",
       inputId: "node-id-input",

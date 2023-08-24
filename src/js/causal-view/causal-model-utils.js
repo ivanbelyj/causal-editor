@@ -61,11 +61,11 @@ export class CausalModelUtils {
       $type: "factor",
       Edge: {
         Probability: 1,
-        CauseId: null,
       },
     };
   }
 
+  static lastCreatedFactNumber = 0;
   static createNewFactWithFactor() {
     return {
       Id: null,
@@ -74,11 +74,10 @@ export class CausalModelUtils {
           $type: "factor",
           Edge: {
             Probability: 1,
-            CauseId: null,
           },
         },
       },
-      NodeValue: "New Fact",
+      NodeValue: `New Fact ${++CausalModelUtils.lastCreatedFactNumber}`,
     };
   }
 }

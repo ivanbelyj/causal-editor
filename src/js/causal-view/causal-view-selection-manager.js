@@ -1,7 +1,7 @@
 import { CausalModelUtils } from "./causal-model-utils.js";
 import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
-const nodeSelectionStrokeWidth = 12;
+const nodeSelectionStrokeWidth = 4;
 
 export class CausalViewSelectionManager extends EventTarget {
   selectedNodesIds = null;

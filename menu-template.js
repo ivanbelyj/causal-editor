@@ -1,13 +1,17 @@
-const { nativeTheme, shell } = require("electron");
+const { nativeTheme, shell, ipcMain, BrowserWindow } = require("electron");
 const { FilesManager } = require("./files-manager.js");
 
 const filesManager = new FilesManager();
 
-const getInitiateActionCallback = (actionName) => () =>
-  filesManager.initiateAction(actionName);
-
 function switchTheme(theme) {
   nativeTheme.themeSource = theme;
+}
+
+function sendOpenFile(causalModelFacts) {
+  BrowserWindow.getFocusedWindow().webContents.send(
+    "open-file",
+    causalModelFacts
+  );
 }
 
 const isMac = process.platform === "darwin";
@@ -40,22 +44,25 @@ module.exports = {
         {
           label: "New",
           accelerator: "CmdOrCtrl+N",
-          click: getInitiateActionCallback("new"),
+          click: () => sendOpenFile(FilesManager.newFileData()),
         },
         {
           label: "Open",
           accelerator: "CmdOrCtrl+O",
-          click: getInitiateActionCallback("open"),
+          click: async () => {
+            const data = await FilesManager.openFileData();
+            sendOpenFile(data);
+          },
         },
         {
           label: "Save",
           accelerator: "CmdOrCtrl+S",
-          click: getInitiateActionCallback("save"),
+          click: () => filesManager.initiateSaveAction("save"),
         },
         {
           label: "Save as...",
           accelerator: "CmdOrCtrl+Shift+S",
-          click: getInitiateActionCallback("save-as"),
+          click: () => filesManager.initiateSaveAction("save-as"),
         },
 
         isMac ? { role: "close" } : { role: "quit" },

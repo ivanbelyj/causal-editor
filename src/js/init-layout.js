@@ -49,7 +49,7 @@ export const initLayout = () => {
   layout.on("initialised", () => {
     const causalView = new CausalView(".causal-view", window.api);
     const causalModelFacts = JSON.parse(factsCollection);
-    causalView.init(causalModelFacts);
+    causalView.init([]);
 
     const nodeValueComponent = new NodeValueComponent(
       ".node-value-component",
