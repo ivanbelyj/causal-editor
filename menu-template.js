@@ -44,14 +44,14 @@ module.exports = {
         {
           label: "New",
           accelerator: "CmdOrCtrl+N",
-          click: () => sendOpenFile(FilesManager.newFileData()),
+          click: () => sendOpenFile(filesManager.openNewFileData()),
         },
         {
           label: "Open",
           accelerator: "CmdOrCtrl+O",
           click: async () => {
-            const data = await FilesManager.openFileData();
-            sendOpenFile(data);
+            const data = await filesManager.openFileData();
+            if (data) sendOpenFile(data);
           },
         },
         {

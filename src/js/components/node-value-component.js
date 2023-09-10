@@ -18,8 +18,6 @@ export class NodeValueComponent {
       inputId: "node-title-input",
       dontShowLabel: true,
     });
-    // Todo: fix bug
-    // Node value after changing textarea is not modified
     this.valueInput = this.appendInputItem({
       name: "Node Value",
       inputId: "node-id-input",
@@ -32,9 +30,9 @@ export class NodeValueComponent {
       isReadonly: true,
     });
 
-    this.titleInput
-      .merge(this.valueInput)
-      .on("change", this.onChange.bind(this));
+    [this.titleInput, this.valueInput].forEach((x) =>
+      x.on("change", this.onChange.bind(this))
+    );
 
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
@@ -82,6 +80,11 @@ export class NodeValueComponent {
 
     this.causalModelFact.Title = this.titleInput.property("value");
     this.causalModelFact.NodeValue = this.valueInput.property("value");
+    console.log(
+      "new value and title: ",
+      this.causalModelFact.NodeValue,
+      this.causalModelFact.Title
+    );
 
     this.causalView.structure.render();
   }

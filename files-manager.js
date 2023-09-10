@@ -2,9 +2,18 @@ const { ipcMain, BrowserWindow } = require("electron");
 const { FileOperations } = require("./file-operations.js");
 const path = require("path");
 
+const appDefaultTitle = "Causal Editor";
+
 class FilesManager {
   action;
-  currentFilePath;
+  _currentFilePath;
+  get currentFilePath() {
+    return this._currentFilePath;
+  }
+  set currentFilePath(val) {
+    this._currentFilePath = val;
+    this.setTitleFromFullPath(this._currentFilePath);
+  }
 
   constructor() {
     ipcMain.on(
@@ -27,18 +36,16 @@ class FilesManager {
             await FileOperations.save(this.currentFilePath, nodes);
             break;
         }
-
-        if (/*this.action != "new" && */ this.currentFilePath)
-          this.setTitleFromFullPath(this.currentFilePath);
       }.bind(this)
     );
   }
 
-  static newFileData() {
+  openNewFileData() {
+    this.currentFilePath = null;
     return [];
   }
 
-  static async openFileData() {
+  async openFileData() {
     const { openDialogRes, data } = await FileOperations.open();
     if (!openDialogRes.canceled) {
       this.currentFilePath = openDialogRes.filePaths[0];
@@ -48,8 +55,15 @@ class FilesManager {
   }
 
   setTitleFromFullPath(fullPath) {
-    const pathBase = path.parse(fullPath).base;
-    BrowserWindow.getFocusedWindow().setTitle(`${pathBase} - Causal Editor`);
+    let titleToSet;
+    if (fullPath) {
+      const pathBase = path.parse(fullPath).base;
+      titleToSet = `${pathBase} - ${appDefaultTitle}`;
+    } else {
+      titleToSet = `${appDefaultTitle}`;
+    }
+
+    BrowserWindow.getFocusedWindow().setTitle(titleToSet);
   }
 
   initiateSaveAction(actionName) {
