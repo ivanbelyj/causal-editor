@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import * as d3dag from "d3-dag";
+// import { zoom } from "d3-zoom";
 import { CausalModelUtils } from "./causal-model-utils.js";
 
 // Displays interactive causal view elements and provides some of their common events
@@ -38,9 +39,6 @@ export class CausalViewStructure extends EventTarget {
         3 * this.nodeHeight,
       ]);
 
-    const width = parseFloat(svgParent.style("width"));
-    const height = parseFloat(svgParent.style("height"));
-
     this.svg = svgParent
       .append("svg")
       .attr("width", "100%")
@@ -51,7 +49,7 @@ export class CausalViewStructure extends EventTarget {
       .attr("class", "causal-view__svg-child");
     this.svgChild = svgChild;
 
-    this.addZoom(this.svg, svgChild, width, height);
+    this.addZoom();
 
     this.edgesParent = svgChild.append("g").attr("class", "edges-parent");
     this.nodesParent = svgChild.append("g").attr("class", "nodes-parent");
@@ -62,22 +60,54 @@ export class CausalViewStructure extends EventTarget {
     }
   }
 
-  addZoom(svg, svgChild, width, height) {
-    svg.call(
-      d3.zoom().on(
-        "zoom",
-        function () {
-          svgChild.attr("transform", () => d3.zoomTransform(this.svg.node()));
-          this.dispatchEvent(new Event("zoomed"));
-        }.bind(this)
-      )
+  setInitialZoom() {
+    // Calculate initial scale factor
+    const isNotEmpty = this.dagWidth > 0;
+
+    const scaleFactor = isNotEmpty
+      ? Math.min(
+          this.svg.node().clientWidth / this.dagWidth,
+          this.svg.node().clientHeight / this.dagHeight
+        )
+      : null;
+
+    // Calculate translation coordinates
+    const translateX =
+      (this.svg.node().clientWidth - this.dagWidth * scaleFactor) / 2;
+    const translateY =
+      (this.svg.node().clientHeight - this.dagHeight * scaleFactor) / 2;
+
+    // Apply initial zoom and center the graph
+    this.svg
+      .transition()
+      .duration(750)
+      .call(
+        this.zoom.transform,
+        isNotEmpty
+          ? d3.zoomIdentity.translate(translateX, translateY).scale(scaleFactor)
+          : d3.zoomIdentity
+      );
+  }
+
+  addZoom() {
+    this.zoom = d3.zoom().on(
+      "zoom",
+      function () {
+        this.svgChild.attr("transform", () =>
+          d3.zoomTransform(this.svg.node())
+        );
+        this.dispatchEvent(new Event("zoomed"));
+      }.bind(this)
     );
+    this.svg.call(this.zoom);
   }
 
   reset(causalModelFacts) {
     this.setDag(causalModelFacts);
 
     const { width: dagWidth, height: dagHeight } = this.layout(this.mutGraph);
+    this.dagWidth = dagWidth;
+    this.dagHeight = dagHeight;
     // this.svg.attr("viewBox", [0, 0, dagWidth, dagHeight].join(" "));
 
     this.nodesParent.html("");
@@ -103,25 +133,28 @@ export class CausalViewStructure extends EventTarget {
       .graphStratify()
       .id(({ Id: id }) => id)
       .parentIds(
-        function (node) {
-          return this.addNodeParentsToSet(node, this.implementationEdgesSet);
+        function (causalModelFact) {
+          return CausalModelUtils.getCausesIdsUnique(causalModelFact);
+          // return this.addNodeParentsToSet(node, this.implementationEdgesSet);
         }.bind(this)
       )(causalModelFacts);
   }
 
+  // Todo: implementation edges set
+
   // Причинно-следственные связи преобразуются в id-based parent data,
   // предназначенные для отображения
-  addNodeParentsToSet(node, implementationEdgesSet) {
-    const res = CausalModelUtils.findCauseIds(node["ProbabilityNest"]);
-    const abstractFactId = node["AbstractFactId"];
-    if (abstractFactId) {
-      if (!res.includes(abstractFactId)) res.push(abstractFactId);
-      implementationEdgesSet.add(
-        CausalModelUtils.sourceAndTargetIdsToEdgeId(abstractFactId, node["Id"])
-      );
-    }
-    return res;
-  }
+  // addNodeParentsToSet(node, implementationEdgesSet) {
+  //   const res = CausalModelUtils.findCauseIds(node["ProbabilityNest"]);
+  //   const abstractFactId = node["AbstractFactId"];
+  //   if (abstractFactId) {
+  //     if (!res.includes(abstractFactId)) res.push(abstractFactId);
+  //     implementationEdgesSet.add(
+  //       CausalModelUtils.sourceAndTargetIdsToEdgeId(abstractFactId, node["Id"])
+  //     );
+  //   }
+  //   return res;
+  // }
 
   addNode(causalModelFact, nodeData) {
     const newNode = this.mutGraph.node(causalModelFact);
@@ -290,6 +323,7 @@ export class CausalViewStructure extends EventTarget {
   // 2. create three nodes and two probability edges
   // 3. the second edge has no gradient or color
   // Ids of two linear gradients in defs are same
+  // All is displayed after reload
   renderEdges() {
     console.log(
       "render edges. links",

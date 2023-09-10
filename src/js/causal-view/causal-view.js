@@ -67,6 +67,7 @@ export class CausalView {
 
   reset(causalModelFacts) {
     this.structure.reset(causalModelFacts);
+    this.structure.setInitialZoom();
   }
 
   nodes() {

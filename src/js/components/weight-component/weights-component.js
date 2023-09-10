@@ -25,27 +25,33 @@ export class WeightsComponent {
     if (causalModelFact) this.reset(causalModelFact);
   }
 
+  addDefaultWeightEdge(useAbstractFactId) {
+    const abstrId = this.causalModelFact.AbstractFactId ?? null;
+    const newItem = {
+      Weight: 1,
+      CauseId: useAbstractFactId ? abstrId : null,
+    };
+    this.weights.push(newItem);
+    this.appendItem(newItem);
+
+    if (abstrId) this.causesChangeManager.onCausesAdd([abstrId]);
+  }
+
   reset(causalModelFact) {
     this.component.html("");
+    if (!causalModelFact) return;
 
     this.causalModelFact = causalModelFact;
     this.causesChangeManager.reset(causalModelFact);
+
+    this.appendAbstractFactIdInput();
 
     // Button to add new items
     const addButton = this.component
       .append("button")
       .attr("class", "button input-item")
       .text("Add Weight Edge")
-      .on(
-        "click",
-        function (event) {
-          const newItem = {};
-          this.weights.push(newItem);
-          this.appendItem(newItem);
-          // Now the new item is empty so it's not necessary to track
-          // causes change
-        }.bind(this)
-      );
+      .on("click", () => this.addDefaultWeightEdge());
 
     this.resetItems();
   }
@@ -64,6 +70,27 @@ export class WeightsComponent {
     for (const weightEdge of this.weights) {
       this.appendItem(weightEdge);
     }
+  }
+
+  appendAbstractFactIdInput() {
+    this.component
+      .append("label")
+      .attr("class", "input-item__label")
+      .text("Abstract Fact Id");
+
+    new SelectNodeElement(
+      this.component.append("div").node(),
+      this.causalView,
+      function (newId) {
+        const oldCauseId = this.causalModelFact.AbstractFactId;
+        this.causalModelFact.AbstractFactId = newId;
+        this.causesChangeManager.onCauseIdChange(oldCauseId, newId);
+
+        // Add first weight edge
+        if (!this.causalModelFact.WeightNest?.Weights?.length)
+          this.addDefaultWeightEdge(true);
+      }.bind(this)
+    ).init(this.causalModelFact.AbstractFactId);
   }
 
   appendItem(weightEdge) {

@@ -3,6 +3,7 @@ import * as d3 from "d3";
 export class NodeValueComponent {
   causalView = null;
   selector = null;
+  causalModelFact = null;
 
   constructor(selector, causalView) {
     this.selector = selector;
@@ -10,8 +11,25 @@ export class NodeValueComponent {
     this.causalView = causalView;
   }
 
-  init() {
+  init(causalModelFact) {
     this.component.attr("class", "component");
+
+    this.causalView.selectionManager.addEventListener(
+      "singleNodeSelected",
+      function (event) {
+        const causalModelFact = event.data.node.data;
+        this.reset(causalModelFact);
+      }.bind(this)
+    );
+
+    if (causalModelFact) this.reset(causalModelFact);
+  }
+
+  reset(causalModelFact) {
+    this.component.html("");
+    if (!causalModelFact) return;
+
+    this.causalModelFact = causalModelFact;
 
     this.titleInput = this.appendInputItem({
       name: "Title",
@@ -34,12 +52,17 @@ export class NodeValueComponent {
       x.on("change", this.onChange.bind(this))
     );
 
-    this.causalView.selectionManager.addEventListener(
-      "singleNodeSelected",
-      function (event) {
-        this.onSingleNodeSelected(event);
-      }.bind(this)
-    );
+    this.update({
+      id: causalModelFact["Id"],
+      title: causalModelFact["Title"],
+      value: causalModelFact["NodeValue"],
+    });
+  }
+
+  update({ id, title, value }) {
+    this.idInput.property("value", id ?? "");
+    this.titleInput.property("value", title ?? "");
+    this.valueInput.property("value", value ?? "");
   }
 
   // Returns input (or textarea) containing in input-item
@@ -64,17 +87,6 @@ export class NodeValueComponent {
     return input;
   }
 
-  onSingleNodeSelected(event) {
-    const nodeData = event.data.node.data;
-    this.causalModelFact = nodeData;
-
-    this.update({
-      id: nodeData["Id"],
-      title: nodeData["Title"],
-      value: nodeData["NodeValue"],
-    });
-  }
-
   onChange() {
     if (!this.causalModelFact) return;
 
@@ -87,11 +99,5 @@ export class NodeValueComponent {
     );
 
     this.causalView.structure.render();
-  }
-
-  update({ id, title, value }) {
-    this.idInput.property("value", id ?? "");
-    this.titleInput.property("value", title ?? "");
-    this.valueInput.property("value", value ?? "");
   }
 }

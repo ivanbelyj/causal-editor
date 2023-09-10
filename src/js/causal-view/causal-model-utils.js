@@ -34,15 +34,15 @@ export class CausalModelUtils {
   }
 
   static getCausesIdsUnique(causalModelFact) {
-    return [
-      ...new Set(
-        CausalModelUtils.findCauseIds(
-          causalModelFact.ProbabilityNest.CausesExpression
-          // There are no removed expr in root causesExpression
-        ).concat(CausalModelUtils.getWeightsEdgesIds(causalModelFact))
-        // And there are no removed weight edges
+    const idsAll = [
+      ...CausalModelUtils.findCauseIds(
+        causalModelFact.ProbabilityNest.CausesExpression
       ),
+      ...CausalModelUtils.getWeightsEdgesIds(causalModelFact),
     ];
+    if (causalModelFact.AbstractFactId)
+      idsAll.push(causalModelFact.AbstractFactId);
+    return [...new Set(idsAll)];
   }
 
   // Edges are identified by source and target ids
