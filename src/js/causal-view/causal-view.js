@@ -28,7 +28,7 @@ export class CausalView {
     );
     api.onOpenFile(
       function (event, data) {
-        console.log("open data", data);
+        // console.log("open data", data);
         this.reset(data);
       }.bind(this)
     );

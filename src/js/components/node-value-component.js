@@ -92,11 +92,6 @@ export class NodeValueComponent {
 
     this.causalModelFact.Title = this.titleInput.property("value");
     this.causalModelFact.NodeValue = this.valueInput.property("value");
-    console.log(
-      "new value and title: ",
-      this.causalModelFact.NodeValue,
-      this.causalModelFact.Title
-    );
 
     this.causalView.structure.render();
   }

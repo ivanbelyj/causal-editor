@@ -34,7 +34,8 @@ export class WeightsComponent {
     this.weights.push(newItem);
     this.appendItem(newItem);
 
-    if (abstrId) this.causesChangeManager.onCausesAdd([abstrId]);
+    // If Abstract Fact Id exists, it is already tracked
+    // if (abstrId) this.causesChangeManager.onCausesAdd([abstrId]);
   }
 
   reset(causalModelFact) {

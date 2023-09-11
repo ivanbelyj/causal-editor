@@ -317,24 +317,19 @@ export class CausalViewStructure extends EventTarget {
     console.log(this.edgeDataToString(d));
   }
 
-  // Todo: fix bug
-  // 1. create new (empty) causal model
-  // 2. create three nodes and two probability edges
-  // 3. the second edge has no gradient or color
-  // Ids of two linear gradients in defs are same
-  // All is displayed after reload
   renderEdges() {
-    console.log(
-      "render edges. links",
-      [...this.mutGraph.links()].map((d) => this.edgeDataToString(d), this)
-    );
+    if (this.showDebugMessages)
+      console.log(
+        "render edges. links",
+        [...this.mutGraph.links()].map((d) => this.edgeDataToString(d), this)
+      );
     const edgePathsSelection = d3
       .select(".edges-parent")
       .selectAll("path")
-      .data(this.mutGraph.links(), (d) => {
+      .data(this.mutGraph.links(), ({ source, target }) => {
         return CausalModelUtils.sourceAndTargetIdsToEdgeId(
-          d.source.Id,
-          d.target.Id
+          source.data.Id,
+          target.data.Id
         );
       });
 
@@ -354,18 +349,11 @@ export class CausalViewStructure extends EventTarget {
           .attr("fill", "none")
           .attr("stroke-width", 3)
           .attr("stroke", function ({ source, target }) {
-            // console.log(
-            //   "set stroke for edge",
-            //   edgeDataToString({ source, target })
-            // );
             // Edges gradients
             const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
               source.data["Id"],
               target.data["Id"]
             );
-            // console.log("id of new gradient", gradId);
-            // console.log("source", source);
-            // console.log("target", target);
 
             const grad = edgesDefs
               .append("linearGradient")
@@ -419,7 +407,6 @@ export class CausalViewStructure extends EventTarget {
     edgePathsSelection.attr("stroke-dasharray", ({ source, target }) => {
       const nodeSrc = source.data;
       const nodeTarget = target.data;
-      console.log("src and target", nodeSrc, nodeTarget);
 
       return nodeTarget.AbstractFactId &&
         nodeTarget.AbstractFactId == nodeSrc.Id
@@ -436,7 +423,7 @@ export class CausalViewStructure extends EventTarget {
 
     // Gradients
     edgePathsSelection.attr("stroke", ({ source, target }) => {
-      this.printEdge({ source, target });
+      // this.printEdge({ source, target });
       const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
         source.data.Id,
         target.data.Id
