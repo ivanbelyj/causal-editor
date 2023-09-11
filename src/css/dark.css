@@ -15,7 +15,7 @@ img[src*=".svg"] {
   filter: var(--icon-filter);
 }
 
-/* .causal-view__svg-child rect,
+.causal-view__svg-child rect,
 .causal-view__svg-child path {
-  filter: grayscale(30%) brightness(40%);
-} */
+  filter: grayscale(10%) brightness(80%);
+}

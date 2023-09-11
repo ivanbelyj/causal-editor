@@ -15,6 +15,11 @@ export class ProbabilityBlock {
     this.causalModelFact = causalModelFact;
     this.causesChangeManager.reset(causalModelFact);
 
+    if (!causalModelFact) {
+      this.content.html("");
+      return;
+    }
+
     const rootCausesExpr =
       this.causalModelFact?.ProbabilityNest?.CausesExpression;
     if (!this.rootCausesItem) {

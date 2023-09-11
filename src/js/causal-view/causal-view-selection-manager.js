@@ -27,6 +27,13 @@ export class CausalViewSelectionManager extends EventTarget {
         this.getSelectionStrokeWidthIgnoreZoom()
       );
     });
+
+    this.reset();
+  }
+
+  reset() {
+    this.selectedNodesIds = null;
+    this.isSelectByClick = true;
   }
 
   setSelectedAppearance(nodeId) {

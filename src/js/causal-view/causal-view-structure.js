@@ -116,7 +116,7 @@ export class CausalViewStructure extends EventTarget {
     this.render();
   }
 
-  // Todo:
+  // Todo: scale extent
   updateScaleExtent() {
     const defaultMinScale = 0.5;
     this.zoom.scaleExtent([

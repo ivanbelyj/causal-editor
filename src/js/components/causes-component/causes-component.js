@@ -2,9 +2,15 @@ import * as d3 from "d3";
 import { ProbabilityBlock } from "./probability-block.js";
 
 export class CausesComponent {
-  constructor(selector, causalView) {
+  constructor(selector, causalView, api) {
     this.component = d3.select(selector);
     this.causalView = causalView;
+
+    api.onReset(
+      function (event, data) {
+        this.reset(null);
+      }.bind(this)
+    );
   }
 
   // Actions that are relevant to CausesComponent regardless of causalModelFact structure.

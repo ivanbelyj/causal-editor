@@ -9,9 +9,16 @@ function switchTheme(theme) {
 
 function sendOpenFile(causalModelFacts) {
   BrowserWindow.getFocusedWindow().webContents.send(
-    "open-file",
+    "open-causal-model",
     causalModelFacts
   );
+
+  sendReset();
+}
+
+// Resets UI
+function sendReset() {
+  BrowserWindow.getFocusedWindow().webContents.send("reset");
 }
 
 const isMac = process.platform === "darwin";

@@ -26,7 +26,7 @@ export class CausalView {
         api.sendNodes(this.nodes());
       }.bind(this)
     );
-    api.onOpenFile(
+    api.onOpenCausalModel(
       function (event, data) {
         // console.log("open data", data);
         this.reset(data);

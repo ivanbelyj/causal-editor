@@ -16,7 +16,8 @@ contextBridge.exposeInMainWorld("api", {
   onGetNodesRequest: (func) => on("get-nodes-request", func),
   onCreateNode: (func) => on("create-node", func),
   onRemoveNode: (func) => on("remove-node", func),
-  onOpenFile: (func) => on("open-file", func),
+  onOpenCausalModel: (func) => on("open-causal-model", func),
+  onReset: (func) => on("reset", func),
 });
 
 function send(channelName, data) {

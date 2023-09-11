@@ -47,25 +47,29 @@ export const initLayout = () => {
   registerComponent(layout, "Weights", "weights-component");
 
   layout.on("initialised", () => {
-    const causalView = new CausalView(".causal-view", window.api);
+    const api = window.api;
+    const causalView = new CausalView(".causal-view", api);
     const causalModelFacts = JSON.parse(factsCollection);
     causalView.init([]);
 
     const nodeValueComponent = new NodeValueComponent(
       ".node-value-component",
-      causalView
+      causalView,
+      api
     );
     nodeValueComponent.init();
 
     const causesComponent = new CausesComponent(
       ".causes-component",
-      causalView
+      causalView,
+      api
     );
     causesComponent.init();
 
     const weightsComponent = new WeightsComponent(
       ".weights-component",
-      causalView
+      causalView,
+      api
     );
     weightsComponent.init();
   });

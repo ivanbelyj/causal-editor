@@ -4,11 +4,17 @@ import { CausesChangeManager } from "../../causal-view/causes-change-manager.js"
 
 // Block is used as a part of a component
 export class WeightsComponent {
-  constructor(selector, causalView) {
+  constructor(selector, causalView, api) {
     // Parent element
     this.component = d3.select(selector);
     this.causalView = causalView;
     this.causesChangeManager = new CausesChangeManager(causalView);
+
+    api.onReset(
+      function (event, data) {
+        this.reset(null);
+      }.bind(this)
+    );
   }
 
   init(causalModelFact) {

@@ -5,10 +5,16 @@ export class NodeValueComponent {
   selector = null;
   causalModelFact = null;
 
-  constructor(selector, causalView) {
+  constructor(selector, causalView, api) {
     this.selector = selector;
     this.component = d3.select(selector);
     this.causalView = causalView;
+
+    api.onReset(
+      function (event, data) {
+        this.reset(null);
+      }.bind(this)
+    );
   }
 
   init(causalModelFact) {
