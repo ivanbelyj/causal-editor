@@ -21,7 +21,6 @@ export class CausalViewStructure extends EventTarget {
   // ===== Set on reset =====
 
   mutGraph; // MutGraph
-  implementationEdgesSet; // Set of impl. edges is required for their special displaying
 
   init(svgParent, causalModelFacts) {
     this.line = d3
@@ -117,6 +116,24 @@ export class CausalViewStructure extends EventTarget {
     this.render();
   }
 
+  // Todo:
+  updateScaleExtent() {
+    const defaultMinScale = 0.5;
+    this.zoom.scaleExtent([
+      this.dagWidth > 0
+        ? Math.min(
+            this.svg.node().clientWidth / this.dagWidth / 2,
+            defaultMinScale
+          )
+        : defaultMinScale,
+      2,
+      // Math.max(
+      //   this.svg.node().clientWidth / this.nodeWidth,
+      //   this.svg.node().clientHeight / this.nodeHeight
+      // ),
+    ]); // Zoom limits
+  }
+
   getNodes() {
     return Array.from(this.mutGraph.nodes());
   }
@@ -128,33 +145,15 @@ export class CausalViewStructure extends EventTarget {
   // Устанавливает dag на основе каузальной модели, а также способ
   // получения набора ребер-реализаций абстрактных фактов в виде строк
   setDag(causalModelFacts) {
-    this.implementationEdgesSet = new Set();
     this.mutGraph = d3dag
       .graphStratify()
       .id(({ Id: id }) => id)
       .parentIds(
         function (causalModelFact) {
           return CausalModelUtils.getCausesIdsUnique(causalModelFact);
-          // return this.addNodeParentsToSet(node, this.implementationEdgesSet);
         }.bind(this)
       )(causalModelFacts);
   }
-
-  // Todo: implementation edges set
-
-  // Причинно-следственные связи преобразуются в id-based parent data,
-  // предназначенные для отображения
-  // addNodeParentsToSet(node, implementationEdgesSet) {
-  //   const res = CausalModelUtils.findCauseIds(node["ProbabilityNest"]);
-  //   const abstractFactId = node["AbstractFactId"];
-  //   if (abstractFactId) {
-  //     if (!res.includes(abstractFactId)) res.push(abstractFactId);
-  //     implementationEdgesSet.add(
-  //       CausalModelUtils.sourceAndTargetIdsToEdgeId(abstractFactId, node["Id"])
-  //     );
-  //   }
-  //   return res;
-  // }
 
   addNode(causalModelFact, nodeData) {
     const newNode = this.mutGraph.node(causalModelFact);
@@ -382,15 +381,6 @@ export class CausalViewStructure extends EventTarget {
               .attr("stop-color", target.data.color ?? "#aaa");
             return `url(#${gradId})`;
           })
-          .attr("stroke-dasharray", ({ source, target }) => {
-            const edgeId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
-              source.data["Id"],
-              target.data["Id"]
-            );
-            const isEdgeImplementation =
-              this.implementationEdgesSet.has(edgeId);
-            return isEdgeImplementation ? "" : "5,5";
-          })
           .attr("marker-end", "url(#arrowId)");
 
         // Add arrows
@@ -426,6 +416,16 @@ export class CausalViewStructure extends EventTarget {
     const nodeHeight = this.nodeHeight;
 
     const edgePathsSelection = d3.selectAll(".edge");
+    edgePathsSelection.attr("stroke-dasharray", ({ source, target }) => {
+      const nodeSrc = source.data;
+      const nodeTarget = target.data;
+      console.log("src and target", nodeSrc, nodeTarget);
+
+      return nodeTarget.AbstractFactId &&
+        nodeTarget.AbstractFactId == nodeSrc.Id
+        ? ""
+        : "5,5";
+    });
     // d3.select(".edges-parent").selectAll("path");
     edgePathsSelection.attr("d", (d) => {
       return this.line([

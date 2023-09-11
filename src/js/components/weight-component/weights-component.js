@@ -87,7 +87,10 @@ export class WeightsComponent {
         this.causesChangeManager.onCauseIdChange(oldCauseId, newId);
 
         // Add first weight edge
-        if (!this.causalModelFact.WeightNest?.Weights?.length)
+        if (
+          !this.causalModelFact.WeightNest?.Weights?.length &&
+          this.causalModelFact.AbstractFactId
+        )
           this.addDefaultWeightEdge(true);
       }.bind(this)
     ).init(this.causalModelFact.AbstractFactId);
