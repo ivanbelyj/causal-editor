@@ -32,6 +32,12 @@ export class CausalView {
         this.reset(data);
       }.bind(this)
     );
+
+    api.onReset(
+      function (event, data) {
+        this.selectionManager.reset();
+      }.bind(this)
+    );
     this.api = api;
 
     const causalView = (this.component = d3.select(selector));

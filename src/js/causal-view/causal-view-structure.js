@@ -41,11 +41,20 @@ export class CausalViewStructure extends EventTarget {
     this.svg = svgParent
       .append("svg")
       .attr("width", "100%")
-      .attr("height", "100%");
+      .attr("height", "100%")
+      .on(
+        "click",
+        function (d, i) {
+          const viewClickedEventData = new Event("viewClicked");
+          viewClickedEventData.data = { d, i };
+          this.dispatchEvent(viewClickedEventData);
+        }.bind(this)
+      );
 
     const svgChild = this.svg
       .append("g")
       .attr("class", "causal-view__svg-child");
+
     this.svgChild = svgChild;
 
     this.addZoom();
@@ -317,6 +326,7 @@ export class CausalViewStructure extends EventTarget {
     console.log(this.edgeDataToString(d));
   }
 
+  // Todo: show probabilities
   renderEdges() {
     if (this.showDebugMessages)
       console.log(

@@ -21,6 +21,7 @@ export class CausalViewSelectionManager extends EventTarget {
     this._structure = structure;
 
     structure.addEventListener("nodeClicked", this.onNodeClicked.bind(this));
+    structure.addEventListener("viewClicked", this.onViewClicked.bind(this));
 
     structure.addEventListener("zoomed", () => {
       d3.selectAll(".node__rect_selected").attr("stroke-width", () =>
@@ -101,9 +102,21 @@ export class CausalViewSelectionManager extends EventTarget {
     this.dispatchEvent(event);
   }
 
+  onViewClicked(event) {
+    if (!this.isSelectByClick) return;
+    this.setSelectedNodesIds([]);
+  }
+
   onNodeClicked(event) {
     if (!this.isSelectByClick) return;
     const nodeData = event.data.i.data;
-    this.setSelectedNodesIds([nodeData["Id"]]);
+    const eventData = event.data.d;
+
+    this.setSelectedNodesIds([
+      ...(eventData.ctrlKey || eventData.metaKey ? this.selectedNodesIds : []),
+      nodeData["Id"],
+    ]);
+
+    eventData.stopPropagation();
   }
 }
