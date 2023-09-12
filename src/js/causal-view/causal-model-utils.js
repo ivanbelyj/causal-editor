@@ -48,11 +48,11 @@ export class CausalModelUtils {
   // Edges are identified by source and target ids
   static sourceAndTargetIdsToEdgeId(source, target) {
     // encodeURIComponents for spaces, hope id doesn't have a `--` in it
-    return encodeURIComponent(`id-${source}--${target}`);
+    return encodeURIComponent(`edge-${source}--${target}`);
   }
 
-  static getNodeIdClassByNodeId(nodeId) {
-    return `.id-${nodeId}`;
+  static getNodeIdClassNameByNodeId(nodeId) {
+    return `node-${nodeId}`;
   }
 
   // Pascal case due to the causal model format

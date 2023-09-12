@@ -15,9 +15,7 @@ export class CausalViewSelectionManager extends EventTarget {
     this._isSelectByClick = val;
   }
 
-  constructor(structure) {
-    super();
-
+  init(structure) {
     this._structure = structure;
 
     structure.addEventListener("nodeClicked", this.onNodeClicked.bind(this));
@@ -38,7 +36,7 @@ export class CausalViewSelectionManager extends EventTarget {
   }
 
   setSelectedAppearance(nodeId) {
-    d3.select(CausalModelUtils.getNodeIdClassByNodeId(nodeId))
+    d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`)
       .raise()
       .select("rect")
       .attr("stroke-width", this.getSelectionStrokeWidthIgnoreZoom())
@@ -54,7 +52,7 @@ export class CausalViewSelectionManager extends EventTarget {
   }
 
   setNotSelectedAppearance(nodeId) {
-    d3.select(CausalModelUtils.getNodeIdClassByNodeId(nodeId))
+    d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`)
       .select("rect")
       .attr("stroke", "none")
       .classed("node__rect_selected", false);
@@ -118,5 +116,16 @@ export class CausalViewSelectionManager extends EventTarget {
     ]);
 
     eventData.stopPropagation();
+  }
+
+  getNodesIdsToDrag(draggedNodeId) {
+    // When dragging one of the selected nodes,
+    // all the selected nodes must be dragged
+    if (this.selectedNodesIds && this.selectedNodesIds.has(draggedNodeId)) {
+      return [...this.selectedNodesIds];
+    } else {
+      // Not selected node is always dragging alone
+      return [draggedNodeId];
+    }
   }
 }

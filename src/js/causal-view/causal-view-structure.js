@@ -22,7 +22,9 @@ export class CausalViewStructure extends EventTarget {
 
   mutGraph; // MutGraph
 
-  init(svgParent, causalModelFacts) {
+  init(svgParent, causalModelFacts, selectionManager) {
+    this.selectionManager = selectionManager;
+
     this.line = d3
       .line()
       .curve(d3.curveCatmullRom)
@@ -224,7 +226,9 @@ export class CausalViewStructure extends EventTarget {
           const enterNodesSelection = enter
             .append("g")
             .attr("class", (d) => {
-              return `node id-${d.data.Id}`;
+              return `node ${CausalModelUtils.getNodeIdClassNameByNodeId(
+                d.data.Id
+              )}`;
             })
             .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
             .on("click", (d, i) => {
@@ -253,7 +257,7 @@ export class CausalViewStructure extends EventTarget {
 
           enterNodesSelection.append("text");
 
-          this.appendNodesDrag(enterNodesSelection);
+          this.addNodesDrag(enterNodesSelection);
         }.bind(this),
         function (update) {
           if (showLog) console.log("update", Array.from(update));
@@ -287,7 +291,7 @@ export class CausalViewStructure extends EventTarget {
       .attr("fill", "var(--color)");
   }
 
-  appendNodesDrag(nodesSelection) {
+  addNodesDrag(nodesSelection) {
     nodesSelection
       .attr("cursor", "grab")
       .call(
@@ -301,20 +305,32 @@ export class CausalViewStructure extends EventTarget {
     function dragStarted() {
       d3.select(this).attr("cursor", "grabbing");
     }
-    const causalView = this;
+    const structure = this;
     function dragged(event, d) {
-      d3.select(this)
-        .attr(
-          "transform",
-          `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`
-        )
-        .raise();
+      const draggedNodeId = d.data.Id;
 
-      causalView.updateEdges();
+      const idsToDrag =
+        structure.selectionManager.getNodesIdsToDrag(draggedNodeId);
+
+      idsToDrag.forEach((id) => {
+        d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(id)}`)
+          .attr("transform", (d) => {
+            return `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`;
+          })
+          .raise();
+      });
+
+      // d3.select(this)
+      //   .attr("transform", () => {
+      //     return `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`;
+      //   })
+      //   .raise();
+
+      structure.updateEdges();
     }
 
     function dragEnded() {
-      nodesSelection.attr("cursor", "grab");
+      d3.select(this).attr("cursor", "grab");
     }
   }
 

@@ -57,7 +57,12 @@ export class CausalView {
     this.nodesManager = new NodesManager(this.structure);
     this.selectionManager = new CausalViewSelectionManager(this.structure);
 
-    this.structure.init(this.component, causalModelFacts);
+    this.selectionManager.init(this.structure);
+    this.structure.init(
+      this.component,
+      causalModelFacts,
+      this.selectionManager
+    );
 
     // Test of reset
     setTimeout(
