@@ -320,12 +320,6 @@ export class CausalViewStructure extends EventTarget {
           .raise();
       });
 
-      // d3.select(this)
-      //   .attr("transform", () => {
-      //     return `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`;
-      //   })
-      //   .raise();
-
       structure.updateEdges();
     }
 

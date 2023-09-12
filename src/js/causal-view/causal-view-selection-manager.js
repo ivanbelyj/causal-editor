@@ -107,13 +107,25 @@ export class CausalViewSelectionManager extends EventTarget {
 
   onNodeClicked(event) {
     if (!this.isSelectByClick) return;
+
     const nodeData = event.data.i.data;
     const eventData = event.data.d;
 
-    this.setSelectedNodesIds([
-      ...(eventData.ctrlKey || eventData.metaKey ? this.selectedNodesIds : []),
+    console.log("node clicked!", nodeData["Id"]);
+    if (this.selectedNodesIds)
+      console.log("selected ids", [...this.selectedNodesIds]);
+
+    const isMultiSelect = eventData.ctrlKey || eventData.metaKey;
+    const removeClicked =
+      isMultiSelect && this.selectedNodesIds?.has(nodeData["Id"]);
+    let newSelected = [
+      ...(isMultiSelect ? this.selectedNodesIds : []),
       nodeData["Id"],
-    ]);
+    ];
+    if (removeClicked)
+      newSelected = newSelected.filter((x) => x != nodeData["Id"]);
+
+    this.setSelectedNodesIds(newSelected);
 
     eventData.stopPropagation();
   }
