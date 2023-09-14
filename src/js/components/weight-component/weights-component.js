@@ -135,7 +135,7 @@ export class WeightsComponent {
 
     itemTop
       .append("img")
-      .attr("src", "images/bin.svg")
+      .attr("src", "bin.svg")
       .attr("class", "component__remove-icon")
       .style("padding-right", "0")
       .on(

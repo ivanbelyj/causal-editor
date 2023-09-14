@@ -62,7 +62,7 @@ export class CausesItem {
     if (this.isRemovable) {
       this.itemTop
         .append("img")
-        .attr("src", "images/bin.svg")
+        .attr("src", "bin.svg")
         .attr("class", "component__remove-icon")
         .on(
           "click",

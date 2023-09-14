@@ -14,8 +14,8 @@ import * as d3 from "d3";
 })();
 
 function updateTheme(isDarkMode) {
-  const goldenLayoutlink = d3.select("#goldenlayout-theme-link");
-  goldenLayoutlink.attr(
+  const goldenLayoutLink = d3.select("#goldenlayout-theme-link");
+  goldenLayoutLink.attr(
     "href",
     `src/css/golden-layout/goldenlayout-${
       isDarkMode ? "dark" : "light"

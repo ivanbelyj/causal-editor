@@ -11,12 +11,16 @@ function createWindow(appLocale) {
     webPreferences: {
       contextIsolation: true,
       sandbox: true,
-      preload: path.join(__dirname, "preload.js"),
+      // preload: path.join(__dirname, "preload.js"),
+      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      // nodeIntegration: true, // Todo: ?
+
       spellcheck: true,
     },
   });
 
-  mainWindow.loadFile("index.html");
+  // mainWindow.loadFile("index.html");
+  mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   mainWindow.webContents.openDevTools();
   mainWindow.maximize();
