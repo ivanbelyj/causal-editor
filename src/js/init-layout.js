@@ -48,6 +48,11 @@ export const initLayout = () => {
   layout.resizeWithContainerAutomatically = true;
 
   const api = window.api;
+  api.onSetComponentChecked(function (event, data) {
+    console.log("toggle component: ", event);
+    console.log("toggle. data", data);
+  });
+
   let causalView;
   layout.registerComponentFactoryFunction("Causal View", (container) => {
     causalView = new CausalView(container.element, api);

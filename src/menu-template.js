@@ -16,9 +16,28 @@ function sendOpenFile(causalModelFacts) {
   sendReset();
 }
 
+function sendMessage(messageName, data) {
+  BrowserWindow.getFocusedWindow().webContents.send(messageName, data);
+}
+
 // Resets UI
 function sendReset() {
-  BrowserWindow.getFocusedWindow().webContents.send("reset");
+  sendMessage("reset");
+}
+
+// Toggle golden-layout component
+function sendSetComponentChecked(componentName, isChecked) {
+  sendMessage("set-component-checked", { componentName, isChecked });
+}
+
+function createComponentToggleItem(componentName) {
+  return {
+    label: componentName,
+    type: "checkbox",
+    click: (menuItem, browserWindow, event) => {
+      sendSetComponentChecked(componentName, menuItem.checked);
+    },
+  };
 }
 
 const isMac = process.platform === "darwin";
@@ -119,7 +138,7 @@ module.exports = {
       label: "Window",
       submenu: [
         { role: "minimize" },
-        { role: "zoom" },
+        // { role: "zoom" },
         ...(isMac
           ? [
               { type: "separator" },
@@ -128,6 +147,10 @@ module.exports = {
               { role: "window" },
             ]
           : [{ role: "close" }]),
+        { type: "separator" },
+        ...["Causal View", "Node Value", "Causes", "Weights"].map(
+          createComponentToggleItem
+        ),
       ],
     },
     {

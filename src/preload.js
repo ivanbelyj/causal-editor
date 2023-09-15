@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld("api", {
   onRemoveNode: (func) => on("remove-node", func),
   onOpenCausalModel: (func) => on("open-causal-model", func),
   onReset: (func) => on("reset", func),
+  onSetComponentChecked: (func) => on("set-component-checked", func),
 });
 
 function send(channelName, data) {

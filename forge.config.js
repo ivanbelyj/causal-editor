@@ -1,3 +1,5 @@
+const RemovePlugin = require("remove-files-webpack-plugin");
+
 module.exports = {
   packagerConfig: {
     asar: true,

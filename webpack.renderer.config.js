@@ -1,5 +1,6 @@
 const rules = require("./webpack.rules");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const RemovePlugin = require("remove-files-webpack-plugin");
 
 rules.push(
   {
@@ -16,28 +17,10 @@ rules.push(
     parser: { dataUrlCondition: { maxSize: 10000 } },
   },
   { test: /\.jpg$/, type: "asset/resource" }
-  // {
-  //   test: /\.(jpe?g|png|gif|svg)$/i,
-
-  //   use: [
-  //     {
-  //       loader: "file-loader",
-  //       options: {
-  //         name: "/images/[name].[ext]",
-  //       },
-  //     },
-  //   ],
-  // }
 );
 
 module.exports = {
   devtool: "source-map",
-  plugins: [
-    new MiniCssExtractPlugin({
-      filename: "[name].css",
-      chunkFilename: "[id].css",
-    }),
-  ],
   module: {
     rules,
   },
@@ -49,4 +32,20 @@ module.exports = {
     goldenLayoutLight:
       "golden-layout/dist/css/themes/goldenlayout-light-theme.css",
   },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: "[name].css",
+      chunkFilename: "[id].css",
+    }),
+    new RemovePlugin({
+      after: {
+        include: [
+          "./.webpack/renderer/light",
+          "./.webpack/renderer/dark",
+          "./.webpack/renderer/goldenLayoutLight",
+          "./.webpack/renderer/goldenLayoutDark",
+        ],
+      },
+    }),
+  ],
 };

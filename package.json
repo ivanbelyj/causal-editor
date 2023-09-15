@@ -46,7 +46,8 @@
     "d3-dag": "^1.0.0",
     "electron-context-menu": "^3.6.1",
     "electron-squirrel-startup": "^1.0.0",
-    "golden-layout": "^2.6.0"
+    "golden-layout": "^2.6.0",
+    "remove-files-webpack-plugin": "^1.5.0"
   },
   "config": {
     "forge": "./forge.config.js"
