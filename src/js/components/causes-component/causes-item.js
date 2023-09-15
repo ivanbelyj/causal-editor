@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { CausalModelUtils } from "../../causal-view/causal-model-utils.js";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
+import binSrc from "../../../images/bin.svg";
 
 // CausesItem is a UI element representing causes expression.
 // It includes top (with type dropdown) and content that can include
@@ -62,7 +63,7 @@ export class CausesItem {
     if (this.isRemovable) {
       this.itemTop
         .append("img")
-        .attr("src", "bin.svg")
+        .attr("src", binSrc)
         .attr("class", "component__remove-icon")
         .on(
           "click",

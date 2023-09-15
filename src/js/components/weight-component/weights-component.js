@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
 import { CausesChangeManager } from "../../causal-view/causes-change-manager.js";
+import binSrc from "../../../images/bin.svg";
 
 // Block is used as a part of a component
 export class WeightsComponent {
@@ -135,7 +136,7 @@ export class WeightsComponent {
 
     itemTop
       .append("img")
-      .attr("src", "bin.svg")
+      .attr("src", binSrc)
       .attr("class", "component__remove-icon")
       .style("padding-right", "0")
       .on(

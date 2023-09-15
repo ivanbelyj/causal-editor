@@ -35,7 +35,9 @@
     "css-loader": "^6.8.1",
     "electron": "^25.2.0",
     "file-loader": "^6.2.0",
+    "mini-css-extract-plugin": "^2.7.6",
     "style-loader": "^3.3.3",
+    "svg-url-loader": "^8.0.0",
     "url-loader": "^4.1.1",
     "webpack": "^5.88.2"
   },
@@ -44,8 +46,7 @@
     "d3-dag": "^1.0.0",
     "electron-context-menu": "^3.6.1",
     "electron-squirrel-startup": "^1.0.0",
-    "golden-layout": "^2.6.0",
-    "jquery": "^3.7.1"
+    "golden-layout": "^2.6.0"
   },
   "config": {
     "forge": "./forge.config.js"

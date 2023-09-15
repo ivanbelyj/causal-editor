@@ -1,70 +1,52 @@
 const rules = require("./webpack.rules");
-const webpack = require("webpack");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 rules.push(
   {
     test: /\.css$/,
-    use: [{ loader: "style-loader" }, { loader: "css-loader" }],
+    use: [MiniCssExtractPlugin.loader, { loader: "css-loader" }],
   },
+  {
+    test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+    type: "asset/resource",
+  },
+  {
+    test: /\.png$/,
+    type: "asset",
+    parser: { dataUrlCondition: { maxSize: 10000 } },
+  },
+  { test: /\.jpg$/, type: "asset/resource" }
   // {
-  //   test: /\.(scss)$/,
-  //   use: [
-  //     {
-  //       loader: "style-loader",
-  //     },
-  //     {
-  //       loader: "css-loader",
-  //     },
-  //     {
-  //       loader: "postcss-loader",
-  //       options: {
-  //         postcssOptions: {
-  //           plugins: function () {
-  //             return [require("autoprefixer")];
-  //           },
-  //         },
-  //       },
-  //     },
-  //     {
-  //       loader: "sass-loader",
-  //     },
-  //   ],
-  // },
+  //   test: /\.(jpe?g|png|gif|svg)$/i,
 
-  // {
-  //   test: /\.(png|jpe?g|gif|ico|svg)$/,
   //   use: [
   //     {
   //       loader: "file-loader",
+  //       options: {
+  //         name: "/images/[name].[ext]",
+  //       },
   //     },
   //   ],
   // }
-  // For newer versions of Webpack it should be
-
-  {
-    test: /\.(jpe?g|png|gif|svg)$/i,
-
-    use: [
-      {
-        loader: "file-loader",
-        options: {
-          name: "/[name].[ext]",
-        },
-      },
-    ],
-  }
 );
 
 module.exports = {
-  // Put your normal webpack config below here
+  devtool: "source-map",
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: "[name].css",
+      chunkFilename: "[id].css",
+    }),
+  ],
   module: {
     rules,
   },
-  devtool: "source-map",
-  // plugins: [
-  //   new webpack.ProvidePlugin({
-  //     $: "jquery",
-  //     jQuery: "jquery",
-  //   }),
-  // ],
+  entry: {
+    light: "./src/css/light.css",
+    dark: "./src/css/dark.css",
+    goldenLayoutDark:
+      "golden-layout/dist/css/themes/goldenlayout-dark-theme.css",
+    goldenLayoutLight:
+      "golden-layout/dist/css/themes/goldenlayout-light-theme.css",
+  },
 };
