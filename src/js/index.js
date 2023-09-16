@@ -1,8 +1,13 @@
-import { initLayout } from "./init-layout.js";
+import { ComponentsManager } from "./components-manager.js";
 import * as d3 from "d3";
 
 (() => {
-  initLayout();
+  const layoutContainer = d3.select("body").append("div");
+  const componentsManager = new ComponentsManager(
+    layoutContainer.node(),
+    window.api
+  );
+  componentsManager.initLayout();
 
   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
   mediaQuery.addEventListener("change", (e) => {

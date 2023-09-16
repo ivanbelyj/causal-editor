@@ -7,6 +7,6 @@ import "./css/components/causal-view.css";
 
 import "./js/index.js";
 
-console.log("styles", n1);
+const unused1 = n1;
 // console.log("styles", n2);
 // console.log("styles", n3);

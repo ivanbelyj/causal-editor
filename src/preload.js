@@ -13,11 +13,18 @@ contextBridge.exposeInMainWorld("api", {
   sendCausalViewEnter: () => send("causal-view-enter"),
   sendCausalViewLeave: () => send("causal-view-leave"),
   sendNodes: (nodes) => send("send-nodes", nodes),
+
+  // When components are checked from the renderer process
+  sendComponentsChecked: (componentTypes) =>
+    send("send-components-checked", componentTypes),
+
   onGetNodesRequest: (func) => on("get-nodes-request", func),
   onCreateNode: (func) => on("create-node", func),
   onRemoveNode: (func) => on("remove-node", func),
   onOpenCausalModel: (func) => on("open-causal-model", func),
   onReset: (func) => on("reset", func),
+
+  // When a component is checked in the menu
   onSetComponentChecked: (func) => on("set-component-checked", func),
 });
 
