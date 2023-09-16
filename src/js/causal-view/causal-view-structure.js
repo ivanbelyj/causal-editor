@@ -55,7 +55,7 @@ export class CausalViewStructure extends EventTarget {
 
     const svgChild = this.svg
       .append("g")
-      .attr("class", "causal-view__svg-child");
+      .classed("causal-view__svg-child", true);
 
     this.svgChild = svgChild;
 

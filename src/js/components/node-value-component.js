@@ -18,7 +18,7 @@ export class NodeValueComponent {
   }
 
   init(causalModelFact) {
-    this.component.attr("class", "component");
+    this.component.classed("component", true);
 
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",

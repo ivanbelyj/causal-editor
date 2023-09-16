@@ -16,7 +16,7 @@ export class CausesComponent {
   // Actions that are relevant to CausesComponent regardless of causalModelFact structure.
   // init() must be called only once
   init(causalModelFact) {
-    this.component.attr("class", "component");
+    this.component.classed("component", true);
     this.content = this.component.append("div").attr("class", "input-item");
 
     this.probabilityBlock = new ProbabilityBlock(

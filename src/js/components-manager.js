@@ -4,12 +4,7 @@ import { CausesComponent } from "./components/causes-component/causes-component.
 import { NodeValueComponent } from "./components/node-value-component.js";
 import { WeightsComponent } from "./components/weight-component/weights-component.js";
 import { factsCollection } from "./test-data.js";
-import {
-  ComponentItem,
-  GoldenLayout,
-  LayoutConfig,
-  LayoutManager,
-} from "golden-layout";
+import { GoldenLayout } from "golden-layout";
 import * as d3 from "d3";
 
 function createId() {
@@ -55,7 +50,7 @@ const defaultConfig = {
 const defaultComponentTypesAndFactories = {
   "Causal View": function (container) {
     this.causalView = new CausalView(container.element, this.api);
-    d3.select(container.element).attr("class", "causal-view");
+    d3.select(container.element).classed("causal-view", true);
     const causalModelFacts = JSON.parse(factsCollection);
     this.causalView.init([]);
   },
@@ -162,11 +157,13 @@ export class ComponentsManager {
     const layout = (this.layout = new GoldenLayout(
       this.layoutContainer.node()
     ));
+    layout.layoutConfig.header.popout = false;
+    layout.resizeWithContainerAutomatically = true;
     layout.on(
       "itemCreated",
       function (event) {
+        console.log("created item");
         this.idsAndComponentItems.set(event.target.id, event.target);
-        // event.target.close();
       }.bind(this)
     );
     layout.on(
@@ -183,7 +180,9 @@ export class ComponentsManager {
         this.api.sendComponentsData(this.componentsData);
       }.bind(this)
     );
-    layout.resizeWithContainerAutomatically = true;
+    layout.on("focus", function () {
+      layout.clearComponentFocus();
+    });
 
     this.registerComponents(defaultComponentTypesAndFactories);
     this.loadConfig(config);

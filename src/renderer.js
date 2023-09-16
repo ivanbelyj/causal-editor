@@ -8,5 +8,3 @@ import "./css/components/causal-view.css";
 import "./js/index.js";
 
 const unused1 = n1;
-// console.log("styles", n2);
-// console.log("styles", n3);

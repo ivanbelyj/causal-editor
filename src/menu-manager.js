@@ -3,7 +3,9 @@ const { nativeTheme, shell, ipcMain, Menu } = require("electron");
 const isMac = process.platform === "darwin";
 
 export class MenuManager {
+  // Information about app components in layout
   componentMenuItems;
+
   constructor(filesManager, window) {
     this.filesManager = filesManager;
     this.window = window;
@@ -18,15 +20,10 @@ export class MenuManager {
   //     this.render();
   //   }
 
+  // Receive layout components data from the renderer process and render the menu
   onSendComponentsData(event, data) {
-    console.log("components checked:", data);
     this.componentsData = data;
-
     this.render();
-  }
-
-  switchTheme(theme) {
-    nativeTheme.themeSource = theme;
   }
 
   sendMessage(messageName, data) {
@@ -38,8 +35,9 @@ export class MenuManager {
     this.sendMessage("reset");
   }
 
-  // Toggle golden-layout component via menu
+  // When toggled golden-layout component via menu
   sendSetComponentActive(id, isActive) {
+    // The component will be set in the renderer process
     this.sendMessage("set-component-active", {
       id,
       isActive,
@@ -51,6 +49,10 @@ export class MenuManager {
       this.createMenuTemplate()
     ));
     Menu.setApplicationMenu(menu);
+  }
+
+  switchTheme(theme) {
+    nativeTheme.themeSource = theme;
   }
 
   createComponentToggleItem(componentData) {
@@ -209,13 +211,13 @@ export class MenuManager {
             type: "radio",
             click: function () {
               this.switchTheme("light");
-            },
+            }.bind(this),
           },
           {
             label: "Dark",
             type: "radio",
             click: function () {
-              switchTheme("dark");
+              this.switchTheme("dark");
             }.bind(this),
           },
         ],
