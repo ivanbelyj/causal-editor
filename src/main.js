@@ -1,7 +1,7 @@
-const { app, BrowserWindow, Menu } = require("electron");
-const path = require("path");
-const { menuTemplate } = require("./menu-template.js");
+const { app, BrowserWindow } = require("electron");
 const { setContextMenu } = require("./set-context-menu.js");
+const { FilesManager } = require("./files-manager.js");
+const { MenuManager } = require("./menu-manager.js");
 
 // Creates the browser window
 function createWindow(appLocale) {
@@ -45,8 +45,9 @@ app.whenReady().then(() => {
   mainWindow = createWindow(appLocale);
   setContextMenu(mainWindow);
 
-  const menu = Menu.buildFromTemplate(menuTemplate);
-  Menu.setApplicationMenu(menu);
+  const filesManager = new FilesManager();
+  const menuManager = new MenuManager(filesManager, mainWindow);
+  menuManager.render();
 
   app.on("activate", function () {
     // On macOS it's common to re-create a window in the app when the

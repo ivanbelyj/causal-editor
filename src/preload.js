@@ -14,9 +14,13 @@ contextBridge.exposeInMainWorld("api", {
   sendCausalViewLeave: () => send("causal-view-leave"),
   sendNodes: (nodes) => send("send-nodes", nodes),
 
+  // Called once on app initialization to update menu items
+  // sendComponentsRegistered: (componentsData) =>
+  //   send("components-registered", componentsData),
+
   // When components are checked from the renderer process
-  sendComponentsChecked: (componentTypes) =>
-    send("send-components-checked", componentTypes),
+  sendComponentsData: (componentsData) =>
+    send("send-components-data", componentsData),
 
   onGetNodesRequest: (func) => on("get-nodes-request", func),
   onCreateNode: (func) => on("create-node", func),
@@ -25,7 +29,7 @@ contextBridge.exposeInMainWorld("api", {
   onReset: (func) => on("reset", func),
 
   // When a component is checked in the menu
-  onSetComponentChecked: (func) => on("set-component-checked", func),
+  onSetComponentActive: (func) => on("set-component-active", func),
 });
 
 function send(channelName, data) {
