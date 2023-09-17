@@ -28,6 +28,13 @@ export class NodeValueComponent {
       }.bind(this)
     );
 
+    this.causalView.selectionManager.addEventListener(
+      "singleNodeNotSelected",
+      function (event) {
+        this.reset(null);
+      }.bind(this)
+    );
+
     if (causalModelFact) this.reset(causalModelFact);
   }
 

@@ -306,6 +306,7 @@ export class CausalViewStructure extends EventTarget {
 
     function dragStarted() {
       d3.select(this).attr("cursor", "grabbing");
+      // console.log("drag started", [...d3.select(this).data()]);
     }
     const structure = this;
     function dragged(event, d) {
@@ -321,12 +322,14 @@ export class CausalViewStructure extends EventTarget {
           })
           .raise();
       });
+      // console.log("dragging", idsToDrag);
 
       structure.updateEdges();
     }
 
     function dragEnded() {
       d3.select(this).attr("cursor", "grab");
+      // console.log("drag ended", [...d3.select(this).data()]);
     }
   }
 

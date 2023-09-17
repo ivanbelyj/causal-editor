@@ -34,6 +34,13 @@ export class CausesComponent {
       }.bind(this)
     );
 
+    this.causalView.selectionManager.addEventListener(
+      "singleNodeNotSelected",
+      function (event, data) {
+        this.reset(null);
+      }.bind(this)
+    );
+
     if (causalModelFact) this.reset(causalModelFact);
   }
 
