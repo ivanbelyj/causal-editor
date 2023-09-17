@@ -27,6 +27,7 @@ module.exports = {
   entry: {
     light: "./src/css/light.css",
     dark: "./src/css/dark.css",
+    goldenLayoutBase: "golden-layout/dist/css/goldenlayout-base.css",
     goldenLayoutDark:
       "golden-layout/dist/css/themes/goldenlayout-dark-theme.css",
     goldenLayoutLight:
@@ -42,6 +43,7 @@ module.exports = {
         include: [
           "./.webpack/renderer/light",
           "./.webpack/renderer/dark",
+          "./.webpack/renderer/goldenLayoutBase",
           "./.webpack/renderer/goldenLayoutLight",
           "./.webpack/renderer/goldenLayoutDark",
         ],

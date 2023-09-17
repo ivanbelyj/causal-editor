@@ -6,6 +6,7 @@ import { WeightsComponent } from "./components/weight-component/weights-componen
 import { factsCollection } from "./test-data.js";
 import { GoldenLayout } from "golden-layout";
 import * as d3 from "d3";
+import { ComponentsDataManager } from "./components-data-manager.js";
 
 function createId() {
   return crypto.randomUUID();
@@ -83,70 +84,32 @@ const defaultComponentTypesAndFactories = {
   },
 };
 
-export class ComponentsManager {
+export class AppLayoutManager {
   constructor(layoutSelector, api) {
     this.layoutContainer = d3
       .select(layoutSelector)
       .attr("class", "layout-container");
     this.api = api;
+
+    this.componentsDataManager = new ComponentsDataManager(api);
   }
 
-  static getComponentsDataFromConfig(config) {
-    let res = [];
-    for (const prop in config) {
-      if (prop == "id") {
-        res.push({
-          componentType: config.componentType,
-          id: config.id,
-          isActive: true, // In config => activated
-        });
-      } else if (typeof config[prop] == "object") {
-        const innerTypes = ComponentsManager.getComponentsDataFromConfig(
-          config[prop]
-        );
-        if (innerTypes.length > 0) res = [...res, ...innerTypes];
-      }
-    }
-    return res;
-  }
-
-  getComponentDataById(id) {
-    return this.componentsData.find((x) => x.id === id);
-  }
-
+  // When check the according item in the menu in the main process
   onSetComponentActive(event, data) {
-    const componentData = this.getComponentDataById(data.id);
-
-    console.log("ids and component items", this.idsAndComponentItems);
-    console.log("set component active: ", componentData);
-    console.log("set component active. event", event);
-    console.log("data", data);
+    const componentData = this.componentsDataManager.getComponentDataById(
+      data.id
+    );
 
     if (!componentData) return;
 
     if (data.isActive) {
-      // Todo: ?
-
-      const newItemConfig = {
-        componentType: "component",
-        id: createId(),
-        parent: this.layout.rootItem.contentItems[0],
-      };
-      // this.layout.rootItem.contentItems[0].addChild(newItemConfig);
-
-      this.layout.addComponentAtLocation(
-        // newItemConfig,
-        // null,
-        componentData.componentType,
-        null
-        // LayoutManager.defaultLocationSelectors
-      );
+      this.layout.addComponentAtLocation(componentData.componentType, null);
     } else {
-      this.idsAndComponentItems.get(data.id).close();
+      this.componentsDataManager
+        .getComponentDataById(data.id)
+        .componentItem?.close();
     }
   }
-
-  idsAndComponentItems;
 
   initLayout(config) {
     if (!config) config = defaultConfig;
@@ -159,30 +122,12 @@ export class ComponentsManager {
     ));
     layout.layoutConfig.header.popout = false;
     layout.resizeWithContainerAutomatically = true;
-    layout.on(
-      "itemCreated",
-      function (event) {
-        console.log("created item");
-        this.idsAndComponentItems.set(event.target.id, event.target);
-      }.bind(this)
-    );
-    layout.on(
-      "itemDestroyed",
-      function (event) {
-        console.log("destr. comp data", this.componentsData);
-        // Todo: ?
-        const componentData = this.getComponentDataById(event.target.id);
-        if (!componentData) return;
-
-        componentData.isActive = false;
-        console.log("destr. component data", componentData);
-        console.log("destroyed item", event.target);
-        this.api.sendComponentsData(this.componentsData);
-      }.bind(this)
-    );
     layout.on("focus", function () {
       layout.clearComponentFocus();
     });
+
+    // layout.on("itemCreated", this.onItemCreatedOrDestroyed.bind(this, true));
+    // layout.on("itemDestroyed", this.onItemCreatedOrDestroyed.bind(this, false));
 
     this.registerComponents(defaultComponentTypesAndFactories);
     this.loadConfig(config);
@@ -190,15 +135,38 @@ export class ComponentsManager {
     this.api.onSetComponentActive(this.onSetComponentActive.bind(this));
   }
 
+  onItemCreatedOrDestroyed(isCreated, event) {
+    console.log(
+      isCreated ? "created " : "destroyed ",
+      event.target.id,
+      event.target.title
+    );
+    this.componentsDataManager.setComponentDataById(
+      event.target.id,
+      isCreated,
+      isCreated ? this.event.target : null
+    );
+    // const componentData = this.getComponentDataById(event.target.id);
+    // if (!componentData) return;
+
+    // if (isCreated) this.idsAndComponentItems.set(event.target.id, event.target);
+    // else this.idsAndComponentItems.delete(event.target.id);
+
+    // componentData.isActive = isCreated;
+    // this.api.sendComponentsData(this.componentsData);
+  }
+
   loadConfig(config) {
     this.layout.loadLayout(config);
-    const loadedComponentsData =
-      ComponentsManager.getComponentsDataFromConfig(config);
-    this.componentsData = loadedComponentsData;
-    console.log("loaded from config: ", this.componentsData);
-
-    this.api.sendComponentsData(loadedComponentsData);
+    this.componentsDataManager.setComponentsDataFromLayoutConfig(config);
   }
+
+  // setComponentsData(componentsData) {
+  //   this.componentsData = componentsData;
+  //   console.log("loaded components data: ", this.componentsData);
+
+  //   this.api.sendComponentsData(componentsData);
+  // }
 
   // * Should be called once
   // * Every factory function will be bound to this ComponentManager

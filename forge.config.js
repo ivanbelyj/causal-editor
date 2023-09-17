@@ -1,8 +1,11 @@
 const RemovePlugin = require("remove-files-webpack-plugin");
+const fs = require("fs");
+const path = require("path");
+const { exec } = require("child_process");
 
 module.exports = {
   packagerConfig: {
-    asar: true,
+    asar: false,
   },
   rebuildConfig: {},
   makers: [
@@ -24,10 +27,11 @@ module.exports = {
     },
   ],
   plugins: [
-    {
-      name: "@electron-forge/plugin-auto-unpack-natives",
-      config: {},
-    },
+    // uses asar
+    // {
+    //   name: "@electron-forge/plugin-auto-unpack-natives",
+    //   config: {},
+    // },
     {
       name: "@electron-forge/plugin-webpack",
       config: {
