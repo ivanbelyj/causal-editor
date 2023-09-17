@@ -4,9 +4,8 @@ import { CausesComponent } from "./components/causes-component/causes-component.
 import { NodeValueComponent } from "./components/node-value-component.js";
 import { WeightsComponent } from "./components/weight-component/weights-component.js";
 import { factsCollection } from "./test-data.js";
-import { GoldenLayout } from "golden-layout";
+import { GoldenLayout, LayoutManager } from "golden-layout";
 import * as d3 from "d3";
-import { ComponentsDataManager } from "./components-data-manager.js";
 
 function createId() {
   return crypto.randomUUID();
@@ -19,7 +18,7 @@ const defaultConfig = {
       {
         type: "component",
         componentType: "Causal View",
-        id: createId(),
+        // id: createId(),
       },
       {
         type: "column",
@@ -28,18 +27,18 @@ const defaultConfig = {
           {
             type: "component",
             componentType: "Node Value",
-            id: createId(),
+            // id: createId(),
             height: 22,
           },
           {
             type: "component",
             componentType: "Causes",
-            id: createId(),
+            // id: createId(),
           },
           {
             type: "component",
             componentType: "Weights",
-            id: createId(),
+            // id: createId(),
             height: 30,
           },
         ],
@@ -85,49 +84,45 @@ const defaultComponentTypesAndFactories = {
 };
 
 export class AppLayoutManager {
+  componentTypesAndItems;
   constructor(layoutSelector, api) {
     this.layoutContainer = d3
       .select(layoutSelector)
       .attr("class", "layout-container");
     this.api = api;
 
-    this.componentsDataManager = new ComponentsDataManager(api);
+    this.componentTypesAndItems = new Map();
   }
 
   // When check the according item in the menu in the main process
-  onSetComponentActive(event, data) {
-    const componentData = this.componentsDataManager.getComponentDataById(
-      data.id
-    );
-
-    if (!componentData) return;
-
-    if (data.isActive) {
-      this.layout.addComponentAtLocation(componentData.componentType, null);
+  onSetComponentActive(event, { componentType, isActive }) {
+    console.log("set component active", componentType, isActive);
+    if (isActive) {
+      this.layout.addComponentAtLocation(componentType, null);
+      if (!this.componentTypesAndItems.has(componentType))
+        this.componentTypesAndItems.set(componentType, null);
     } else {
-      this.componentsDataManager
-        .getComponentDataById(data.id)
-        .componentItem?.close();
+      const compItemToClose = this.componentTypesAndItems.get(componentType);
+      compItemToClose?.close();
+      this.componentTypesAndItems.delete(componentType);
     }
   }
 
   initLayout(config) {
     if (!config) config = defaultConfig;
 
-    this.idsAndComponentItems = new Map();
-
     // Create layout
-    const layout = (this.layout = new GoldenLayout(
-      this.layoutContainer.node()
-    ));
+    const layout = new GoldenLayout(this.layoutContainer.node());
+    this.layout = layout;
+
     layout.layoutConfig.header.popout = false;
     layout.resizeWithContainerAutomatically = true;
     layout.on("focus", function () {
       layout.clearComponentFocus();
     });
 
-    // layout.on("itemCreated", this.onItemCreatedOrDestroyed.bind(this, true));
-    // layout.on("itemDestroyed", this.onItemCreatedOrDestroyed.bind(this, false));
+    layout.on("itemCreated", this.onItemCreatedOrDestroyed.bind(this, true));
+    layout.on("itemDestroyed", this.onItemCreatedOrDestroyed.bind(this, false));
 
     this.registerComponents(defaultComponentTypesAndFactories);
     this.loadConfig(config);
@@ -141,32 +136,43 @@ export class AppLayoutManager {
       event.target.id,
       event.target.title
     );
-    this.componentsDataManager.setComponentDataById(
-      event.target.id,
-      isCreated,
-      isCreated ? this.event.target : null
-    );
-    // const componentData = this.getComponentDataById(event.target.id);
-    // if (!componentData) return;
+    const componentType = event.target.componentType;
+    if (!componentType) return; // It is not a component
 
-    // if (isCreated) this.idsAndComponentItems.set(event.target.id, event.target);
-    // else this.idsAndComponentItems.delete(event.target.id);
+    if (isCreated) this.componentTypesAndItems.set(componentType, event.target);
+    else this.componentTypesAndItems.delete(componentType);
 
-    // componentData.isActive = isCreated;
-    // this.api.sendComponentsData(this.componentsData);
+    console.log("send comp active", componentType, isCreated);
+    this.api.sendComponentActive({
+      componentType,
+      isActive: isCreated,
+    });
+  }
+
+  static getComponentTypesFromLayoutConfig(config) {
+    let res = [];
+    for (const prop in config) {
+      if (prop == "componentType") {
+        res.push(config.componentType);
+      } else if (typeof config[prop] == "object") {
+        const innerTypes = AppLayoutManager.getComponentTypesFromLayoutConfig(
+          config[prop]
+        );
+        if (innerTypes.length > 0) res = [...res, ...innerTypes];
+      }
+    }
+    return res;
   }
 
   loadConfig(config) {
+    const loadedFromConfig =
+      AppLayoutManager.getComponentTypesFromLayoutConfig(config);
+    console.log("loaded component names", loadedFromConfig);
+    for (const componentType of loadedFromConfig) {
+      this.api.sendComponentActive({ componentType, isActive: true });
+    }
     this.layout.loadLayout(config);
-    this.componentsDataManager.setComponentsDataFromLayoutConfig(config);
   }
-
-  // setComponentsData(componentsData) {
-  //   this.componentsData = componentsData;
-  //   console.log("loaded components data: ", this.componentsData);
-
-  //   this.api.sendComponentsData(componentsData);
-  // }
 
   // * Should be called once
   // * Every factory function will be bound to this ComponentManager

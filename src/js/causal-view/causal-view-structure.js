@@ -22,6 +22,8 @@ export class CausalViewStructure extends EventTarget {
 
   mutGraph; // MutGraph
 
+  // Todo: handle when causal view component is hidden
+
   init(svgParent, causalModelFacts, selectionManager) {
     this.selectionManager = selectionManager;
 

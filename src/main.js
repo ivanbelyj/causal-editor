@@ -13,7 +13,6 @@ function createWindow(appLocale) {
       sandbox: true,
       // preload: path.join(__dirname, "preload.js"),
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      // nodeIntegration: true, // Todo: ?
 
       spellcheck: true,
     },

@@ -11,7 +11,7 @@ export class MenuManager {
     this.window = window;
 
     // ipcMain.on("components-registered", this.onComponentsRegistered.bind(this));
-    ipcMain.on("send-components-data", this.onSendComponentsData.bind(this));
+    ipcMain.on("send-component-active", this.onSendComponentActive.bind(this));
   }
 
   //   onComponentsRegistered(event, data) {
@@ -21,8 +21,22 @@ export class MenuManager {
   //   }
 
   // Receive layout components data from the renderer process and render the menu
-  onSendComponentsData(event, data) {
-    this.componentsData = data;
+  onSendComponentActive(event, { componentType, isActive }) {
+    if (!this.registeredComponentTypes) {
+      this.registeredComponentTypes = new Set();
+    }
+    if (!this.registeredComponentTypes.has(componentType)) {
+      this.registeredComponentTypes.add(componentType);
+    }
+    if (!this.activeComponentTypes) {
+      this.activeComponentTypes = new Set();
+    }
+    if (isActive) {
+      this.activeComponentTypes.add(componentType);
+    } else {
+      this.activeComponentTypes.delete(componentType);
+    }
+
     this.render();
   }
 
@@ -35,14 +49,7 @@ export class MenuManager {
     this.sendMessage("reset");
   }
 
-  // When toggled golden-layout component via menu
-  sendSetComponentActive(id, isActive) {
-    // The component will be set in the renderer process
-    this.sendMessage("set-component-active", {
-      id,
-      isActive,
-    });
-  }
+  // sendSetComponentActive(id, isActive) {}
 
   render() {
     const menu = (this.menu = Menu.buildFromTemplate(
@@ -55,23 +62,32 @@ export class MenuManager {
     nativeTheme.themeSource = theme;
   }
 
-  createComponentToggleItem(componentData) {
+  createComponentToggleItem({ componentType, isActive }) {
     return {
-      label: componentData.componentType,
+      label: componentType,
       type: "checkbox",
-      checked: componentData.isActive,
-      id: componentData.id,
+      checked: isActive,
+      // When toggled golden-layout component via menu
       click: function (menuItem, browserWindow, event) {
         console.log("click on toggle component", menuItem, event);
-        this.sendSetComponentActive(menuItem.id, menuItem.checked);
+        // The component will be set in the renderer process
+        this.sendMessage("set-component-active", {
+          componentType,
+          isActive: menuItem.checked,
+        });
       }.bind(this),
     };
   }
 
   createMenuTemplate() {
-    const componentMenuItems = this.componentsData
-      ? this.componentsData.map(this.createComponentToggleItem, this)
-      : [];
+    const componentMenuItems = [...(this.registeredComponentTypes ?? [])].map(
+      function (componentType) {
+        return this.createComponentToggleItem({
+          componentType,
+          isActive: this.activeComponentTypes.has(componentType),
+        });
+      }.bind(this)
+    );
     return [
       // { role: 'appMenu' }
       ...(isMac
@@ -169,7 +185,7 @@ export class MenuManager {
           { role: "toggleDevTools" },
           { type: "separator" },
           { role: "resetZoom" },
-          { role: "zoomIn" },
+          { role: "zoomIn", accelerator: "CmdOrCtrl+=" },
           { role: "zoomOut" },
           { type: "separator" },
           { role: "togglefullscreen" },

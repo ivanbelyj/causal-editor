@@ -14,13 +14,9 @@ contextBridge.exposeInMainWorld("api", {
   sendCausalViewLeave: () => send("causal-view-leave"),
   sendNodes: (nodes) => send("send-nodes", nodes),
 
-  // Called once on app initialization to update menu items
-  // sendComponentsRegistered: (componentsData) =>
-  //   send("components-registered", componentsData),
-
   // When components are checked from the renderer process
-  sendComponentsData: (componentsData) =>
-    send("send-components-data", componentsData),
+  sendComponentActive: (componentData) =>
+    send("send-component-active", componentData),
 
   onGetNodesRequest: (func) => on("get-nodes-request", func),
   onCreateNode: (func) => on("create-node", func),
