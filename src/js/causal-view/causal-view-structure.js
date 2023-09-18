@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import * as d3dag from "d3-dag";
 // import { zoom } from "d3-zoom";
 import { CausalModelUtils } from "./causal-model-utils.js";
+import { Command } from "../undo-redo/command.js";
 
 // Displays interactive causal view elements and provides some of their common events
 // (node click, enter, etc.)
@@ -23,6 +24,11 @@ export class CausalViewStructure extends EventTarget {
   mutGraph; // MutGraph
 
   // Todo: handle when causal view component is hidden
+
+  constructor(undoRedoManager) {
+    super();
+    this.undoRedoManager = undoRedoManager;
+  }
 
   init(svgParent, causalModelFacts, selectionManager) {
     this.selectionManager = selectionManager;
@@ -305,11 +311,21 @@ export class CausalViewStructure extends EventTarget {
           .on("end", dragEnded)
       );
 
-    function dragStarted() {
+    const structure = this;
+
+    let posDataBeforeDrag;
+    function dragStarted(event, d) {
+      const draggedNodeId = d.data.Id;
+
+      const idsToDrag =
+        structure.selectionManager.getNodesIdsToDrag(draggedNodeId);
+
+      posDataBeforeDrag = structure.nodeIdsToPosData(idsToDrag);
+
       d3.select(this).attr("cursor", "grabbing");
       // console.log("drag started", [...d3.select(this).data()]);
     }
-    const structure = this;
+
     function dragged(event, d) {
       const draggedNodeId = d.data.Id;
 
@@ -328,10 +344,66 @@ export class CausalViewStructure extends EventTarget {
       structure.updateEdges();
     }
 
-    function dragEnded() {
+    const undoRedoManager = this.undoRedoManager;
+    function dragEnded(event, d) {
+      const draggedNodeId = d.data.Id;
+
+      const idsToDrag =
+        structure.selectionManager.getNodesIdsToDrag(draggedNodeId);
+
+      const posDataAfterDrag = structure.nodeIdsToPosData(idsToDrag);
+
+      console.log(
+        "drag and drop. from ",
+        posDataBeforeDrag,
+        "to",
+        posDataAfterDrag
+      );
       d3.select(this).attr("cursor", "grab");
+      undoRedoManager.execute(
+        structure.getDragCommand(posDataBeforeDrag, posDataAfterDrag)
+      );
       // console.log("drag ended", [...d3.select(this).data()]);
     }
+  }
+
+  nodeIdsToPosData(nodeIds) {
+    return nodeIds.map(
+      function (nodeId) {
+        const nodeData = this.getNodeById(nodeId);
+        return { nodeId, x: nodeData.ux, y: nodeData.uy };
+      }.bind(this)
+    );
+    // return nodesData.map((nodeData) => ({
+    //   id: nodeData.data.Id,
+    //   x: nodeData.ux,
+    //   y: nodeData.uy,
+    // }));
+  }
+
+  getDragCommand(nodesDataBeforeDrag, nodesDataAfterDrag) {
+    return new Command(
+      this.setPosByPosData.bind(this, nodesDataAfterDrag),
+      this.setPosByPosData.bind(this, nodesDataBeforeDrag)
+    );
+  }
+
+  setPosByPosData(posData) {
+    posData.forEach(({ nodeId, x, y }) => {
+      const nodeSelection = d3.select(
+        `.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`
+      );
+      // Todo: set to node data
+      console.log("set pos by pos data. node selection:", nodeSelection);
+      const nodeDatum = nodeSelection.datum();
+      nodeDatum.ux = x;
+      nodeDatum.uy = y;
+      nodeSelection.attr("transform", (d) => {
+        return `translate(${x}, ${y})`;
+      });
+
+      this.updateEdges();
+    });
   }
 
   edgeDataToString(d) {

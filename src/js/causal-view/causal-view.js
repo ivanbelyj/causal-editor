@@ -52,7 +52,7 @@ export class CausalView {
   }
 
   init(causalModelFacts) {
-    this.structure = new CausalViewStructure();
+    this.structure = new CausalViewStructure(this.undoRedoManager);
     this.structure.addEventListener("nodeEnter", () =>
       this.api.sendNodeEnter()
     );
