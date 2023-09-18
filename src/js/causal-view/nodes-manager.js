@@ -56,7 +56,7 @@ export class NodesManager {
 
   getNodeIdByPosWithOffset(x, y) {
     const nodeElement = ScreenUtils.nodeElementFromPoint(
-      { x: x + 10, y: y + 10 }, // Todo: get center of node
+      { x: x + 10, y: y + 10 }, // Todo: get center of the node
       "node"
     );
     console.log("remove", nodeElement);

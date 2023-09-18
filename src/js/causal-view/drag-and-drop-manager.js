@@ -102,8 +102,6 @@ export class DragAndDropManager {
       const nodeSelection = d3.select(
         `.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`
       );
-      // Todo: set to node data
-      console.log("set pos by pos data. node selection:", nodeSelection);
       const nodeDatum = nodeSelection.datum();
       nodeDatum.ux = x;
       nodeDatum.uy = y;

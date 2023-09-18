@@ -46,6 +46,24 @@ export class CausesItem {
   // Actions that are relevant to CausesItem regardless of causesExpression structure.
   // init() must be called only once
   init(causesExpression) {
+    if (causesExpression) {
+      this.reset(causesExpression);
+    }
+  }
+
+  reset(causesExpression) {
+    if (!causesExpression)
+      console.error("causes expression can't be ", causesExpression);
+
+    this.causesExpression = causesExpression;
+    CausesItem.resetCausesItem(this, this.causesExpression);
+  }
+
+  resetItemTop(causesExpression) {
+    if (this.itemTop) {
+      this.itemTop.remove();
+    }
+
     // Every causes-item has item top (for selecting the type or removing the item)
     this.itemTop = this.component
       .append("div")
@@ -69,7 +87,7 @@ export class CausesItem {
           "click",
           function () {
             this.component.remove();
-            this.onRemoveClick?.(this.causesExpression);
+            this.onRemoveClick?.(causesExpression);
           }.bind(this)
         );
     }
@@ -80,11 +98,13 @@ export class CausesItem {
     typeDropdown.append("option").attr("value", "or").text("Or");
     typeDropdown.append("option").attr("value", "not").text("Not");
 
+    typeDropdown.property("value", causesExpression?.$type ?? "none");
+
     typeDropdown.on(
       "change",
       function (e) {
         const newType = e.target.value;
-        const prevType = this.causesExpression?.$type;
+        const prevType = causesExpression?.$type;
 
         let removedExpr = null;
         if (
@@ -94,7 +114,7 @@ export class CausesItem {
           // To change $type is enough (next)
         } else {
           // Remove expression
-          const expr = this.causesExpression;
+          const expr = causesExpression;
           removedExpr = structuredClone(expr);
 
           // We should mutate this.causesExpression instead of creating a new one
@@ -115,7 +135,7 @@ export class CausesItem {
             };
           }
         }
-        this.causesExpression.$type = newType;
+        causesExpression.$type = newType;
 
         // Tracked to update causal view
         if (removedExpr) {
@@ -124,26 +144,15 @@ export class CausesItem {
         }
 
         // In most cases new CausesItem structure is not similar to previous
-        this.reset(this.causesExpression);
+        this.reset(causesExpression);
       }.bind(this)
     );
-
-    if (causesExpression) {
-      this.reset(causesExpression);
-    }
-  }
-
-  reset(causesExpression) {
-    if (!causesExpression)
-      console.error("causes expression can't be ", causesExpression);
-
-    this.causesExpression = causesExpression;
-    CausesItem.resetCausesItem(this, this.causesExpression);
   }
 
   static resetCausesItem(causeItem, expr) {
     // Update top
-    causeItem.typeDropdown.property("value", expr?.$type ?? "none");
+    causeItem.resetItemTop(expr);
+    // causeItem.typeDropdown.property("value", expr?.$type ?? "none");
 
     // Reset content and remove inner items
     causeItem.resetContent(expr?.$type);
