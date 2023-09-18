@@ -174,6 +174,7 @@ export class CausalViewStructure extends EventTarget {
     newNode.uy = nodeData.y;
     return newNode;
   }
+
   removeNode(nodeId) {
     const nodeToRemove = this.getNodes().find((x) => x.data.Id == nodeId);
     if (!nodeToRemove) {

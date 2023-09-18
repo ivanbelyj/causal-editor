@@ -4,12 +4,9 @@ import { CausesComponent } from "./components/causes-component/causes-component.
 import { NodeValueComponent } from "./components/node-value-component.js";
 import { WeightsComponent } from "./components/weight-component/weights-component.js";
 import { factsCollection } from "./test-data.js";
-import { GoldenLayout, LayoutManager } from "golden-layout";
+import { GoldenLayout } from "golden-layout";
 import * as d3 from "d3";
-
-function createId() {
-  return crypto.randomUUID();
-}
+import { UndoRedoManager } from "./undo-redo/undo-redo-manager.js";
 
 const defaultConfig = {
   root: {
@@ -49,9 +46,16 @@ const defaultConfig = {
 
 const defaultComponentTypesAndFactories = {
   "Causal View": function (container) {
-    this.causalView = new CausalView(container.element, this.api);
+    this.undoRedoManager = new UndoRedoManager(this.api);
+
+    this.causalView = new CausalView(
+      container.element,
+      this.api,
+      this.undoRedoManager
+    );
     d3.select(container.element).classed("causal-view", true);
     const causalModelFacts = JSON.parse(factsCollection);
+    // Todo: fix init with causalModelFacts
     this.causalView.init([]);
   },
 

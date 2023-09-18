@@ -10,15 +10,21 @@ export class CausalView {
   structure = null;
   selectionManager = null;
 
-  constructor(selector, api) {
+  constructor(selector, api, undoRedoManager) {
+    this.undoRedoManager = undoRedoManager;
+
     api.onCreateNode(
       function (event, data) {
-        this.nodesManager.createNode(data.x, data.y);
+        undoRedoManager.execute(
+          this.nodesManager.getCreateNodeCommand(data.x, data.y)
+        );
       }.bind(this)
     );
     api.onRemoveNode(
       function (event, data) {
-        this.nodesManager.removeNode(data.x, data.y);
+        undoRedoManager.execute(
+          this.nodesManager.getRemoveNodeCommand(data.x, data.y)
+        );
       }.bind(this)
     );
     api.onGetNodesRequest(
@@ -54,7 +60,7 @@ export class CausalView {
       this.api.sendNodeLeave()
     );
 
-    this.nodesManager = new NodesManager(this.structure);
+    this.nodesManager = new NodesManager(this.structure, this.undoRedoManager);
     this.selectionManager = new CausalViewSelectionManager(this.structure);
 
     this.selectionManager.init(this.structure);

@@ -149,8 +149,22 @@ export class MenuManager {
       {
         label: "Edit",
         submenu: [
-          { role: "undo" },
-          { role: "redo" },
+          {
+            label: "Undo",
+            accelerator: "CmdOrCtrl+Z",
+            click: function (menuItem, focusedWin) {
+              focusedWin.webContents.undo();
+              focusedWin.webContents.send("undo");
+            }.bind(this),
+          },
+          {
+            label: "Redo",
+            accelerator: "CmdOrCtrl+Y",
+            click: function (menuItem, focusedWin) {
+              focusedWin.webContents.redo();
+              focusedWin.webContents.send("redo");
+            }.bind(this),
+          },
           { type: "separator" },
           { role: "cut" },
           { role: "copy" },

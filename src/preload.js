@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld("api", {
 
   // When a component is checked in the menu
   onSetComponentActive: (func) => on("set-component-active", func),
+
+  onUndo: (func) => on("undo", func),
+  onRedo: (func) => on("redo", func),
 });
 
 function send(channelName, data) {
