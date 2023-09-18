@@ -61,7 +61,9 @@ export class CausalView {
     );
 
     this.nodesManager = new NodesManager(this.structure, this.undoRedoManager);
-    this.selectionManager = new CausalViewSelectionManager(this.structure);
+    this.selectionManager = new CausalViewSelectionManager(
+      this.undoRedoManager
+    );
 
     this.selectionManager.init(this.structure);
     this.structure.init(

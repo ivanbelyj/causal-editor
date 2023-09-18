@@ -1,3 +1,4 @@
+import { Command } from "../undo-redo/command.js";
 import { CausalModelUtils } from "./causal-model-utils.js";
 import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
@@ -15,6 +16,11 @@ export class CausalViewSelectionManager extends EventTarget {
     this._isSelectByClick = val;
   }
 
+  constructor(undoRedoManager) {
+    super();
+    this.undoRedoManager = undoRedoManager;
+  }
+
   init(structure) {
     this._structure = structure;
 
@@ -28,6 +34,42 @@ export class CausalViewSelectionManager extends EventTarget {
     });
 
     this.reset();
+  }
+
+  getSelectNodesCommand(nodeIds) {
+    const prevSelected = [...(this.selectedNodesIds ?? [])];
+    const res = new Command(
+      this.setSelectedNodeIds.bind(this, nodeIds),
+      this.setSelectedNodeIds.bind(this, prevSelected),
+
+      // Merge only if the old selection is a subset
+      CausalViewSelectionManager.shouldMerge(prevSelected, nodeIds)
+        ? "select"
+        : null
+    );
+    return res;
+  }
+
+  static shouldMerge(oldSelection, newSelection) {
+    const res = CausalViewSelectionManager.isSubsetOrEqual(
+      newSelection,
+      oldSelection
+    );
+    // console.log(
+    //   "should merge: ",
+    //   res,
+    //   ". ",
+    //   oldSelection,
+    //   "is",
+    //   res ? "" : "not",
+    //   "subset or equal of ",
+    //   newSelection
+    // );
+    return res;
+  }
+
+  static isSubsetOrEqual(superset, subset) {
+    return subset.every((x) => superset.includes(x));
   }
 
   reset() {
@@ -58,7 +100,7 @@ export class CausalViewSelectionManager extends EventTarget {
       .classed("node__rect_selected", false);
   }
 
-  setSelectedNodesIds(ids) {
+  setSelectedNodeIds(ids) {
     const prevSelected = this.selectedNodesIds;
     const toSelectAll = (this.selectedNodesIds = new Set(ids)); // Including already selected
 
@@ -102,7 +144,8 @@ export class CausalViewSelectionManager extends EventTarget {
 
   onViewClicked(event) {
     if (!this.isSelectByClick) return;
-    this.setSelectedNodesIds([]);
+    this.undoRedoManager.execute(this.getSelectNodesCommand([]));
+    // this.setSelectedNodeIds([]);
   }
 
   onNodeClicked(event) {
@@ -119,13 +162,14 @@ export class CausalViewSelectionManager extends EventTarget {
     const removeClicked =
       isMultiSelect && this.selectedNodesIds?.has(nodeData["Id"]);
     let newSelected = [
-      ...(isMultiSelect ? this.selectedNodesIds : []),
+      ...(isMultiSelect ? this.selectedNodesIds ?? [] : []),
       nodeData["Id"],
     ];
     if (removeClicked)
       newSelected = newSelected.filter((x) => x != nodeData["Id"]);
 
-    this.setSelectedNodesIds(newSelected);
+    // this.setSelectedNodeIds(newSelected);
+    this.undoRedoManager.execute(this.getSelectNodesCommand(newSelected));
 
     eventData.stopPropagation();
   }
