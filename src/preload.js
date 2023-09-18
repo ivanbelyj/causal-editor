@@ -29,6 +29,8 @@ contextBridge.exposeInMainWorld("api", {
 
   onUndo: (func) => on("undo", func),
   onRedo: (func) => on("redo", func),
+
+  onSelectAll: (func) => on("select-all", func),
 });
 
 function send(channelName, data) {

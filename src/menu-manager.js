@@ -1,4 +1,10 @@
-const { nativeTheme, shell, ipcMain, Menu } = require("electron");
+const {
+  nativeTheme,
+  shell,
+  ipcMain,
+  Menu,
+  globalShortcut,
+} = require("electron");
 
 const isMac = process.platform === "darwin";
 
@@ -12,6 +18,8 @@ export class MenuManager {
 
     // ipcMain.on("components-registered", this.onComponentsRegistered.bind(this));
     ipcMain.on("send-component-active", this.onSendComponentActive.bind(this));
+
+    globalShortcut.register("CmdOrCtrl+A", this.selectAllHandler.bind(this));
   }
 
   //   onComponentsRegistered(event, data) {
@@ -77,6 +85,10 @@ export class MenuManager {
         });
       }.bind(this),
     };
+  }
+
+  selectAllHandler() {
+    this.window.webContents.send("select-all");
   }
 
   createMenuTemplate() {
@@ -186,7 +198,11 @@ export class MenuManager {
             : [
                 { role: "delete" },
                 { type: "separator" },
-                { role: "selectAll" },
+                {
+                  label: "Select All",
+                  accelerator: "CmdOrCtrl+A",
+                  click: this.selectAllHandler.bind(this),
+                },
               ]),
         ],
       },

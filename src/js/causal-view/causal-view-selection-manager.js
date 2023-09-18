@@ -16,9 +16,17 @@ export class CausalViewSelectionManager extends EventTarget {
     this._isSelectByClick = val;
   }
 
-  constructor(undoRedoManager) {
+  constructor(api, undoRedoManager) {
     super();
     this.undoRedoManager = undoRedoManager;
+    this.api = api;
+    this.api.onSelectAll(this.selectAll.bind(this));
+  }
+
+  selectAll() {
+    this.executeSelectNodeIds(
+      this._structure.getNodes().map((node) => node.data.Id)
+    );
   }
 
   init(structure) {
@@ -144,8 +152,12 @@ export class CausalViewSelectionManager extends EventTarget {
 
   onViewClicked(event) {
     if (!this.isSelectByClick) return;
-    this.undoRedoManager.execute(this.getSelectNodesCommand([]));
+    this.executeSelectNodeIds([]);
     // this.setSelectedNodeIds([]);
+  }
+
+  executeSelectNodeIds(nodeIds) {
+    this.undoRedoManager.execute(this.getSelectNodesCommand(nodeIds));
   }
 
   onNodeClicked(event) {
@@ -168,8 +180,7 @@ export class CausalViewSelectionManager extends EventTarget {
     if (removeClicked)
       newSelected = newSelected.filter((x) => x != nodeData["Id"]);
 
-    // this.setSelectedNodeIds(newSelected);
-    this.undoRedoManager.execute(this.getSelectNodesCommand(newSelected));
+    this.executeSelectNodeIds(newSelected);
 
     eventData.stopPropagation();
   }

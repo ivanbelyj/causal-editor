@@ -3,6 +3,7 @@ import * as d3dag from "d3-dag";
 // import { zoom } from "d3-zoom";
 import { CausalModelUtils } from "./causal-model-utils.js";
 import { Command } from "../undo-redo/command.js";
+import { DragAndDropManager } from "./drag-and-drop-manager.js";
 
 // Displays interactive causal view elements and provides some of their common events
 // (node click, enter, etc.)
@@ -266,7 +267,12 @@ export class CausalViewStructure extends EventTarget {
 
           enterNodesSelection.append("text");
 
-          this.addNodesDrag(enterNodesSelection);
+          this.dragAndDropManager = new DragAndDropManager(
+            this,
+            this.undoRedoManager,
+            this.selectionManager
+          );
+          this.dragAndDropManager.addNodesDrag(enterNodesSelection);
         }.bind(this),
         function (update) {
           if (showLog) console.log("update", Array.from(update));
@@ -298,112 +304,6 @@ export class CausalViewStructure extends EventTarget {
         `translate(${this.nodeWidth / 2}, ${this.nodeHeight / 2})`
       )
       .attr("fill", "var(--color)");
-  }
-
-  addNodesDrag(nodesSelection) {
-    nodesSelection
-      .attr("cursor", "grab")
-      .call(
-        d3
-          .drag()
-          .on("start", dragStarted)
-          .on("drag", dragged)
-          .on("end", dragEnded)
-      );
-
-    const structure = this;
-
-    let posDataBeforeDrag;
-    function dragStarted(event, d) {
-      const draggedNodeId = d.data.Id;
-
-      const idsToDrag =
-        structure.selectionManager.getNodesIdsToDrag(draggedNodeId);
-
-      posDataBeforeDrag = structure.nodeIdsToPosData(idsToDrag);
-
-      d3.select(this).attr("cursor", "grabbing");
-      // console.log("drag started", [...d3.select(this).data()]);
-    }
-
-    function dragged(event, d) {
-      const draggedNodeId = d.data.Id;
-
-      const idsToDrag =
-        structure.selectionManager.getNodesIdsToDrag(draggedNodeId);
-
-      idsToDrag.forEach((id) => {
-        d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(id)}`)
-          .attr("transform", (d) => {
-            return `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`;
-          })
-          .raise();
-      });
-      // console.log("dragging", idsToDrag);
-
-      structure.updateEdges();
-    }
-
-    const undoRedoManager = this.undoRedoManager;
-    function dragEnded(event, d) {
-      const draggedNodeId = d.data.Id;
-
-      const idsToDrag =
-        structure.selectionManager.getNodesIdsToDrag(draggedNodeId);
-
-      const posDataAfterDrag = structure.nodeIdsToPosData(idsToDrag);
-
-      console.log(
-        "drag and drop. from ",
-        posDataBeforeDrag,
-        "to",
-        posDataAfterDrag
-      );
-      d3.select(this).attr("cursor", "grab");
-      undoRedoManager.execute(
-        structure.getDragCommand(posDataBeforeDrag, posDataAfterDrag)
-      );
-      // console.log("drag ended", [...d3.select(this).data()]);
-    }
-  }
-
-  nodeIdsToPosData(nodeIds) {
-    return nodeIds.map(
-      function (nodeId) {
-        const nodeData = this.getNodeById(nodeId);
-        return { nodeId, x: nodeData.ux, y: nodeData.uy };
-      }.bind(this)
-    );
-    // return nodesData.map((nodeData) => ({
-    //   id: nodeData.data.Id,
-    //   x: nodeData.ux,
-    //   y: nodeData.uy,
-    // }));
-  }
-
-  getDragCommand(nodesDataBeforeDrag, nodesDataAfterDrag) {
-    return new Command(
-      this.setPosByPosData.bind(this, nodesDataAfterDrag),
-      this.setPosByPosData.bind(this, nodesDataBeforeDrag)
-    );
-  }
-
-  setPosByPosData(posData) {
-    posData.forEach(({ nodeId, x, y }) => {
-      const nodeSelection = d3.select(
-        `.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`
-      );
-      // Todo: set to node data
-      console.log("set pos by pos data. node selection:", nodeSelection);
-      const nodeDatum = nodeSelection.datum();
-      nodeDatum.ux = x;
-      nodeDatum.uy = y;
-      nodeSelection.attr("transform", (d) => {
-        return `translate(${x}, ${y})`;
-      });
-
-      this.updateEdges();
-    });
   }
 
   edgeDataToString(d) {

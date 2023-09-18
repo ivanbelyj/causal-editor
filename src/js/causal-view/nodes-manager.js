@@ -3,6 +3,7 @@ import { CausalModelUtils } from "./causal-model-utils.js";
 import { ScreenUtils } from "./screen-utils.js";
 import { Command } from "../undo-redo/command.js";
 
+// Todo: rename?
 // Class that allows to create or remove nodes in causal view
 export class NodesManager {
   constructor(causalViewStructure) {
