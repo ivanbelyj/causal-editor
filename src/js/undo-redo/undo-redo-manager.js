@@ -1,3 +1,5 @@
+import { Command } from "./command";
+
 export class UndoRedoManager {
   constructor(api) {
     this.api = api;
@@ -18,8 +20,35 @@ export class UndoRedoManager {
   execute(command) {
     console.log("before command execute", this.undoStack, this.redoStack);
     command.execute();
-    this.undoStack.push(command);
+    this.redoStack = [];
+
+    const lastInUndo =
+      this.undoStack?.length > 0 && this.undoStack[this.undoStack.length - 1];
+    let cmdToPush = command;
+    if (
+      lastInUndo &&
+      command.mergeGroup &&
+      command.mergeGroup === lastInUndo.mergeGroup
+    ) {
+      cmdToPush = UndoRedoManager.mergeSelectionCommands([
+        this.undoStack.pop(),
+        command,
+      ]); // Replace with a merged command
+    }
+
+    this.undoStack.push(cmdToPush);
+
     console.log("after command execute", this.undoStack, this.redoStack);
+  }
+
+  static mergeSelectionCommands(commands) {
+    if (!commands || commands.lenght === 0)
+      console.error("Cannot merge commands: ", commands);
+    return new Command(
+      commands[commands.length - 1].execute,
+      commands[0].undo,
+      commands[0].mergeGroup
+    );
   }
 
   undo() {
