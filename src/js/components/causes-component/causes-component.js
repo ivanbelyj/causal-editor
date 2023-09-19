@@ -2,9 +2,10 @@ import * as d3 from "d3";
 import { ProbabilityBlock } from "./probability-block.js";
 
 export class CausesComponent {
-  constructor(selector, causalView, api) {
+  constructor(selector, causalView, api, undoRedoManager) {
     this.component = d3.select(selector);
     this.causalView = causalView;
+    this.undoRedoManager = undoRedoManager;
 
     api.onReset(
       function (event, data) {
@@ -21,7 +22,8 @@ export class CausesComponent {
 
     this.probabilityBlock = new ProbabilityBlock(
       this.content.append("div").node(),
-      this.causalView
+      this.causalView,
+      this.undoRedoManager
     );
 
     // this.weightsBlock = new WeightBlock(this.content.append("div").node());

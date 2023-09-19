@@ -72,7 +72,8 @@ const defaultComponentTypesAndFactories = {
     const causesComponent = new CausesComponent(
       container.element,
       this.causalView,
-      this.api
+      this.api,
+      this.undoRedoManager
     );
     causesComponent.init();
   },
@@ -100,7 +101,6 @@ export class AppLayoutManager {
 
   // When check the according item in the menu in the main process
   onSetComponentActive(event, { componentType, isActive }) {
-    console.log("set component active", componentType, isActive);
     if (isActive) {
       this.layout.addComponentAtLocation(componentType, null);
       if (!this.componentTypesAndItems.has(componentType))
@@ -135,18 +135,12 @@ export class AppLayoutManager {
   }
 
   onItemCreatedOrDestroyed(isCreated, event) {
-    console.log(
-      isCreated ? "created " : "destroyed ",
-      event.target.id,
-      event.target.title
-    );
     const componentType = event.target.componentType;
     if (!componentType) return; // It is not a component
 
     if (isCreated) this.componentTypesAndItems.set(componentType, event.target);
     else this.componentTypesAndItems.delete(componentType);
 
-    console.log("send comp active", componentType, isCreated);
     this.api.sendComponentActive({
       componentType,
       isActive: isCreated,
@@ -171,7 +165,6 @@ export class AppLayoutManager {
   loadConfig(config) {
     const loadedFromConfig =
       AppLayoutManager.getComponentTypesFromLayoutConfig(config);
-    console.log("loaded component names", loadedFromConfig);
     for (const componentType of loadedFromConfig) {
       this.api.sendComponentActive({ componentType, isActive: true });
     }

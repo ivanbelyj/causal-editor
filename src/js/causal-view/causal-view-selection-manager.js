@@ -1,4 +1,4 @@
-import { Command } from "../undo-redo/command.js";
+import { SelectionCommand } from "../undo-redo/commands/selection-command.js";
 import { CausalModelUtils } from "./causal-model-utils.js";
 import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
@@ -46,38 +46,10 @@ export class CausalViewSelectionManager extends EventTarget {
 
   getSelectNodesCommand(nodeIds) {
     const prevSelected = [...(this.selectedNodesIds ?? [])];
-    const res = new Command(
-      this.setSelectedNodeIds.bind(this, nodeIds),
-      this.setSelectedNodeIds.bind(this, prevSelected),
 
-      // Merge only if the old selection is a subset
-      CausalViewSelectionManager.shouldMerge(prevSelected, nodeIds)
-        ? "select"
-        : null
-    );
+    const res = new SelectionCommand(this, nodeIds, prevSelected);
+
     return res;
-  }
-
-  static shouldMerge(oldSelection, newSelection) {
-    const res = CausalViewSelectionManager.isSubsetOrEqual(
-      newSelection,
-      oldSelection
-    );
-    // console.log(
-    //   "should merge: ",
-    //   res,
-    //   ". ",
-    //   oldSelection,
-    //   "is",
-    //   res ? "" : "not",
-    //   "subset or equal of ",
-    //   newSelection
-    // );
-    return res;
-  }
-
-  static isSubsetOrEqual(superset, subset) {
-    return subset.every((x) => superset.includes(x));
   }
 
   reset() {
@@ -157,6 +129,11 @@ export class CausalViewSelectionManager extends EventTarget {
   }
 
   executeSelectNodeIds(nodeIds) {
+    // Commands that do nothing are ignored
+    // if (
+    //   (nodeIds && nodeIds.length > 0) ||
+    //   (this.selectedNodesIds && this.selectedNodesIds.length) > 0
+    // )
     this.undoRedoManager.execute(this.getSelectNodesCommand(nodeIds));
   }
 
@@ -165,10 +142,6 @@ export class CausalViewSelectionManager extends EventTarget {
 
     const nodeData = event.data.i.data;
     const eventData = event.data.d;
-
-    console.log("node clicked!", nodeData["Id"]);
-    if (this.selectedNodesIds)
-      console.log("selected ids", [...this.selectedNodesIds]);
 
     const isMultiSelect = eventData.ctrlKey || eventData.metaKey;
     const removeClicked =
@@ -185,6 +158,7 @@ export class CausalViewSelectionManager extends EventTarget {
     eventData.stopPropagation();
   }
 
+  // Todo: rename
   getNodesIdsToDrag(draggedNodeId) {
     // When dragging one of the selected nodes,
     // all the selected nodes must be dragged

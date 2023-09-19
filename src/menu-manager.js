@@ -19,7 +19,8 @@ export class MenuManager {
     // ipcMain.on("components-registered", this.onComponentsRegistered.bind(this));
     ipcMain.on("send-component-active", this.onSendComponentActive.bind(this));
 
-    globalShortcut.register("CmdOrCtrl+A", this.selectAllHandler.bind(this));
+    // Todo: fix
+    // globalShortcut.register("CmdOrCtrl+A", this.selectAllHandler.bind(this));
   }
 
   //   onComponentsRegistered(event, data) {
@@ -77,7 +78,6 @@ export class MenuManager {
       checked: isActive,
       // When toggled golden-layout component via menu
       click: function (menuItem, browserWindow, event) {
-        console.log("click on toggle component", menuItem, event);
         // The component will be set in the renderer process
         this.sendMessage("set-component-active", {
           componentType,

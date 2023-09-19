@@ -1,6 +1,10 @@
 import * as d3 from "d3";
 import { CausalModelUtils } from "./causal-model-utils";
-import { Command } from "../undo-redo/command";
+import { DragNodesCommand } from "../undo-redo/commands/drag-nodes-command";
+
+// Distances less than this value will not be considered as a node move
+// and won't execute a Command
+const dragDistanceThreshold = 1e-3;
 
 // CausalViewStructure's drag and drop manager
 export class DragAndDropManager {
@@ -22,45 +26,35 @@ export class DragAndDropManager {
       );
 
     const structure = this.causalViewStructure;
-    const selectionManager = this.selectionManager;
     const undoRedoManager = this.undoRedoManager;
     const dragAndDropManager = this;
 
     let posDataBeforeDrag;
     function dragStarted(event, d) {
-      const draggedNodeId = d.data.Id;
-
-      const idsToDrag = selectionManager.getNodesIdsToDrag(draggedNodeId);
-
-      posDataBeforeDrag = dragAndDropManager.nodeIdsToPosData(idsToDrag);
+      posDataBeforeDrag = dragAndDropManager.getNodesToDragPosData(d.data.Id);
 
       d3.select(this).attr("cursor", "grabbing");
-      // console.log("drag started", [...d3.select(this).data()]);
     }
 
     function dragged(event, d) {
-      const draggedNodeId = d.data.Id;
+      const posDataToDrag = dragAndDropManager.getNodesToDragPosData(d.data.Id);
 
-      const idsToDrag = selectionManager.getNodesIdsToDrag(draggedNodeId);
-
-      idsToDrag.forEach((id) => {
-        d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(id)}`)
+      // Change positions of nodes that should be dragged
+      posDataToDrag.forEach(({ nodeId }) => {
+        d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`)
           .attr("transform", (d) => {
             return `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`;
           })
           .raise();
       });
-      // console.log("dragging", idsToDrag);
 
       structure.updateEdges();
     }
 
     function dragEnded(event, d) {
       const draggedNodeId = d.data.Id;
-
-      const idsToDrag = selectionManager.getNodesIdsToDrag(draggedNodeId);
-
-      const posDataAfterDrag = dragAndDropManager.nodeIdsToPosData(idsToDrag);
+      const posDataAfterDrag =
+        dragAndDropManager.getNodesToDragPosData(draggedNodeId);
 
       console.log(
         "drag and drop. from ",
@@ -69,32 +63,46 @@ export class DragAndDropManager {
         posDataAfterDrag
       );
       d3.select(this).attr("cursor", "grab");
-      undoRedoManager.execute(
-        dragAndDropManager.getDragCommand(posDataBeforeDrag, posDataAfterDrag)
+
+      const getPointOfDraggedNode = (posData) =>
+        posData.find((x) => x.nodeId == draggedNodeId);
+
+      const dragDistance = DragAndDropManager.distance(
+        getPointOfDraggedNode(posDataBeforeDrag),
+        getPointOfDraggedNode(posDataAfterDrag)
       );
-      // console.log("drag ended", [...d3.select(this).data()]);
+
+      if (dragDistance >= dragDistanceThreshold)
+        undoRedoManager.execute(
+          dragAndDropManager.getDragCommand(posDataAfterDrag, posDataBeforeDrag)
+        );
     }
   }
 
-  nodeIdsToPosData(nodeIds) {
-    return nodeIds.map(
-      function (nodeId) {
-        const nodeData = this.causalViewStructure.getNodeById(nodeId);
-        return { nodeId, x: nodeData.ux, y: nodeData.uy };
-      }.bind(this)
+  // Pos data contains node id and position of the node
+  getNodesToDragData(draggedNodeId) {
+    const idsToDrag = this.selectionManager.getNodesIdsToDrag(draggedNodeId);
+    return idsToDrag.map(
+      this.causalViewStructure.getNodeById,
+      this.causalViewStructure
     );
-    // return nodesData.map((nodeData) => ({
-    //   id: nodeData.data.Id,
-    //   x: nodeData.ux,
-    //   y: nodeData.uy,
-    // }));
+  }
+  getNodesToDragPosData(draggedNodeId) {
+    return this.getNodesToDragData(draggedNodeId).map((nodeData) => ({
+      nodeId: nodeData.data.Id,
+      x: nodeData.ux,
+      y: nodeData.uy,
+    }));
   }
 
-  getDragCommand(nodesDataBeforeDrag, nodesDataAfterDrag) {
-    return new Command(
-      this.setPosByPosData.bind(this, nodesDataAfterDrag),
-      this.setPosByPosData.bind(this, nodesDataBeforeDrag)
+  static distance(point1, point2) {
+    return Math.sqrt(
+      Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
     );
+  }
+
+  getDragCommand(nodesDataAfterDrag, nodesDataBeforeDrag) {
+    return new DragNodesCommand(this, nodesDataAfterDrag, nodesDataBeforeDrag);
   }
 
   setPosByPosData(posData) {

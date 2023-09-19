@@ -1,32 +1,25 @@
 import * as d3 from "d3";
 import { CausalModelUtils } from "./causal-model-utils.js";
 import { ScreenUtils } from "./screen-utils.js";
-import { Command } from "../undo-redo/command.js";
+import { Command } from "../undo-redo/commands/command.js";
+import { CreateRemoveNodeCommand } from "../undo-redo/commands/create-remove-node-command.js";
 
-// Todo: rename?
 // Class that allows to create or remove nodes in causal view
-export class NodesManager {
+export class NodesCreateRemoveManager {
   constructor(causalViewStructure) {
     this.structure = causalViewStructure;
   }
 
   getCreateNodeCommand(x, y, fact) {
     fact = fact ?? this.createCausalModelFact();
-    return new Command(
-      this.createNode.bind(this, x, y, fact),
-      this.removeNode.bind(this, x, y, fact)
-    );
+    return new CreateRemoveNodeCommand(this, true, { x, y, fact });
   }
 
   getRemoveNodeCommand(x, y, fact) {
     fact =
       fact ??
       this.structure.getNodeById(this.getNodeIdByPosWithOffset(x, y)).data;
-    console.log("this fact will be created on redo", fact);
-    return new Command(
-      this.removeNode.bind(this, x, y, fact),
-      this.createNode.bind(this, x, y, fact)
-    );
+    return new CreateRemoveNodeCommand(this, false, { x, y, fact });
   }
 
   createCausalModelFact() {
@@ -59,7 +52,6 @@ export class NodesManager {
       { x: x + 10, y: y + 10 }, // Todo: get center of the node
       "node"
     );
-    console.log("remove", nodeElement);
     const nodeData = d3.select(nodeElement).data()[0];
     return nodeData.data.Id;
   }

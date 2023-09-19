@@ -3,7 +3,7 @@ import { factsCollection } from "../test-data.js";
 import { CausalViewSelectionManager } from "./causal-view-selection-manager.js";
 
 import * as d3 from "d3";
-import { NodesManager } from "./nodes-manager.js";
+import { NodesCreateRemoveManager } from "./nodes-create-remove-manager.js";
 
 // A component representing causal model
 export class CausalView {
@@ -16,14 +16,14 @@ export class CausalView {
     api.onCreateNode(
       function (event, data) {
         undoRedoManager.execute(
-          this.nodesManager.getCreateNodeCommand(data.x, data.y)
+          this.nodesCreateRemoveManager.getCreateNodeCommand(data.x, data.y)
         );
       }.bind(this)
     );
     api.onRemoveNode(
       function (event, data) {
         undoRedoManager.execute(
-          this.nodesManager.getRemoveNodeCommand(data.x, data.y)
+          this.nodesCreateRemoveManager.getRemoveNodeCommand(data.x, data.y)
         );
       }.bind(this)
     );
@@ -60,7 +60,10 @@ export class CausalView {
       this.api.sendNodeLeave()
     );
 
-    this.nodesManager = new NodesManager(this.structure, this.undoRedoManager);
+    this.nodesCreateRemoveManager = new NodesCreateRemoveManager(
+      this.structure,
+      this.undoRedoManager
+    );
     this.selectionManager = new CausalViewSelectionManager(
       this.api,
       this.undoRedoManager

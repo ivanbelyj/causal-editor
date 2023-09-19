@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import * as d3dag from "d3-dag";
 // import { zoom } from "d3-zoom";
 import { CausalModelUtils } from "./causal-model-utils.js";
-import { Command } from "../undo-redo/command.js";
+import { Command } from "../undo-redo/commands/command.js";
 import { DragAndDropManager } from "./drag-and-drop-manager.js";
 
 // Displays interactive causal view elements and provides some of their common events

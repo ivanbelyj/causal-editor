@@ -1,7 +1,9 @@
 import * as d3 from "d3";
 import { CausalModelUtils } from "../../causal-view/causal-model-utils.js";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
+import { Command } from "../../undo-redo/commands/command.js";
 import binSrc from "../../../images/bin.svg";
+import { CausesExpressionCommand } from "../../undo-redo/commands/causes-expression-command.js";
 
 // CausesItem is a UI element representing causes expression.
 // It includes top (with type dropdown) and content that can include
@@ -24,6 +26,7 @@ export class CausesItem {
     // rootCausesExpression,
 
     causalView,
+    undoRedoManager,
   }) {
     this.selector = selector;
     this.component = d3.select(selector);
@@ -41,6 +44,8 @@ export class CausesItem {
     // this.rootCausesExpression = rootCausesExpression;
 
     this.causalView = causalView;
+
+    this.undoRedoManager = undoRedoManager;
   }
 
   // Actions that are relevant to CausesItem regardless of causesExpression structure.
@@ -100,53 +105,83 @@ export class CausesItem {
 
     typeDropdown.property("value", causesExpression?.$type ?? "none");
 
-    typeDropdown.on(
-      "change",
-      function (e) {
-        const newType = e.target.value;
-        const prevType = causesExpression?.$type;
+    typeDropdown.on("change", this.onTypeDropdownChanged.bind(this));
+  }
 
-        let removedExpr = null;
-        if (
-          (prevType == "and" && newType == "or") ||
-          (prevType == "or" && newType == "and")
-        ) {
-          // To change $type is enough (next)
-        } else {
-          // Remove expression
-          const expr = causesExpression;
-          removedExpr = structuredClone(expr);
-
-          // We should mutate this.causesExpression instead of creating a new one
-          for (const key in expr) {
-            delete expr[`${key}`];
-          }
-
-          if (newType == "and" || newType == "or") {
-            expr.Operands = [];
-          }
-          if (newType == "not") {
-            // Add a child that has not been defined yet, but is required
-            expr.CausesExpression = CausalModelUtils.createFactorExpression();
-          }
-          if (newType == "factor") {
-            expr.Edge = {
-              Probability: 1,
-            };
-          }
-        }
-        causesExpression.$type = newType;
-
-        // Tracked to update causal view
-        if (removedExpr) {
-          // this.onCausesExpressionRemove(removedExpr);
-          this.causesChangeManager.onCausesExpressionRemove(removedExpr);
-        }
-
-        // In most cases new CausesItem structure is not similar to previous
-        this.reset(causesExpression);
-      }.bind(this)
+  onTypeDropdownChanged(e) {
+    const prevCausesExpr = structuredClone(this.causesExpression);
+    const changedCausesExpr = this.getChangedTypeCausesExpression(
+      this.causesExpression,
+      e.target.value
     );
+    // console.log(
+    //   "drop down changed. prev expr",
+    //   prevCausesExpr,
+    //   "changed expr",
+    //   changedCausesExpr
+    // );
+
+    const cmd = new CausesExpressionCommand(
+      this,
+      prevCausesExpr,
+      changedCausesExpr
+    );
+    this.undoRedoManager.execute(cmd);
+  }
+
+  setCausesExpression(newExpr) {
+    // console.log("=".repeat(50));
+    // console.log("will be set", newExpr);
+    const removedExprClone = structuredClone(this.causesExpression);
+    // console.log("structured clone of causes expr", removedExprClone);
+
+    // We should mutate this.causesExpression instead of creating a  new one
+    for (const key in this.causesExpression) {
+      delete this.causesExpression[`${key}`];
+    }
+    // for (const key in newExpr) {
+    //   this.causesExpression[key] = structuredClone(newExpr[key]);
+    // }
+    Object.assign(this.causesExpression, newExpr);
+    // console.log("mutated causes expr", this.causesExpression);
+    // console.log("removed expr", removedExprClone);
+
+    // Tracked to update causal view
+    this.causesChangeManager.onCausesExpressionRemove(removedExprClone);
+
+    // In most cases new CausesItem structure is not similar to previous
+    this.reset(structuredClone(newExpr));
+
+    // console.log("finally causes expr is", this.causesExpression);
+  }
+
+  getChangedTypeCausesExpression(causesExpression, newType) {
+    const prevType = causesExpression?.$type;
+    let res = {};
+
+    if (
+      (prevType == "and" && newType == "or") ||
+      (prevType == "or" && newType == "and")
+    ) {
+      // Structure is almost the same
+      res = structuredClone(causesExpression);
+    } else {
+      if (newType == "and" || newType == "or") {
+        res.Operands = [];
+      }
+      if (newType == "not") {
+        // Add a child that has not been defined yet, but is required
+        res.CausesExpression = CausalModelUtils.createFactorExpression();
+      }
+      if (newType == "factor") {
+        res.Edge = {
+          Probability: 1,
+        };
+      }
+    }
+    res.$type = newType;
+
+    return res;
   }
 
   static resetCausesItem(causeItem, expr) {
@@ -300,6 +335,7 @@ export class CausesItem {
       isRoot: false, // Inner item can't be a root
       // rootCausesExpression: this.rootCausesExpression,
       causalView: this.causalView,
+      undoRedoManager: this.undoRedoManager,
     });
     newItem.init(causesExpression);
 

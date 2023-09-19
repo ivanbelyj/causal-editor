@@ -1,5 +1,7 @@
-import { Command } from "./command";
+import { Command } from "./commands/command";
+import { SelectionCommand } from "./commands/selection-command";
 
+const isShowLogMessages = true;
 export class UndoRedoManager {
   constructor(api) {
     this.api = api;
@@ -12,58 +14,94 @@ export class UndoRedoManager {
   }
 
   reset() {
-    console.log("reset undoRedoManager");
+    // console.log("reset undoRedoManager");
     this.undoStack = [];
     this.redoStack = [];
   }
 
   execute(command) {
-    console.log("before command execute", this.undoStack, this.redoStack);
+    // if (isShowLogMessages)
+    //   console.log("before command execute", this.undoStack, this.redoStack);
     command.execute();
     this.redoStack = [];
 
-    const lastInUndo =
-      this.undoStack?.length > 0 && this.undoStack[this.undoStack.length - 1];
-    let cmdToPush = command;
-    if (
-      lastInUndo &&
-      command.mergeGroup &&
-      command.mergeGroup === lastInUndo.mergeGroup
-    ) {
-      cmdToPush = UndoRedoManager.mergeSelectionCommands([
-        this.undoStack.pop(),
+    const cmdToPush = this.getCommandToPushToUndoStack(command);
+    // If command shouldn't be ignored
+    if (cmdToPush) this.undoStack.push(cmdToPush);
+
+    if (isShowLogMessages)
+      console.log(
+        "executed command",
+        !cmdToPush ? "(ignored by undo)" : "",
         command,
-      ]); // Replace with a merged command
-    }
-
-    this.undoStack.push(cmdToPush);
-
-    console.log("after command execute", this.undoStack, this.redoStack);
+        "undoStack",
+        this.undoStack,
+        "redoStack",
+        this.redoStack
+      );
   }
 
-  static mergeSelectionCommands(commands) {
-    if (!commands || commands.lenght === 0)
-      console.error("Cannot merge commands: ", commands);
-    return new Command(
-      commands[commands.length - 1].execute,
-      commands[0].undo,
-      commands[0].mergeGroup
+  static peek(stack) {
+    return stack?.length > 0 && stack[stack.length - 1];
+  }
+
+  getCommandToPushToUndoStack(executedCommand) {
+    if (
+      executedCommand instanceof SelectionCommand &&
+      !executedCommand.shouldPush()
+    )
+      return null;
+
+    const undoStackHead = UndoRedoManager.peek(this.undoStack);
+    let cmdToPush = executedCommand;
+    if (
+      UndoRedoManager.shouldMergeSelectoinCommands(
+        undoStackHead,
+        executedCommand
+      )
+    ) {
+      // Replace with a merged command
+      cmdToPush = this.undoStack.pop().mergedWith(executedCommand);
+    }
+    return cmdToPush;
+  }
+
+  static shouldMergeSelectoinCommands(cmd1, cmd2) {
+    return (
+      cmd1 &&
+      cmd2 &&
+      cmd1 instanceof SelectionCommand &&
+      cmd2 instanceof SelectionCommand &&
+      cmd1.shouldMerge() &&
+      cmd2.shouldMerge()
     );
   }
 
   undo() {
-    if (this.undoStack.length > 0) {
-      const command = this.undoStack.pop();
-      this.redoStack.push(command);
-      command.undo();
+    try {
+      if (this.undoStack.length > 0) {
+        const command = this.undoStack.pop();
+        if (isShowLogMessages) console.log("undo", command);
+
+        this.redoStack.push(command);
+        command.undo();
+      }
+    } catch (err) {
+      console.error("catched error", err);
     }
   }
 
   redo() {
-    if (this.redoStack.length > 0) {
-      const command = this.redoStack.pop();
-      this.undoStack.push(command);
-      command.execute();
+    try {
+      if (this.redoStack.length > 0) {
+        const command = this.redoStack.pop();
+        if (isShowLogMessages) console.log("redo", command);
+
+        this.undoStack.push(command);
+        command.execute();
+      }
+    } catch (err) {
+      console.error("catched error", err);
     }
   }
 }

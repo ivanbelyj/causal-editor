@@ -4,9 +4,10 @@ import { CausesChangeManager } from "../../causal-view/causes-change-manager.js"
 
 // Block representing probability nest in causes component
 export class ProbabilityBlock {
-  constructor(selector, causalView) {
+  constructor(selector, causalView, undoRedoManager) {
     this.content = d3.select(selector);
     this.causalView = causalView;
+    this.undoRedoManager = undoRedoManager;
 
     this.causesChangeManager = new CausesChangeManager(causalView);
   }
@@ -32,6 +33,7 @@ export class ProbabilityBlock {
         causesChangeManager: this.causesChangeManager,
         rootCausesExpression: rootCausesExpr,
         causalView: this.causalView,
+        undoRedoManager: this.undoRedoManager,
       }));
       rootCausesItem.init();
     }
