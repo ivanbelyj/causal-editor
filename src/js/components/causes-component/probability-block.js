@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { CausesItem } from "./causes-item.js";
-import { CausesChangeManager } from "../../causal-view/causes-change-manager.js";
+import { CausesChangeManager } from "../causes-change-manager.js";
+import { CausesExpressionProvider } from "../causes-expression-provider.js";
 
 // Block representing probability nest in causes component
 export class ProbabilityBlock {
@@ -24,19 +25,18 @@ export class ProbabilityBlock {
     const rootCausesExpr =
       this.causalModelFact?.ProbabilityNest?.CausesExpression;
     if (!this.rootCausesItem) {
-      const rootCausesItem = (this.rootCausesItem = new CausesItem({
+      this.rootCausesItem = new CausesItem({
         selector: this.content.node(),
         isRemovable: false,
         isRoot: true,
-        // onCausesRemove: this.onCausesRemove.bind(this),
-        // onCauseIdChange: this.onCauseIdChange.bind(this),
-        causesChangeManager: this.causesChangeManager,
         rootCausesExpression: rootCausesExpr,
         causalView: this.causalView,
-        undoRedoManager: this.undoRedoManager,
-      }));
-      rootCausesItem.init();
+        causesExpressionProvider: new CausesExpressionProvider(
+          this.undoRedoManager,
+          this.causesChangeManager
+        ),
+      });
     }
-    this.rootCausesItem.reset(rootCausesExpr);
+    this.rootCausesItem.resetProvider(rootCausesExpr);
   }
 }

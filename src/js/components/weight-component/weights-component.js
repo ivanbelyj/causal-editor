@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
-import { CausesChangeManager } from "../../causal-view/causes-change-manager.js";
+import { CausesChangeManager } from "../causes-change-manager.js";
 import binSrc from "../../../images/bin.svg";
 
 // Block is used as a part of a component
@@ -155,7 +155,7 @@ export class WeightsComponent {
             const removedItem = this.weights[removeIndex];
             this.weights.splice(removeIndex, 1);
             if (removedItem.CauseId)
-              this.causesChangeManager.onCausesRemove([removedItem.CauseId]);
+              this.causesChangeManager.onCausesRemoved([removedItem.CauseId]);
             else {
             } // There is no reason to track causes change
           } else {

@@ -1,9 +1,6 @@
 import * as d3 from "d3";
-import { CausalModelUtils } from "../../causal-view/causal-model-utils.js";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
-import { Command } from "../../undo-redo/commands/command.js";
 import binSrc from "../../../images/bin.svg";
-import { CausesExpressionCommand } from "../../undo-redo/commands/causes-expression-command.js";
 
 // CausesItem is a UI element representing causes expression.
 // It includes top (with type dropdown) and content that can include
@@ -18,15 +15,10 @@ export class CausesItem {
     isRemovable,
     onRemoveClick,
 
-    // onCausesRemove,
-    // onCauseIdChange,
-    causesChangeManager,
-
     isRoot,
-    // rootCausesExpression,
 
     causalView,
-    undoRedoManager,
+    causesExpressionProvider,
   }) {
     this.selector = selector;
     this.component = d3.select(selector);
@@ -35,9 +27,6 @@ export class CausesItem {
 
     // Necessary to update changes in CausalView because d3 tracks flat data,
     // not nested and mutating
-    // this.onCausesRemove = onCausesRemove;
-    // this.onCauseIdChange = onCauseIdChange;
-    this.causesChangeManager = causesChangeManager;
 
     // Knowing isRootItem is required to have only one right border for inner items
     this.isRoot = isRoot ?? false;
@@ -45,26 +34,52 @@ export class CausesItem {
 
     this.causalView = causalView;
 
-    this.undoRedoManager = undoRedoManager;
+    this.causesExpressionProvider = causesExpressionProvider;
+    causesExpressionProvider.addEventListener(
+      "causes-expression-reset",
+      this.reset.bind(this)
+    );
+    causesExpressionProvider.addEventListener(
+      "causes-expression-mutated",
+      this.reset.bind(this)
+    );
   }
 
-  // Actions that are relevant to CausesItem regardless of causesExpression structure.
-  // init() must be called only once
-  init(causesExpression) {
-    if (causesExpression) {
-      this.reset(causesExpression);
+  // Resets causes item's provider with causes expression
+  resetProvider(causesExpression) {
+    this.causesExpressionProvider.set(causesExpression);
+  }
+
+  reset() {
+    const expr = this.causesExpressionProvider.get();
+    console.log("reset causes-item. expr:", expr);
+
+    this.resetItemTop();
+
+    // Reset content and remove inner items
+    this.resetContent();
+
+    if (!expr) return;
+
+    // Create actual inner items
+    // const childrenExpr = [];
+    // if (expr.Operands) childrenExpr.push(...expr.Operands);
+    // else if (expr.CausesExpression) childrenExpr.push(expr.CausesExpression);
+    const childrenProviders =
+      this.causesExpressionProvider.createAndSetChildrenExpressionProviders();
+    if (childrenProviders.length > 0) {
+      for (const childProvider of childrenProviders) {
+        const newItem = this.appendInnerItem(
+          expr.$type !== "not",
+          // Inner items are not removable only in inversion operation (there is always only an operand)
+          childProvider
+        );
+        newItem.reset();
+      }
     }
   }
 
-  reset(causesExpression) {
-    if (!causesExpression)
-      console.error("causes expression can't be ", causesExpression);
-
-    this.causesExpression = causesExpression;
-    CausesItem.resetCausesItem(this, this.causesExpression);
-  }
-
-  resetItemTop(causesExpression) {
+  resetItemTop() {
     if (this.itemTop) {
       this.itemTop.remove();
     }
@@ -92,7 +107,7 @@ export class CausesItem {
           "click",
           function () {
             this.component.remove();
-            this.onRemoveClick?.(causesExpression);
+            this.onRemoveClick?.();
           }.bind(this)
         );
     }
@@ -103,117 +118,22 @@ export class CausesItem {
     typeDropdown.append("option").attr("value", "or").text("Or");
     typeDropdown.append("option").attr("value", "not").text("Not");
 
-    typeDropdown.property("value", causesExpression?.$type ?? "none");
-
-    typeDropdown.on("change", this.onTypeDropdownChanged.bind(this));
-  }
-
-  onTypeDropdownChanged(e) {
-    const prevCausesExpr = structuredClone(this.causesExpression);
-    const changedCausesExpr = this.getChangedTypeCausesExpression(
-      this.causesExpression,
-      e.target.value
+    typeDropdown.property(
+      "value",
+      this.causesExpressionProvider.get()?.$type ?? "none"
     );
-    // console.log(
-    //   "drop down changed. prev expr",
-    //   prevCausesExpr,
-    //   "changed expr",
-    //   changedCausesExpr
-    // );
 
-    const cmd = new CausesExpressionCommand(
-      this,
-      prevCausesExpr,
-      changedCausesExpr
+    typeDropdown.on(
+      "change",
+      function (e) {
+        this.causesExpressionProvider.changeExpressionType(e.target.value);
+      }.bind(this)
     );
-    this.undoRedoManager.execute(cmd);
-  }
-
-  setCausesExpression(newExpr) {
-    // console.log("=".repeat(50));
-    // console.log("will be set", newExpr);
-    const removedExprClone = structuredClone(this.causesExpression);
-    // console.log("structured clone of causes expr", removedExprClone);
-
-    // We should mutate this.causesExpression instead of creating a  new one
-    for (const key in this.causesExpression) {
-      delete this.causesExpression[`${key}`];
-    }
-    // for (const key in newExpr) {
-    //   this.causesExpression[key] = structuredClone(newExpr[key]);
-    // }
-    Object.assign(this.causesExpression, newExpr);
-    // console.log("mutated causes expr", this.causesExpression);
-    // console.log("removed expr", removedExprClone);
-
-    // Tracked to update causal view
-    this.causesChangeManager.onCausesExpressionRemove(removedExprClone);
-
-    // In most cases new CausesItem structure is not similar to previous
-    this.reset(structuredClone(newExpr));
-
-    // console.log("finally causes expr is", this.causesExpression);
-  }
-
-  getChangedTypeCausesExpression(causesExpression, newType) {
-    const prevType = causesExpression?.$type;
-    let res = {};
-
-    if (
-      (prevType == "and" && newType == "or") ||
-      (prevType == "or" && newType == "and")
-    ) {
-      // Structure is almost the same
-      res = structuredClone(causesExpression);
-    } else {
-      if (newType == "and" || newType == "or") {
-        res.Operands = [];
-      }
-      if (newType == "not") {
-        // Add a child that has not been defined yet, but is required
-        res.CausesExpression = CausalModelUtils.createFactorExpression();
-      }
-      if (newType == "factor") {
-        res.Edge = {
-          Probability: 1,
-        };
-      }
-    }
-    res.$type = newType;
-
-    return res;
-  }
-
-  static resetCausesItem(causeItem, expr) {
-    // Update top
-    causeItem.resetItemTop(expr);
-    // causeItem.typeDropdown.property("value", expr?.$type ?? "none");
-
-    // Reset content and remove inner items
-    causeItem.resetContent(expr?.$type);
-
-    if (!expr) return;
-
-    // Create actual inner items
-    const childrenExpr = [];
-    if (expr.Operands) childrenExpr.push(...expr.Operands);
-    else if (expr.CausesExpression) childrenExpr.push(expr.CausesExpression);
-    if (childrenExpr.length > 0) {
-      for (const childExpr of childrenExpr) {
-        const newItem = causeItem.appendInnerItem(
-          expr.$type !== "not",
-          // Inner items are not removable only in inversion operation (there is always only an operand)
-          childExpr
-        );
-        // Create item from expression
-        CausesItem.resetCausesItem(newItem, childExpr);
-      }
-    }
   }
 
   // After removing all content including inner items resetContent() creates
   // only item content itself (without inner items)
-  resetContent(type) {
+  resetContent() {
     if (this.content) {
       this.content.remove();
     }
@@ -222,7 +142,7 @@ export class CausesItem {
       this.innerItemsParent = null;
     }
 
-    switch (type) {
+    switch (this.causesExpressionProvider.get().$type) {
       case "factor":
         this.setFactorItemContent();
         break;
@@ -238,10 +158,11 @@ export class CausesItem {
   }
 
   setFactorItemContent() {
-    if (this.causesExpression.$type != "factor") {
+    const expr = this.causesExpressionProvider.get();
+    if (expr.$type != "factor") {
       console.error(
         "Incorrect causesExpression for factor item creation: ",
-        this.causesExpression
+        this.expr
       );
     }
 
@@ -253,12 +174,12 @@ export class CausesItem {
       .attr("step", "0.01")
       .attr("class", "input-item text-input input-item__input")
       .attr("placeholder", "Probability")
-      .property("value", this.causesExpression.Edge.Probability)
+      .property("value", expr.Edge.Probability)
       .on(
         "change",
         function (event) {
-          this.causesExpression.Edge.Probability = parseFloat(
-            d3.select(event.target).property("value")
+          this.causesExpressionProvider.changeProbability(
+            parseFloat(d3.select(event.target).property("value"))
           );
         }.bind(this)
       );
@@ -266,16 +187,10 @@ export class CausesItem {
     new SelectNodeElement(
       this.content.append("div").node(),
       this.causalView,
-      function (id) {
-        const oldCauseId = this.causesExpression?.Edge?.CauseId;
-        this.causesExpression.Edge.CauseId = id;
-
-        this.causesChangeManager.onCauseIdChange(
-          oldCauseId,
-          this.causesExpression.Edge.CauseId
-        );
-      }.bind(this)
-    ).init(this.causesExpression.Edge.CauseId);
+      this.causesExpressionProvider.changeCauseId.bind(
+        this.causesExpressionProvider
+      )
+    ).init(expr.Edge.CauseId);
   }
 
   setAndOrItemContent() {
@@ -290,10 +205,11 @@ export class CausesItem {
     addButton.on(
       "click",
       function (event) {
-        const newItem = CausalModelUtils.createFactorExpression();
-        this.causesExpression.Operands.push(newItem);
-        // New operand is empty so cause change will be handled on change type
-        this.appendInnerItem(true, newItem);
+        this.causesExpressionProvider.addNewOperand(
+          function (newExprProvider) {
+            this.appendInnerItem(true, newExprProvider);
+          }.bind(this)
+        );
       }.bind(this)
     );
   }
@@ -303,7 +219,7 @@ export class CausesItem {
   }
 
   // Inner item is visually separated from outer (borders and padding)
-  appendInnerItem(isRemovable, causesExpression) {
+  appendInnerItem(isRemovable, causesExpressionProvider) {
     if (!this.innerItemsParent)
       this.innerItemsParent = this.content.append("div");
 
@@ -319,25 +235,13 @@ export class CausesItem {
     const newItem = new CausesItem({
       selector: itemSelection.node(),
       isRemovable,
-      // onCausesRemove: this.onCausesRemove,
-      // onCauseIdChange: this.onCauseIdChange,
-      causesChangeManager: this.causesChangeManager,
-      onRemoveClick: function (removingExpr) {
-        const removeIndex =
-          this.causesExpression.Operands.indexOf(removingExpr);
-        this.causesExpression.Operands.splice(removeIndex, 1);
-
-        // const causesToRemove = this.getCauseIdsToRemove(removingExpr);
-        // // Pass removed causes to update causal-view
-        // this.onCausesRemove(causesToRemove);
-        this.causesChangeManager.onCausesExpressionRemove(removingExpr);
-      }.bind(this),
+      onRemoveClick: this.causesExpressionProvider.removeOperand.bind(
+        this.causesExpressionProvider
+      ),
       isRoot: false, // Inner item can't be a root
-      // rootCausesExpression: this.rootCausesExpression,
       causalView: this.causalView,
-      undoRedoManager: this.undoRedoManager,
+      causesExpressionProvider,
     });
-    newItem.init(causesExpression);
 
     return newItem;
   }

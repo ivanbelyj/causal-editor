@@ -80,4 +80,20 @@ export class CausalModelUtils {
       NodeValue: `New Fact ${++CausalModelUtils.lastCreatedFactNumber}`,
     };
   }
+
+  static arrayComplement(minuend, subtrahend) {
+    return minuend.filter((x) => x && !subtrahend.includes(x));
+  }
+
+  static causesExpressionComplement(minuendExpr, subtrahendExpr) {
+    const minCausesIds = CausalModelUtils.findCauseIds(minuendExpr);
+    const subCausesIds = CausalModelUtils.findCauseIds(subtrahendExpr);
+    return CausalModelUtils.arrayComplement(minCausesIds, subCausesIds);
+  }
+
+  static factComplement(minuendFact, subtrahendFact) {
+    const minCausesIds = CausalModelUtils.getCausesIdsUnique(minuendFact);
+    const subCausesIds = CausalModelUtils.getCausesIdsUnique(subtrahendFact);
+    return CausalModelUtils.arrayComplement(minCausesIds, subCausesIds);
+  }
 }

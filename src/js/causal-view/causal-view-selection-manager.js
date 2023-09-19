@@ -138,10 +138,12 @@ export class CausalViewSelectionManager extends EventTarget {
   }
 
   onNodeClicked(event) {
+    const eventData = event.data.d;
+    eventData.stopPropagation();
+
     if (!this.isSelectByClick) return;
 
     const nodeData = event.data.i.data;
-    const eventData = event.data.d;
 
     const isMultiSelect = eventData.ctrlKey || eventData.metaKey;
     const removeClicked =
@@ -154,8 +156,6 @@ export class CausalViewSelectionManager extends EventTarget {
       newSelected = newSelected.filter((x) => x != nodeData["Id"]);
 
     this.executeSelectNodeIds(newSelected);
-
-    eventData.stopPropagation();
   }
 
   // Todo: rename
