@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
-import binSrc from "../../../images/bin.svg";
+import binImgSrc from "../../../images/bin.svg";
 
 // CausesItem is a UI element representing causes expression.
 // It includes top (with type dropdown) and content that can include
@@ -14,9 +14,7 @@ export class CausesItem {
     selector,
     isRemovable,
     onRemoveClick,
-
     isRoot,
-
     causalView,
     causesExpressionProvider,
   }) {
@@ -25,12 +23,11 @@ export class CausesItem {
     this.isRemovable = isRemovable ?? false;
     this.onRemoveClick = onRemoveClick;
 
-    // Necessary to update changes in CausalView because d3 tracks flat data,
-    // not nested and mutating
+    // It's necessary to update changes in CausalView
+    // because d3 tracks flat data, not nested and mutating
 
     // Knowing isRootItem is required to have only one right border for inner items
     this.isRoot = isRoot ?? false;
-    // this.rootCausesExpression = rootCausesExpression;
 
     this.causalView = causalView;
 
@@ -52,7 +49,7 @@ export class CausesItem {
 
   reset() {
     const expr = this.causesExpressionProvider.get();
-    console.log("reset causes-item. expr:", expr);
+    // console.log("reset causes-item. expr:", expr);
 
     this.resetItemTop();
 
@@ -62,16 +59,14 @@ export class CausesItem {
     if (!expr) return;
 
     // Create actual inner items
-    // const childrenExpr = [];
-    // if (expr.Operands) childrenExpr.push(...expr.Operands);
-    // else if (expr.CausesExpression) childrenExpr.push(expr.CausesExpression);
     const childrenProviders =
       this.causesExpressionProvider.createAndSetChildrenExpressionProviders();
     if (childrenProviders.length > 0) {
       for (const childProvider of childrenProviders) {
         const newItem = this.appendInnerItem(
           expr.$type !== "not",
-          // Inner items are not removable only in inversion operation (there is always only an operand)
+          // Inner items are not removable only in the inversion operation
+          // (there is always only an operand)
           childProvider
         );
         newItem.reset();
@@ -84,12 +79,13 @@ export class CausesItem {
       this.itemTop.remove();
     }
 
-    // Every causes-item has item top (for selecting the type or removing the item)
+    // Every causes-item has item top (for selecting the type
+    // or removing the item)
     this.itemTop = this.component
       .append("div")
       .attr("class", "component__inner-item-top");
 
-    // Removable item has remove-icon instead of padding
+    // Removable item has a remove icon instead of the padding
     if (this.isRemovable) {
       this.itemTop.style("padding-right", "0");
     }
@@ -101,26 +97,30 @@ export class CausesItem {
     if (this.isRemovable) {
       this.itemTop
         .append("img")
-        .attr("src", binSrc)
+        .attr("src", binImgSrc)
         .attr("class", "component__remove-icon")
         .on(
           "click",
           function () {
-            this.component.remove();
-            this.onRemoveClick?.();
+            // Removing is already handled by causes-expression-mutated event
+            // this.component.remove();
+
+            this.onRemoveClick?.(this.causesExpressionProvider.get());
           }.bind(this)
         );
     }
 
-    typeDropdown.append("option").attr("value", "none").text("None");
-    typeDropdown.append("option").attr("value", "factor").text("Factor");
-    typeDropdown.append("option").attr("value", "and").text("And");
-    typeDropdown.append("option").attr("value", "or").text("Or");
-    typeDropdown.append("option").attr("value", "not").text("Not");
+    const noneOptionVal = "none";
+    [noneOptionVal, "factor", "and", "or", "not"].forEach((optionVal) => {
+      typeDropdown
+        .append("option")
+        .attr("value", optionVal)
+        .text(optionVal.charAt(0).toUpperCase() + optionVal.slice(1));
+    });
 
     typeDropdown.property(
       "value",
-      this.causesExpressionProvider.get()?.$type ?? "none"
+      this.causesExpressionProvider.get()?.$type ?? noneOptionVal
     );
 
     typeDropdown.on(
@@ -131,8 +131,8 @@ export class CausesItem {
     );
   }
 
-  // After removing all content including inner items resetContent() creates
-  // only item content itself (without inner items)
+  // After removing all content and inner items resetContent() creates
+  // item content itself only (without inner items)
   resetContent() {
     if (this.content) {
       this.content.remove();
@@ -194,9 +194,10 @@ export class CausesItem {
   }
 
   setAndOrItemContent() {
-    this.content.style("padding-right", "0"); // reduced to save space
+    // Padding is reduced to save space
+    this.content.style("padding-right", "0");
 
-    // Button to add new items
+    // A button for adding new items
     const addButton = this.content
       .append("button")
       .attr("class", "button input-item")
@@ -205,28 +206,31 @@ export class CausesItem {
     addButton.on(
       "click",
       function (event) {
-        this.causesExpressionProvider.addNewOperand(
-          function (newExprProvider) {
-            this.appendInnerItem(true, newExprProvider);
-          }.bind(this)
-        );
+        this.causesExpressionProvider.addNewOperand();
+        // appending new inner item is already handled
+        // by causes-expression-mutated event
+        // (function (newExprProvider) {
+        //   this.appendInnerItem(true, newExprProvider);
+        // }.bind(this))
       }.bind(this)
     );
   }
 
   setNotItemContent() {
-    this.content.style("padding-right", "0"); // reduced to save space
+    // Padding is reduced to save space
+    this.content.style("padding-right", "0");
   }
 
-  // Inner item is visually separated from outer (borders and padding)
   appendInnerItem(isRemovable, causesExpressionProvider) {
     if (!this.innerItemsParent)
       this.innerItemsParent = this.content.append("div");
 
+    // Inner item is visually separated from the outer
     const itemSelection = this.innerItemsParent
       .append("div")
       .attr("class", "component__inner-item")
-      .style("padding-right", "0"); // Every inner item reduces padding-right to save space
+      .style("padding-right", "0");
+    // Every inner item reduces padding-right to save space
 
     if (!this.isRoot) {
       itemSelection.style("border-right", "none");
@@ -238,7 +242,7 @@ export class CausesItem {
       onRemoveClick: this.causesExpressionProvider.removeOperand.bind(
         this.causesExpressionProvider
       ),
-      isRoot: false, // Inner item can't be a root
+      isRoot: false, // Inner item can't be the root
       causalView: this.causalView,
       causesExpressionProvider,
     });

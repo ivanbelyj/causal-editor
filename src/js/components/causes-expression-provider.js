@@ -14,13 +14,13 @@ export class CausesExpressionProvider extends EventTarget {
 
   set(causesExpression) {
     this._causesExpression = causesExpression;
-    this.dispatchReset();
+    this.#dispatchReset();
   }
 
-  dispatchReset() {
+  #dispatchReset() {
     this.dispatchEvent(new Event("causes-expression-reset"));
   }
-  dispatchMutated() {
+  #dispatchMutated() {
     this.dispatchEvent(new Event("causes-expression-mutated"));
   }
 
@@ -58,6 +58,7 @@ export class CausesExpressionProvider extends EventTarget {
       this.mutateCausesExpression.bind(this, prevCausesExpr)
     );
     this.undoRedoManager.execute(cmd);
+    // this.#dispatchMutated();
   }
 
   getChangedTypeCausesExpression(causesExpression, newType) {
@@ -114,13 +115,14 @@ export class CausesExpressionProvider extends EventTarget {
     );
 
     // this.reset(structuredClone(newExpr));
-    this.dispatchMutated();
+    this.#dispatchMutated();
   }
 
   changeProbability(newProbability) {
     const prevProbability = this._causesExpression.Edge.Probability;
     const setProbability = function (newVal) {
       this._causesExpression.Edge.Probability = newVal;
+      this.#dispatchMutated();
     }.bind(this);
     const changeProbCmd = new Command(
       () => setProbability(newProbability),
@@ -138,6 +140,7 @@ export class CausesExpressionProvider extends EventTarget {
         oldId,
         this._causesExpression.Edge.CauseId
       );
+      this.#dispatchMutated();
     }.bind(this);
     const oldCauseId = this._causesExpression?.Edge?.CauseId;
     const cmd = new Command(
@@ -147,11 +150,11 @@ export class CausesExpressionProvider extends EventTarget {
     this.undoRedoManager.execute(cmd);
   }
 
-  addNewOperand(onNewOperandAdded) {
+  addNewOperand() {
     const newExpr = CausalModelUtils.createFactorExpression();
     const cmd = new Command(
       function () {
-        this.#addOperand(newExpr, onNewOperandAdded);
+        this.#addOperand(newExpr);
       }.bind(this),
       function () {
         this.#removeOperand(newExpr);
@@ -160,19 +163,20 @@ export class CausesExpressionProvider extends EventTarget {
     this.undoRedoManager.execute(cmd);
   }
 
-  removeOperand(expr, onNewOperandAdded) {
+  removeOperand(expr) {
     const cmd = new Command(
       function () {
         this.#removeOperand(expr);
       }.bind(this),
       function () {
-        this.#addOperand(expr, onNewOperandAdded);
+        this.#addOperand(expr);
       }.bind(this)
     );
     this.undoRedoManager.execute(cmd);
   }
 
-  #addOperand(newExpr, onNewOperandAdded) {
+  #addOperand(newExpr) {
+    if (!newExpr) console.error("add empty operand", newExpr);
     this._causesExpression.Operands.push(newExpr);
     // New operand has no cause so cause change will be handled on change type
 
@@ -180,8 +184,9 @@ export class CausesExpressionProvider extends EventTarget {
       this.undoRedoManager,
       this.causesChangeManager
     );
-    onNewOperandAdded?.(newExprProvider);
+    // onNewOperandAdded?.(newExprProvider);
     newExprProvider.set(newExpr);
+    this.#dispatchMutated();
   }
 
   #removeOperand(operandExpr) {
@@ -191,5 +196,6 @@ export class CausesExpressionProvider extends EventTarget {
     // const causesToRemove = this.getCauseIdsToRemove(removingExpr);
     // Pass removed causes to update causal-view
     this.causesChangeManager.onCausesExpressionRemove(operandExpr);
+    this.#dispatchMutated();
   }
 }

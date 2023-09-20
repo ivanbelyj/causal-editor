@@ -4,7 +4,7 @@ import { CausesComponent } from "./components/causes-component/causes-component.
 import { NodeValueComponent } from "./components/node-value-component.js";
 import { WeightsComponent } from "./components/weight-component/weights-component.js";
 import { factsCollection } from "./test-data.js";
-import { GoldenLayout } from "golden-layout";
+import { GoldenLayout, LayoutManager } from "golden-layout";
 import * as d3 from "d3";
 import { UndoRedoManager } from "./undo-redo/undo-redo-manager.js";
 
@@ -101,8 +101,23 @@ export class AppLayoutManager {
 
   // When check the according item in the menu in the main process
   onSetComponentActive(event, { componentType, isActive }) {
+    const locationSelectors =
+      // LayoutManager.afterFocusedItemIfPossibleLocationSelectors;
+      [
+        { typeId: 3 /* FirstRowOrColumn */, index: 1 },
+        // { typeId: 0 /* FocusedItem */, index: 1 },
+        // { typeId: 2 /* FirstStack */, index: undefined },
+        { typeId: 7 /* Root */, index: undefined },
+      ];
+    console.log();
     if (isActive) {
-      this.layout.addComponentAtLocation(componentType, null);
+      this.layout.addComponentAtLocation(
+        componentType,
+        null,
+        componentType,
+        locationSelectors
+      );
+
       if (!this.componentTypesAndItems.has(componentType))
         this.componentTypesAndItems.set(componentType, null);
     } else {
