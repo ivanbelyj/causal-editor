@@ -2,13 +2,16 @@ import * as d3 from "d3";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
 import { CausesChangeManager } from "../causes-change-manager.js";
 import binSrc from "../../../images/bin.svg";
+import { CausalFactProvider } from "../providers/causal-fact-provider.js";
 
 // Block is used as a part of a component
 export class WeightsComponent {
-  constructor(selector, causalView, api) {
+  constructor(selector, causalView, api, undoRedoManager) {
     // Parent element
     this.component = d3.select(selector);
     this.causalView = causalView;
+
+    // Todo: is it necessary to create here?
     this.causesChangeManager = new CausesChangeManager(causalView);
 
     api.onReset(
@@ -16,48 +19,49 @@ export class WeightsComponent {
         this.reset(null);
       }.bind(this)
     );
+
+    this.undoRedoManager = undoRedoManager;
+
+    this.causalFactProvider = new CausalFactProvider(
+      this.undoRedoManager,
+      this.causesChangeManager
+    );
+    this.causalFactProvider.addEventListener("mutated", this.reset.bind(this));
+    this.causalFactProvider.addEventListener("reset", this.reset.bind(this));
   }
 
-  init(causalModelFact) {
+  resetProvider(causalModelFact) {
+    this.causalFactProvider.set(causalModelFact);
+  }
+
+  init() {
     this.component.classed("component", true);
 
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
       function (event) {
         const causalModelFact = event.data.node.data;
-        this.reset(causalModelFact);
+        this.resetProvider(causalModelFact);
       }.bind(this)
     );
 
     this.causalView.selectionManager.addEventListener(
       "singleNodeNotSelected",
       function (event) {
-        this.reset(null);
+        this.resetProvider(null);
       }.bind(this)
     );
 
-    if (causalModelFact) this.reset(causalModelFact);
+    // if (causalModelFact) this.reset(causalModelFact);
   }
 
-  addDefaultWeightEdge(useAbstractFactId) {
-    const abstrId = this.causalModelFact.AbstractFactId ?? null;
-    const newItem = {
-      Weight: 1,
-      CauseId: useAbstractFactId ? abstrId : null,
-    };
-    this.weights.push(newItem);
-    this.appendItem(newItem);
-
-    // If Abstract Fact Id exists, it is already tracked
-    // if (abstrId) this.causesChangeManager.onCausesAdd([abstrId]);
-  }
-
-  reset(causalModelFact) {
+  reset() {
     this.component.html("");
-    if (!causalModelFact) return;
 
-    this.causalModelFact = causalModelFact;
-    this.causesChangeManager.reset(causalModelFact);
+    const causalFact = this.causalFactProvider.get();
+    if (!causalFact) return;
+
+    this.causesChangeManager.reset(causalFact);
 
     this.appendAbstractFactIdInput();
 
@@ -66,9 +70,16 @@ export class WeightsComponent {
       .append("button")
       .attr("class", "button input-item")
       .text("Add Weight Edge")
-      .on("click", () => this.addDefaultWeightEdge());
+      .on(
+        "click",
+        this.causalFactProvider.addNewWeightEdge.bind(this.causalFactProvider)
+      );
 
     this.resetItems();
+  }
+
+  getWeights() {
+    return this.causalFactProvider.get().WeightNest?.Weights;
   }
 
   // Content is a part of component that is changing
@@ -78,13 +89,16 @@ export class WeightsComponent {
       this.itemsParent = null;
     }
 
-    if (!this.causalModelFact.WeightNest?.Weights)
-      this.causalModelFact.WeightNest = { Weights: [] };
-    this.weights = this.causalModelFact.WeightNest.Weights;
+    // this.causalFactProvider;
+    // if (!this.causalModelFact.WeightNest?.Weights)
+    //   this.causalModelFact.WeightNest = { Weights: [] };
+    // this.weights = this.causalModelFact.WeightNest.Weights;
 
-    for (const weightEdge of this.weights) {
-      this.appendItem(weightEdge);
-    }
+    const weights = this.getWeights();
+    if (weights)
+      for (const weightEdge of weights) {
+        this.appendItem(weightEdge);
+      }
   }
 
   appendAbstractFactIdInput() {
@@ -96,19 +110,8 @@ export class WeightsComponent {
     new SelectNodeElement(
       this.component.append("div").node(),
       this.causalView,
-      function (newId) {
-        const oldCauseId = this.causalModelFact.AbstractFactId;
-        this.causalModelFact.AbstractFactId = newId;
-        this.causesChangeManager.onCauseIdChange(oldCauseId, newId);
-
-        // Add first weight edge
-        if (
-          !this.causalModelFact.WeightNest?.Weights?.length &&
-          this.causalModelFact.AbstractFactId
-        )
-          this.addDefaultWeightEdge(true);
-      }.bind(this)
-    ).init(this.causalModelFact.AbstractFactId);
+      this.causalFactProvider.changeAbstractFactId.bind(this.causalFactProvider)
+    ).init(this.causalFactProvider.get().AbstractFactId);
   }
 
   appendItem(weightEdge) {
@@ -135,9 +138,8 @@ export class WeightsComponent {
     weightInput.on(
       "change",
       function (event) {
-        weightEdge.Weight = parseFloat(
-          d3.select(event.target).property("value")
-        );
+        const newWeight = parseFloat(d3.select(event.target).property("value"));
+        this.causalFactProvider.changeWeightEdgeWeight(weightEdge, newWeight);
       }.bind(this)
     );
 
@@ -150,17 +152,7 @@ export class WeightsComponent {
         "click",
         function (event) {
           item.remove();
-          const removeIndex = this.weights.indexOf(weightEdge);
-          if (removeIndex != -1) {
-            const removedItem = this.weights[removeIndex];
-            this.weights.splice(removeIndex, 1);
-            if (removedItem.CauseId)
-              this.causesChangeManager.onCausesRemoved([removedItem.CauseId]);
-            else {
-            } // There is no reason to track causes change
-          } else {
-            console.error("trying to remove weight edge that doesn't exist");
-          }
+          this.causalFactProvider.removeEdge(weightEdge);
         }.bind(this)
       );
 
@@ -168,9 +160,7 @@ export class WeightsComponent {
       itemContent.append("div").node(),
       this.causalView,
       function (newId) {
-        const oldCauseId = weightEdge.CauseId;
-        weightEdge.CauseId = newId;
-        this.causesChangeManager.onCauseIdChange(oldCauseId, newId);
+        this.causalFactProvider.changeWeightEdgeCauseId(weightEdge, newId);
       }.bind(this)
     ).init(weightEdge.CauseId);
   }

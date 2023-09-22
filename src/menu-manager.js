@@ -4,6 +4,7 @@ const {
   ipcMain,
   Menu,
   globalShortcut,
+  BrowserWindow,
 } = require("electron");
 
 const isMac = process.platform === "darwin";
@@ -19,8 +20,12 @@ export class MenuManager {
     // ipcMain.on("components-registered", this.onComponentsRegistered.bind(this));
     ipcMain.on("send-component-active", this.onSendComponentActive.bind(this));
 
-    // Todo: fix
-    // globalShortcut.register("CmdOrCtrl+A", this.selectAllHandler.bind(this));
+    window.webContents.on("before-input-event", (event, input) => {
+      // Todo: use Mousetrap js?
+      if (input.control && input.key.toLowerCase() === "a") {
+        this.selectAllHandler();
+      }
+    });
   }
 
   //   onComponentsRegistered(event, data) {

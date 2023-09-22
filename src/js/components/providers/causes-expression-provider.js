@@ -1,31 +1,20 @@
-import { CausalModelUtils } from "../causal-view/causal-model-utils";
-import { Command } from "../undo-redo/commands/command";
-// import { CausesExpressionCommand } from "../undo-redo/commands/causes-expression-command";
+import { CausalModelUtils } from "../../causal-view/causal-model-utils";
+import { Command } from "../../undo-redo/commands/command";
+import { DataProvider } from "./data-provider";
 
 // Provides api of CausesExpression change,
 // performing all related actions such as CausalView updating
 // (via CausesChangeManager) and undo / redo support
-export class CausesExpressionProvider extends EventTarget {
+export class CausesExpressionProvider extends DataProvider {
   constructor(undoRedoManager, causesChangeManager) {
-    super();
-    this.undoRedoManager = undoRedoManager;
-    this.causesChangeManager = causesChangeManager;
+    super(undoRedoManager, causesChangeManager);
   }
 
-  set(causesExpression) {
-    this._causesExpression = causesExpression;
-    this.#dispatchReset();
+  get _causesExpression() {
+    return this._data;
   }
-
-  #dispatchReset() {
-    this.dispatchEvent(new Event("causes-expression-reset"));
-  }
-  #dispatchMutated() {
-    this.dispatchEvent(new Event("causes-expression-mutated"));
-  }
-
-  get() {
-    return Object.freeze({ ...this._causesExpression });
+  set _causesExpression(value) {
+    this._data = value;
   }
 
   createAndSetChildrenExpressionProviders() {
@@ -115,14 +104,14 @@ export class CausesExpressionProvider extends EventTarget {
     );
 
     // this.reset(structuredClone(newExpr));
-    this.#dispatchMutated();
+    this._dispatchMutated();
   }
 
   changeProbability(newProbability) {
     const prevProbability = this._causesExpression.Edge.Probability;
     const setProbability = function (newVal) {
       this._causesExpression.Edge.Probability = newVal;
-      this.#dispatchMutated();
+      this._dispatchMutated();
     }.bind(this);
     const changeProbCmd = new Command(
       () => setProbability(newProbability),
@@ -140,7 +129,7 @@ export class CausesExpressionProvider extends EventTarget {
         oldId,
         this._causesExpression.Edge.CauseId
       );
-      this.#dispatchMutated();
+      this._dispatchMutated();
     }.bind(this);
     const oldCauseId = this._causesExpression?.Edge?.CauseId;
     const cmd = new Command(
@@ -186,7 +175,7 @@ export class CausesExpressionProvider extends EventTarget {
     );
     // onNewOperandAdded?.(newExprProvider);
     newExprProvider.set(newExpr);
-    this.#dispatchMutated();
+    this._dispatchMutated();
   }
 
   #removeOperand(operandExpr) {
@@ -196,6 +185,6 @@ export class CausesExpressionProvider extends EventTarget {
     // const causesToRemove = this.getCauseIdsToRemove(removingExpr);
     // Pass removed causes to update causal-view
     this.causesChangeManager.onCausesExpressionRemove(operandExpr);
-    this.#dispatchMutated();
+    this._dispatchMutated();
   }
 }

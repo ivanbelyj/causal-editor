@@ -32,14 +32,8 @@ export class CausesItem {
     this.causalView = causalView;
 
     this.causesExpressionProvider = causesExpressionProvider;
-    causesExpressionProvider.addEventListener(
-      "causes-expression-reset",
-      this.reset.bind(this)
-    );
-    causesExpressionProvider.addEventListener(
-      "causes-expression-mutated",
-      this.reset.bind(this)
-    );
+    causesExpressionProvider.addEventListener("reset", this.reset.bind(this));
+    causesExpressionProvider.addEventListener("mutated", this.reset.bind(this));
   }
 
   // Resets causes item's provider with causes expression
@@ -102,7 +96,7 @@ export class CausesItem {
         .on(
           "click",
           function () {
-            // Removing is already handled by causes-expression-mutated event
+            // Removing is already handled by mutated event
             // this.component.remove();
 
             this.onRemoveClick?.(this.causesExpressionProvider.get());
@@ -208,7 +202,7 @@ export class CausesItem {
       function (event) {
         this.causesExpressionProvider.addNewOperand();
         // appending new inner item is already handled
-        // by causes-expression-mutated event
+        // by mutated event
         // (function (newExprProvider) {
         //   this.appendInnerItem(true, newExprProvider);
         // }.bind(this))

@@ -56,12 +56,12 @@ export class DragAndDropManager {
       const posDataAfterDrag =
         dragAndDropManager.getNodesToDragPosData(draggedNodeId);
 
-      console.log(
-        "drag and drop. from ",
-        posDataBeforeDrag,
-        "to",
-        posDataAfterDrag
-      );
+      // console.log(
+      //   "drag and drop. from ",
+      //   posDataBeforeDrag,
+      //   "to",
+      //   posDataAfterDrag
+      // );
       d3.select(this).attr("cursor", "grab");
 
       const getPointOfDraggedNode = (posData) =>

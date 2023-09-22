@@ -52,9 +52,7 @@ export class CausesChangeManager {
     for (const removedId of this.getCauseIdsToRemove(removedCauseIds)) {
       if (false) {
         // Are there some not removed edges that use this link?
-      }
-      // Todo: fix bug with undo
-      else
+      } else
         this.causalView.structure.removeLink(
           removedId,
           this.causalModelFact.Id

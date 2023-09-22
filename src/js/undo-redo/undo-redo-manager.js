@@ -1,7 +1,7 @@
 import { Command } from "./commands/command";
 import { SelectionCommand } from "./commands/selection-command";
 
-const isShowLogMessages = true;
+const isShowLogMessages = false;
 export class UndoRedoManager {
   constructor(api) {
     this.api = api;

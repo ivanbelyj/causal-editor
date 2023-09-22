@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import { CausesItem } from "./causes-item.js";
 import { CausesChangeManager } from "../causes-change-manager.js";
-import { CausesExpressionProvider } from "../causes-expression-provider.js";
+import { CausesExpressionProvider } from "../providers/causes-expression-provider.js";
 
 // Block representing probability nest in causes component
 export class ProbabilityBlock {
