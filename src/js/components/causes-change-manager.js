@@ -75,22 +75,6 @@ export class CausesChangeManager {
     this.onCausesRemoved(causesToRemove);
   }
 
-  // onCausesExpressionAdd(expr) {
-  //   const causesToAdd = this.getCauseIdsToRemove(
-  //     CausalModelUtils.findCauseIds(expr)
-  //   );
-  //   this.onCausesAdd(causesToAdd);
-  // }
-
-  // // getCauseIdsToAdd and getCauseIdsToRemove can be replaced by one method,
-  // // but there are some comments and local variables naming convenient to understand
-  // getCauseIdsToAdd(newIds) {
-  //   const existingCauseIds = CausalModelUtils.getCausesIdsUnique(
-  //     this.causalModelFact
-  //   );
-  //   return CausesChangeManager.complement(newIds, existingCauseIds);
-  // }
-
   // - Some edges on causal-view can mean several causes at once
   //   so the edge should be removed only if it's used by removed cause only
   // - It is assumed that removeIds are already removed

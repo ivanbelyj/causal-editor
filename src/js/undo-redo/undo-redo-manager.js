@@ -1,7 +1,6 @@
-import { Command } from "./commands/command";
 import { SelectionCommand } from "./commands/selection-command";
 
-const isShowLogMessages = false;
+const isShowLogMessages = true;
 export class UndoRedoManager {
   constructor(api) {
     this.api = api;
@@ -23,16 +22,22 @@ export class UndoRedoManager {
     // if (isShowLogMessages)
     //   console.log("before command execute", this.undoStack, this.redoStack);
     command.execute();
-    this.redoStack = [];
 
     const cmdToPush = this.getCommandToPushToUndoStack(command);
     // If command shouldn't be ignored
-    if (cmdToPush) this.undoStack.push(cmdToPush);
+    if (cmdToPush) {
+      this.undoStack.push(cmdToPush);
+
+      // Selection commands don't clear redoStack
+      if (!cmdToPush instanceof SelectionCommand) {
+        this.redoStack = [];
+      }
+    }
 
     if (isShowLogMessages)
       console.log(
         "executed command",
-        !cmdToPush ? "(ignored by undo)" : "",
+        !cmdToPush ? "(ignored)" : "",
         command,
         "undoStack",
         this.undoStack,
@@ -55,7 +60,7 @@ export class UndoRedoManager {
     const undoStackHead = UndoRedoManager.peek(this.undoStack);
     let cmdToPush = executedCommand;
     if (
-      UndoRedoManager.shouldMergeSelectoinCommands(
+      UndoRedoManager.shouldMergeSelectionCommands(
         undoStackHead,
         executedCommand
       )
@@ -66,7 +71,7 @@ export class UndoRedoManager {
     return cmdToPush;
   }
 
-  static shouldMergeSelectoinCommands(cmd1, cmd2) {
+  static shouldMergeSelectionCommands(cmd1, cmd2) {
     return (
       cmd1 &&
       cmd2 &&

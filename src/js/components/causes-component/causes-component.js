@@ -2,10 +2,11 @@ import * as d3 from "d3";
 import { ProbabilityBlock } from "./probability-block.js";
 
 export class CausesComponent {
-  constructor(selector, causalView, api, undoRedoManager) {
+  constructor(selector, causalView, api, undoRedoManager, causesChangeManager) {
     this.component = d3.select(selector);
     this.causalView = causalView;
     this.undoRedoManager = undoRedoManager;
+    this.causesChangeManager = causesChangeManager;
 
     api.onReset(
       function (event, data) {
@@ -23,11 +24,13 @@ export class CausesComponent {
     this.probabilityBlock = new ProbabilityBlock(
       this.content.append("div").node(),
       this.causalView,
-      this.undoRedoManager
+      this.undoRedoManager,
+      this.causesChangeManager
     );
 
     // this.weightsBlock = new WeightBlock(this.content.append("div").node());
 
+    // Todo: add event listeners for components in external code?
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
       function (event) {
@@ -51,6 +54,4 @@ export class CausesComponent {
     this.probabilityBlock.reset(causalModelFact);
     // this.weightsBlock.reset(causalModelFact);
   }
-
-  // createWeightsNest() {}
 }

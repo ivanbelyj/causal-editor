@@ -5,17 +5,17 @@ import { CausesExpressionProvider } from "../providers/causes-expression-provide
 
 // Block representing probability nest in causes component
 export class ProbabilityBlock {
-  constructor(selector, causalView, undoRedoManager) {
+  constructor(selector, causalView, undoRedoManager, causesChangeManager) {
     this.content = d3.select(selector);
     this.causalView = causalView;
     this.undoRedoManager = undoRedoManager;
 
-    this.causesChangeManager = new CausesChangeManager(causalView);
+    this.causesChangeManager = causesChangeManager; // new CausesChangeManager(causalView);
   }
 
   reset(causalModelFact) {
     this.causalModelFact = causalModelFact;
-    this.causesChangeManager.reset(causalModelFact);
+    // this.causesChangeManager.reset(causalModelFact);
 
     if (!causalModelFact) {
       this.content.html("");

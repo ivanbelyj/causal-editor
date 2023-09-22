@@ -28,7 +28,7 @@ export class SelectionCommand extends Command {
   }
 
   shouldPush() {
-    // Some SelectionCommand-s should be ignored
+    // Some selection commands should be ignored
     return (
       this.newSelectedNodeIds.length > 0 || this.prevSelectedNodeIds.length > 0
     );
@@ -45,15 +45,4 @@ export class SelectionCommand extends Command {
       this.prevSelectedNodeIds
     );
   }
-
-  //   static mergeSelectionCommands(commands) {
-  //     if (!commands || commands.lenght === 0)
-  //       console.error("Cannot merge commands: ", commands);
-  //     return new Command(
-  //       commands[commands.length - 1].execute,
-  //       commands[0].undo,
-  //       commands[0].mergeGroup,
-  //       "merged"
-  //     );
-  //   }
 }

@@ -6,13 +6,12 @@ import { CausalFactProvider } from "../providers/causal-fact-provider.js";
 
 // Block is used as a part of a component
 export class WeightsComponent {
-  constructor(selector, causalView, api, undoRedoManager) {
+  constructor(selector, causalView, api, undoRedoManager, causesChangeManager) {
     // Parent element
     this.component = d3.select(selector);
     this.causalView = causalView;
 
-    // Todo: is it necessary to create here?
-    this.causesChangeManager = new CausesChangeManager(causalView);
+    this.causesChangeManager = causesChangeManager; // new CausesChangeManager(causalView);
 
     api.onReset(
       function (event, data) {
@@ -61,7 +60,7 @@ export class WeightsComponent {
     const causalFact = this.causalFactProvider.get();
     if (!causalFact) return;
 
-    this.causesChangeManager.reset(causalFact);
+    // this.causesChangeManager.reset(causalFact);
 
     this.appendAbstractFactIdInput();
 

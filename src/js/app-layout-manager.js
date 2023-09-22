@@ -8,6 +8,7 @@ import { GoldenLayout, LayoutManager } from "golden-layout";
 import * as d3 from "d3";
 import { UndoRedoManager } from "./undo-redo/undo-redo-manager.js";
 import { CausalFactProvider } from "./components/providers/causal-fact-provider.js";
+import { CausesChangeManager } from "./components/causes-change-manager.js";
 
 const defaultConfig = {
   root: {
@@ -45,6 +46,8 @@ const defaultConfig = {
   },
 };
 
+// Todo: refactor class?
+
 const defaultComponentTypesAndFactories = {
   "Causal View": function (container) {
     this.undoRedoManager = new UndoRedoManager(this.api);
@@ -54,10 +57,26 @@ const defaultComponentTypesAndFactories = {
       this.api,
       this.undoRedoManager
     );
+
     d3.select(container.element).classed("causal-view", true);
     const causalModelFacts = JSON.parse(factsCollection);
     // Todo: fix init with causalModelFacts
     this.causalView.init([]);
+
+    // For tracking changes in external code to update causal-view
+    this.causesChangeManager = new CausesChangeManager(this.causalView);
+    this.causalView.selectionManager.addEventListener(
+      "singleNodeSelected",
+      (event) => {
+        const causalModelFact = event.data.node.data;
+        this.causesChangeManager.reset(causalModelFact);
+      }
+    );
+
+    this.causalView.selectionManager.addEventListener(
+      "singleNodeNotSelected",
+      () => this.causesChangeManager.reset(null)
+    );
   },
 
   "Node Value": function (container) {
@@ -74,7 +93,8 @@ const defaultComponentTypesAndFactories = {
       container.element,
       this.causalView,
       this.api,
-      this.undoRedoManager
+      this.undoRedoManager,
+      this.causesChangeManager
     );
     causesComponent.init();
   },
@@ -84,7 +104,8 @@ const defaultComponentTypesAndFactories = {
       container.element,
       this.causalView,
       this.api,
-      this.undoRedoManager
+      this.undoRedoManager,
+      this.causesChangeManager
     );
     weightsComponent.init();
   },

@@ -1,6 +1,7 @@
 import { DataProvider } from "./data-provider";
 import { Command } from "../../undo-redo/commands/command";
 import { CommandUtils } from "../../undo-redo/commands/command-utils";
+import { MacroCommand } from "../../undo-redo/commands/macro-command";
 
 export class CausalFactProvider extends DataProvider {
   constructor(undoRedoManager, causesChangeManager) {
@@ -100,45 +101,50 @@ export class CausalFactProvider extends DataProvider {
   // 3. clear abstract fact via select-id-element
   // 4. there is a one redundant link displayed on causal-view
 
-  changeAbstractFactId(newId) {
-    const oldId = this._causalFact.AbstractFactId;
-    // CommandUtils.executeChangeStateCommand(
-    //   this.undoRedoManager,
-    //   this.#changeAbstractFactId.bind(this),
-    //   newId,
-    //   oldId
-    // );
-    const shouldCreateFirstWeightEdge = !this.#getWeights()?.length && newId;
-    const defaultWeightEdge = this.#createDefaultWeightEdge(newId);
-    // !this.#getWeights()?.length && this._causalFact.AbstractFactId;
-    const cmd = new Command(
+  changeAbstractFactId(newAbstrId) {
+    const oldAbstrId = this._causalFact.AbstractFactId;
+
+    let cmdToExecute = new Command(
       () => {
-        this.#changeAbstractFactId(newId);
-        // Add first weight edge
-        if (shouldCreateFirstWeightEdge)
-          this.#addWeightEdge(defaultWeightEdge); // _dispatchMutated is called
-        else this._dispatchMutated();
+        this.#changeAbstractFactId(newAbstrId);
       },
       () => {
-        this.#changeAbstractFactId(oldId);
-        // If there was the first weight edge added automatically,
-        // remove it also automatically
-        if (shouldCreateFirstWeightEdge)
-          // _dispatchMutated is called
-          this.#removeWeightEdge(defaultWeightEdge);
-        else this._dispatchMutated();
+        this.#changeAbstractFactId(oldAbstrId);
       }
     );
-    this.undoRedoManager.execute(cmd);
+
+    if (!this.#getWeights()?.length && newAbstrId) {
+      const defaultWeightEdge = this.#createDefaultWeightEdge(newAbstrId);
+      const addRemoveEdgeCmd = new Command(
+        () => {
+          // Add first weight edge
+          this.#addWeightEdge(defaultWeightEdge);
+        },
+        () => {
+          // If there was the first weight edge added automatically,
+          // remove it also automatically
+          this.#removeWeightEdge(defaultWeightEdge);
+        }
+      );
+      cmdToExecute = MacroCommand.fromCommands(cmdToExecute, addRemoveEdgeCmd);
+    }
+
+    this.undoRedoManager.execute(cmdToExecute);
   }
 
   #changeAbstractFactId(newId) {
-    const oldCauseId = this._causalFact.AbstractFactId;
+    const oldAbstrId = this._causalFact.AbstractFactId;
     this._causalFact.AbstractFactId = newId;
-    this.causesChangeManager.onCauseIdChange(oldCauseId, newId);
+    console.log("before on cause id change", this._causalFact);
+    console.log("abstract id must be updated");
+    console.log(
+      "fact ins causes change manager",
+      this.causesChangeManager.causalModelFact,
+      "(must be the same)"
+    );
+    this.causesChangeManager.onCauseIdChange(oldAbstrId, newId);
 
-    // Should be called after adding edge (automatically adding edge)
-    // this._dispatchMutated();
+    this._dispatchMutated();
   }
 
   // // Gets frozen weight edge and return actual that can be mutated
