@@ -142,7 +142,7 @@ export class CausalFactProvider extends DataProvider {
       this.causesChangeManager.causalModelFact,
       "(must be the same)"
     );
-    this.causesChangeManager.onCauseIdChange(oldAbstrId, newId);
+    this.causesChangeManager.onCauseIdChanged(oldAbstrId, newId);
 
     this._dispatchMutated();
   }
@@ -178,7 +178,7 @@ export class CausalFactProvider extends DataProvider {
       // const actualWeightEdge = this.#getActualWeightEdge(weightEdge);
       const oldCauseId = weightEdge.CauseId;
       weightEdge.CauseId = newCauseId;
-      this.causesChangeManager.onCauseIdChange(oldCauseId, newCauseId);
+      this.causesChangeManager.onCauseIdChanged(oldCauseId, newCauseId);
       this._dispatchMutated();
     };
     const oldCauseId = weightEdge.CauseId;

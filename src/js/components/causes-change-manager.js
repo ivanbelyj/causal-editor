@@ -1,9 +1,10 @@
 import { CausalModelUtils } from "../causal-view/causal-model-utils.js";
 
 // When some node edges (causes) are added/changed/removed in external code,
-// they must be updated in causal-view because d3 tracks only flat data,
-// not nested and mutating
-
+// they must be updated in causal-view manually because d3 tracks only flat data,
+// not nested and mutating.
+// Provided methods must be called when adding/changing/removing cause ids
+// in external code to update causal-view
 export class CausesChangeManager {
   constructor(causalView) {
     this.causalView = causalView;
@@ -13,9 +14,9 @@ export class CausesChangeManager {
     this.causalModelFact = causalModelFact;
   }
 
-  // Next methods must be called when adding/changing/removing/ cause ids
-  // in external code to update causal-view
-
+  // It's ok that some of the passed causes already exist in the causal-view,
+  // unlike onCausesRemove.
+  // They will be ignored
   onCausesAdd(causeIdsToAdd) {
     for (const addedCauseId of causeIdsToAdd) {
       if (
@@ -29,57 +30,40 @@ export class CausesChangeManager {
           this.causalModelFact.Id
         );
       else {
-        // Link already exists in causal-view
+        // The link already exists in the causal-view
       }
     }
     this.causalView.structure.render();
   }
 
   onCausesExpressionAdd(exprToAdd) {
-    const causesToAdd = this.getCauseIdsToRemove(
-      CausalModelUtils.findCauseIds(exprToAdd)
-    );
-
     // Pass added causes to update causal-view
-    this.onCausesAdd(causesToAdd);
+    this.onCausesAdd(CausalModelUtils.findCauseIds(exprToAdd));
   }
 
-  // onCausesRemoved is used by onCausesExpressionRemove
-  // but also can be used by external code when removing weight edges
-  // (they have no expressions structure)
+  // !!! It is assumed that removeCauseIds are already removed from causalModelFact
   onCausesRemoved(removedCauseIds) {
-    // Removed cause ids are ids from removed edges
     for (const removedId of this.getCauseIdsToRemove(removedCauseIds)) {
-      if (false) {
-        // Are there some not removed edges that use this link?
-      } else
-        this.causalView.structure.removeLink(
-          removedId,
-          this.causalModelFact.Id
-        );
+      this.causalView.structure.removeLink(removedId, this.causalModelFact.Id);
     }
     this.causalView.structure.render();
   }
 
-  onCauseIdChange(oldId, newId) {
+  onCauseIdChanged(oldId, newId) {
     if (oldId) this.onCausesRemoved([oldId]);
     if (newId) this.onCausesAdd([newId]);
   }
 
-  onCausesExpressionRemove(expr) {
-    const causesToRemove = this.getCauseIdsToRemove(
-      CausalModelUtils.findCauseIds(expr)
-    );
-
+  onCausesExpressionRemoved(expr) {
     // Pass removed causes to update causal-view
-    this.onCausesRemoved(causesToRemove);
+    this.onCausesRemoved(CausalModelUtils.findCauseIds(expr));
   }
 
   // - Some edges on causal-view can mean several causes at once
-  //   so the edge should be removed only if it's used by removed cause only
-  // - It is assumed that removeIds are already removed
-  getCauseIdsToRemove(removedIds) {
-    // There are no removed ids in the causal model fact
+  //   so the edge should be removed only if it's used by removed causes only
+  // !!! It is assumed that removeIds are already removed from causalModelFact
+  getCauseIdsToRemove(removedCauseIds) {
+    // There are no removed cause ids in the causal model fact
     const causeIdsNotToRemove = CausalModelUtils.getCausesIdsUnique(
       this.causalModelFact
     );
@@ -87,7 +71,9 @@ export class CausesChangeManager {
     // But some cause ids from causeIdsNotToRemove
     // could be also in removed edges
 
-    // const res = removedIds.filter((x) => x && !causeIdsNotToRemove.includes(x));
-    return CausalModelUtils.arrayComplement(removedIds, causeIdsNotToRemove);
+    return CausalModelUtils.arrayComplement(
+      removedCauseIds,
+      causeIdsNotToRemove
+    );
   }
 }

@@ -11,6 +11,7 @@ export class DataProvider extends EventTarget {
 
   set _data(value) {
     this.#data = value;
+    // console.log("reset data provider with ", value);
   }
 
   get() {

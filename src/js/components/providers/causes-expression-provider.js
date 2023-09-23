@@ -95,7 +95,7 @@ export class CausesExpressionProvider extends DataProvider {
     Object.assign(this._causesExpression, newExpr);
 
     // Tracked to update causal view
-    this.causesChangeManager.onCausesExpressionRemove(
+    this.causesChangeManager.onCausesExpressionRemoved(
       removedExprClone
       // CausalModelUtils.causesExpressionComplement(
       //   removedExprClone,
@@ -125,7 +125,7 @@ export class CausesExpressionProvider extends DataProvider {
       const oldId = this._causesExpression.Edge.CauseId;
       this._causesExpression.Edge.CauseId = causeId;
 
-      this.causesChangeManager.onCauseIdChange(
+      this.causesChangeManager.onCauseIdChanged(
         oldId,
         this._causesExpression.Edge.CauseId
       );
@@ -173,10 +173,20 @@ export class CausesExpressionProvider extends DataProvider {
       this.undoRedoManager,
       this.causesChangeManager
     );
+
+    this.causesChangeManager.onCausesExpressionAdd(newExpr);
+
     // onNewOperandAdded?.(newExprProvider);
     newExprProvider.set(newExpr);
     this._dispatchMutated();
   }
+
+  // Todo: fix bug
+  // 1. open test1.json
+  // 2. select "Biological war"
+  // 3. Remove "Or"
+  // 4. Undo
+  // 5. Redo
 
   #removeOperand(operandExpr) {
     const removeIndex = this._causesExpression.Operands.indexOf(operandExpr);
@@ -184,7 +194,7 @@ export class CausesExpressionProvider extends DataProvider {
 
     // const causesToRemove = this.getCauseIdsToRemove(removingExpr);
     // Pass removed causes to update causal-view
-    this.causesChangeManager.onCausesExpressionRemove(operandExpr);
+    this.causesChangeManager.onCausesExpressionRemoved(operandExpr);
     this._dispatchMutated();
   }
 }

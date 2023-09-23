@@ -158,8 +158,7 @@ export class CausalViewSelectionManager extends EventTarget {
     this.executeSelectNodeIds(newSelected);
   }
 
-  // Todo: rename
-  getNodesIdsToDrag(draggedNodeId) {
+  getNodeIdsToDrag(draggedNodeId) {
     // When dragging one of the selected nodes,
     // all the selected nodes must be dragged
     if (this.selectedNodesIds && this.selectedNodesIds.has(draggedNodeId)) {

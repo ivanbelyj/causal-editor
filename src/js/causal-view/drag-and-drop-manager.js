@@ -81,7 +81,7 @@ export class DragAndDropManager {
 
   // Pos data contains node id and position of the node
   getNodesToDragData(draggedNodeId) {
-    const idsToDrag = this.selectionManager.getNodesIdsToDrag(draggedNodeId);
+    const idsToDrag = this.selectionManager.getNodeIdsToDrag(draggedNodeId);
     return idsToDrag.map(
       this.causalViewStructure.getNodeById,
       this.causalViewStructure
