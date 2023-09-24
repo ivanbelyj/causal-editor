@@ -10,25 +10,26 @@ export class CausesChangeManager {
     this.causalView = causalView;
   }
 
-  reset(causalModelFact) {
-    this.causalModelFact = causalModelFact;
-  }
+  // reset(causalModelFact) {
+  //   this.causalModelFact = causalModelFact;
+  // }
 
   // It's ok that some of the passed causes already exist in the causal-view,
   // unlike onCausesRemove.
   // They will be ignored
-  onCausesAdd(causeIdsToAdd) {
+  onCausesAdd(causalFact, causeIdsToAdd) {
+    if (!causalFact) throw new Error("causal fact can't be ", causalFact);
     for (const addedCauseId of causeIdsToAdd) {
+      if (!addedCauseId)
+        throw new Error("addedCauseId cannot be ", addedCauseId);
+
       if (
         !this.causalView.structure.getLinkBySourceAndTargetIds(
           addedCauseId,
-          this.causalModelFact.Id
+          causalFact.Id
         )
       )
-        this.causalView.structure.addLink(
-          addedCauseId,
-          this.causalModelFact.Id
-        );
+        this.causalView.structure.addLink(addedCauseId, causalFact.Id);
       else {
         // The link already exists in the causal-view
       }
@@ -36,37 +37,47 @@ export class CausesChangeManager {
     this.causalView.structure.render();
   }
 
-  onCausesExpressionAdd(exprToAdd) {
+  onCausesExpressionAdd(causalFact, exprToAdd) {
     // Pass added causes to update causal-view
-    this.onCausesAdd(CausalModelUtils.findCauseIds(exprToAdd));
+    this.onCausesAdd(causalFact, CausalModelUtils.findCauseIds(exprToAdd));
   }
 
-  // !!! It is assumed that removeCauseIds are already removed from causalModelFact
-  onCausesRemoved(removedCauseIds) {
-    for (const removedId of this.getCauseIdsToRemove(removedCauseIds)) {
-      this.causalView.structure.removeLink(removedId, this.causalModelFact.Id);
+  // Todo: fix bug
+  // 1. Create two nodes
+  // 2. Link with FACTOR in AND
+  // 3. Undo
+  // 4. Undo
+  // 5. Redo
+  // 6. Error: Cannot read properties of undefined (reading 'link')
+
+  // !!! It is assumed that removeCauseIds are already removed from causalFact
+  onCausesRemoved(causalFact, removedCauseIds) {
+    if (!causalFact) throw new Error("causal fact can't be ", causalFact);
+    for (const removedId of this.getCauseIdsToRemove(
+      causalFact,
+      removedCauseIds
+    )) {
+      this.causalView.structure.removeLink(removedId, causalFact.Id);
     }
     this.causalView.structure.render();
   }
 
-  onCauseIdChanged(oldId, newId) {
-    if (oldId) this.onCausesRemoved([oldId]);
-    if (newId) this.onCausesAdd([newId]);
+  onCauseIdChanged(causalFact, oldId, newId) {
+    if (oldId) this.onCausesRemoved(causalFact, [oldId]);
+    if (newId) this.onCausesAdd(causalFact, [newId]);
   }
 
-  onCausesExpressionRemoved(expr) {
+  onCausesExpressionRemoved(causalFact, expr) {
     // Pass removed causes to update causal-view
-    this.onCausesRemoved(CausalModelUtils.findCauseIds(expr));
+    this.onCausesRemoved(causalFact, CausalModelUtils.findCauseIds(expr));
   }
 
   // - Some edges on causal-view can mean several causes at once
   //   so the edge should be removed only if it's used by removed causes only
-  // !!! It is assumed that removeIds are already removed from causalModelFact
-  getCauseIdsToRemove(removedCauseIds) {
+  // !!! It is assumed that removeIds are already removed from causalFact
+  getCauseIdsToRemove(causalFact, removedCauseIds) {
     // There are no removed cause ids in the causal model fact
-    const causeIdsNotToRemove = CausalModelUtils.getCausesIdsUnique(
-      this.causalModelFact
-    );
+    const causeIdsNotToRemove = CausalModelUtils.getCausesIdsUnique(causalFact);
 
     // But some cause ids from causeIdsNotToRemove
     // could be also in removed edges

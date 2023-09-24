@@ -41,6 +41,16 @@ export class NodesCreateRemoveManager {
     this.structure.render();
   }
 
+  // Todo: fix bug
+  // 1. create a new node in saved CM and do nothing with it
+  // 2. remove the new node
+  // 3. Error - Cannot read properties of undefined (reading 'data')
+  // This bug appears not in every saved CM
+
+  // 1. Open test1.json
+  // 2. remove node Colony
+  // 3. The same error
+
   removeNode(x, y, fact) {
     const id = fact?.Id ?? this.getNodeIdByPosWithOffset(x, y);
     this.structure.removeNode(id);

@@ -65,25 +65,26 @@ const defaultComponentTypesAndFactories = {
 
     // For tracking changes in external code to update causal-view
     this.causesChangeManager = new CausesChangeManager(this.causalView);
-    this.causalView.selectionManager.addEventListener(
-      "singleNodeSelected",
-      (event) => {
-        const causalModelFact = event.data.node.data;
-        this.causesChangeManager.reset(causalModelFact);
-      }
-    );
+    // this.causalView.selectionManager.addEventListener(
+    //   "singleNodeSelected",
+    //   (event) => {
+    //     const causalModelFact = event.data.node.data;
+    //     this.causesChangeManager.reset(causalModelFact);
+    //   }
+    // );
 
-    this.causalView.selectionManager.addEventListener(
-      "singleNodeNotSelected",
-      () => this.causesChangeManager.reset(null)
-    );
+    // this.causalView.selectionManager.addEventListener(
+    //   "singleNodeNotSelected",
+    //   () => this.causesChangeManager.reset(null)
+    // );
   },
 
   "Node Value": function (container) {
     const nodeValueComponent = new NodeValueComponent(
       container.element,
       this.causalView,
-      this.api
+      this.api,
+      this.undoRedoManager
     );
     nodeValueComponent.init();
   },
@@ -170,6 +171,8 @@ export class AppLayoutManager {
     this.loadConfig(config);
 
     this.api.onSetComponentActive(this.onSetComponentActive.bind(this));
+
+    // d3.selectAll(".lm_stack").attr("tabindex", 0);
   }
 
   onItemCreatedOrDestroyed(isCreated, event) {
@@ -209,8 +212,8 @@ export class AppLayoutManager {
     this.layout.loadLayout(config);
   }
 
-  // * Should be called once
-  // * Every factory function will be bound to this ComponentManager
+  // - Should be called once
+  // - Every factory function will be bound to this AppLayoutManager
   registerComponents(componentTypesAndFactories) {
     for (const [componentType, factoryFunc] of Object.entries(
       componentTypesAndFactories

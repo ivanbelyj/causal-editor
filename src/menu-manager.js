@@ -21,9 +21,17 @@ export class MenuManager {
     ipcMain.on("send-component-active", this.onSendComponentActive.bind(this));
 
     window.webContents.on("before-input-event", (event, input) => {
-      // Todo: use Mousetrap js?
-      if (input.control && input.key.toLowerCase() === "a") {
-        this.selectAllHandler();
+      // accelerator not working
+      // if (input.control && input.key.toLowerCase() === "a") {
+      //   this.selectAllHandler();
+      // }
+      if (input.control && input.key.toLowerCase() === "z") {
+        this.undoHandler();
+        event.preventDefault();
+      }
+      if (input.control && input.key.toLowerCase() === "y") {
+        this.redoHandler();
+        event.preventDefault();
       }
     });
   }
@@ -94,6 +102,16 @@ export class MenuManager {
 
   selectAllHandler() {
     this.window.webContents.send("select-all");
+  }
+
+  undoHandler(menuItem, focusedWin) {
+    // focusedWin.webContents.undo();
+    this.window.webContents.send("undo");
+  }
+
+  redoHandler(menuItem, focusedWin) {
+    // focusedWin.webContents.redo();
+    this.window.webContents.send("redo");
   }
 
   createMenuTemplate() {
@@ -169,18 +187,12 @@ export class MenuManager {
           {
             label: "Undo",
             accelerator: "CmdOrCtrl+Z",
-            click: function (menuItem, focusedWin) {
-              focusedWin.webContents.undo();
-              focusedWin.webContents.send("undo");
-            }.bind(this),
+            click: this.undoHandler.bind(this),
           },
           {
             label: "Redo",
             accelerator: "CmdOrCtrl+Y",
-            click: function (menuItem, focusedWin) {
-              focusedWin.webContents.redo();
-              focusedWin.webContents.send("redo");
-            }.bind(this),
+            click: this.redoHandler.bind(this),
           },
           { type: "separator" },
           { role: "cut" },

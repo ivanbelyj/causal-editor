@@ -117,10 +117,14 @@ export class CausesItem {
       this.causesExpressionProvider.get()?.$type ?? noneOptionVal
     );
 
+    const causalFact = this.causesExpressionProvider.causalFact;
     typeDropdown.on(
       "change",
       function (e) {
-        this.causesExpressionProvider.changeExpressionType(e.target.value);
+        this.causesExpressionProvider.changeExpressionType(
+          causalFact,
+          e.target.value
+        );
       }.bind(this)
     );
   }
@@ -165,7 +169,7 @@ export class CausesItem {
       .attr("type", "number")
       .attr("min", "0")
       .attr("max", "1")
-      .attr("step", "0.01")
+      .attr("step", "0.1")
       .attr("class", "input-item text-input input-item__input")
       .attr("placeholder", "Probability")
       .property("value", expr.Edge.Probability)
@@ -181,9 +185,11 @@ export class CausesItem {
     new SelectNodeElement(
       this.content.append("div").node(),
       this.causalView,
-      this.causesExpressionProvider.changeCauseId.bind(
-        this.causesExpressionProvider
-      )
+      (newCauseId) =>
+        this.causesExpressionProvider.changeCauseId(
+          this.causesExpressionProvider.causalFact,
+          newCauseId
+        )
     ).init(expr.Edge.CauseId);
   }
 

@@ -5,6 +5,7 @@ export class CausalModelUtils {
       if (prop === "Edge") {
         if (
           obj[prop].hasOwnProperty("CauseId") &&
+          obj[prop].CauseId &&
           !edgeProps.has(obj[prop]["CauseId"])
         )
           edgeProps.add(obj[prop]["CauseId"]);
@@ -26,7 +27,7 @@ export class CausalModelUtils {
     const idsSet = new Set();
     for (const weightEdge of weightEdges) {
       const id = weightEdge.CauseId;
-      if (!idsSet.has(id)) {
+      if (!idsSet.has(id) && id) {
         idsSet.add(id);
       }
     }

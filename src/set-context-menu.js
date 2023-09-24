@@ -3,6 +3,8 @@ const { ipcMain } = require("electron");
 
 let isNodeEntered = false;
 
+// Todo: move into class?
+
 ipcMain.on("node-enter", () => {
   isNodeEntered = true;
 });
@@ -46,6 +48,13 @@ module.exports = {
               x: parameters.x,
               y: parameters.y,
             });
+          },
+        },
+        {
+          label: "Select All",
+          visible: isCausalViewEntered,
+          click: (event) => {
+            mainWindow.webContents.send("select-all");
           },
         },
       ],

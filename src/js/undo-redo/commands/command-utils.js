@@ -8,10 +8,14 @@ export class CommandUtils {
     prevState
   ) {
     undoRedoManager.execute(
-      new Command(
-        () => setStateFunc(newState),
-        () => setStateFunc(prevState)
-      )
+      CommandUtils.createChangeStateCommand(setStateFunc, newState, prevState)
+    );
+  }
+
+  static createChangeStateCommand(setStateFunc, newState, prevState) {
+    return new Command(
+      () => setStateFunc(newState),
+      () => setStateFunc(prevState)
     );
   }
 

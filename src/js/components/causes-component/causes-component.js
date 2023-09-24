@@ -1,5 +1,6 @@
 import * as d3 from "d3";
-import { ProbabilityBlock } from "./probability-block.js";
+import { CausesItem } from "./causes-item.js";
+import { CausesExpressionProvider } from "../providers/causes-expression-provider.js";
 
 export class CausesComponent {
   constructor(selector, causalView, api, undoRedoManager, causesChangeManager) {
@@ -17,18 +18,9 @@ export class CausesComponent {
 
   // Actions that are relevant to CausesComponent regardless of causalModelFact structure.
   // init() must be called only once
-  init(causalModelFact) {
+  init() {
     this.component.classed("component", true);
     this.content = this.component.append("div").attr("class", "input-item");
-
-    this.probabilityBlock = new ProbabilityBlock(
-      this.content.append("div").node(),
-      this.causalView,
-      this.undoRedoManager,
-      this.causesChangeManager
-    );
-
-    // this.weightsBlock = new WeightBlock(this.content.append("div").node());
 
     // Todo: add event listeners for components in external code?
     this.causalView.selectionManager.addEventListener(
@@ -45,13 +37,32 @@ export class CausesComponent {
         this.reset(null);
       }.bind(this)
     );
-
-    if (causalModelFact) this.reset(causalModelFact);
   }
 
   reset(causalModelFact) {
     this.causalModelFact = causalModelFact;
-    this.probabilityBlock.reset(causalModelFact);
-    // this.weightsBlock.reset(causalModelFact);
+
+    if (!causalModelFact) {
+      this.content.html("");
+      return;
+    }
+
+    const rootCausesExpr =
+      this.causalModelFact.ProbabilityNest?.CausesExpression;
+    if (!this.rootCausesItem) {
+      this.rootCausesItem = new CausesItem({
+        selector: this.content.node(),
+        isRemovable: false,
+        isRoot: true,
+        rootCausesExpression: rootCausesExpr,
+        causalView: this.causalView,
+        causesExpressionProvider: new CausesExpressionProvider(
+          this.undoRedoManager,
+          this.causesChangeManager,
+          causalModelFact
+        ),
+      });
+    }
+    this.rootCausesItem.resetProvider(rootCausesExpr);
   }
 }

@@ -1,4 +1,5 @@
-import { SelectionCommand } from "./commands/selection-command";
+import { ChangePropertyHandler } from "./command-handlers/change-property-handler";
+import { SelectionCommandsHandler } from "./command-handlers/selection-commands-handler";
 
 const isShowLogMessages = true;
 export class UndoRedoManager {
@@ -10,6 +11,11 @@ export class UndoRedoManager {
     this.api.onReset(this.reset.bind(this));
 
     this.reset();
+
+    this.commandHandlers = [
+      new SelectionCommandsHandler(this),
+      new ChangePropertyHandler(this),
+    ];
   }
 
   reset() {
@@ -18,18 +24,31 @@ export class UndoRedoManager {
     this.redoStack = [];
   }
 
+  getCommandHandler(command) {
+    const handlers = this.commandHandlers.filter((handler) =>
+      handler.shouldHandle(command)
+    );
+    if (handlers.length > 1)
+      console.error("Multiple command handlers are not implemented");
+    else if (handlers.length === 1) return handlers[0];
+    else return null;
+  }
+
   execute(command) {
+    const cmdHandler = this.getCommandHandler(command);
+
     // if (isShowLogMessages)
     //   console.log("before command execute", this.undoStack, this.redoStack);
     command.execute();
 
-    const cmdToPush = this.getCommandToPushToUndoStack(command);
+    const cmdToPush =
+      cmdHandler?.getCommandToPushToUndoStack(command) ?? command;
     // If command shouldn't be ignored
     if (cmdToPush) {
       this.undoStack.push(cmdToPush);
 
-      // Selection commands don't clear redoStack
-      if (!cmdToPush instanceof SelectionCommand) {
+      // Some commands don't clear redoStack
+      if (!cmdHandler || cmdHandler.shouldClearRedoStack(cmdToPush)) {
         this.redoStack = [];
       }
     }
@@ -46,40 +65,16 @@ export class UndoRedoManager {
       );
   }
 
-  static peek(stack) {
+  static #peek(stack) {
     return stack?.length > 0 && stack[stack.length - 1];
   }
 
-  getCommandToPushToUndoStack(executedCommand) {
-    if (
-      executedCommand instanceof SelectionCommand &&
-      !executedCommand.shouldPush()
-    )
-      return null;
-
-    const undoStackHead = UndoRedoManager.peek(this.undoStack);
-    let cmdToPush = executedCommand;
-    if (
-      UndoRedoManager.shouldMergeSelectionCommands(
-        undoStackHead,
-        executedCommand
-      )
-    ) {
-      // Replace with a merged command
-      cmdToPush = this.undoStack.pop().mergedWith(executedCommand);
-    }
-    return cmdToPush;
+  peekUndo() {
+    return UndoRedoManager.#peek(this.undoStack);
   }
 
-  static shouldMergeSelectionCommands(cmd1, cmd2) {
-    return (
-      cmd1 &&
-      cmd2 &&
-      cmd1 instanceof SelectionCommand &&
-      cmd2 instanceof SelectionCommand &&
-      cmd1.shouldMerge() &&
-      cmd2.shouldMerge()
-    );
+  peekRedo() {
+    return UndoRedoManager.#peek(this.redoStack);
   }
 
   undo() {

@@ -15,7 +15,7 @@ export class WeightsComponent {
 
     api.onReset(
       function (event, data) {
-        this.reset(null);
+        this.resetProvider(null);
       }.bind(this)
     );
 

@@ -36,6 +36,7 @@
     "electron": "^25.2.0",
     "file-loader": "^6.2.0",
     "mini-css-extract-plugin": "^2.7.6",
+    "mousetrap": "^1.6.5",
     "style-loader": "^3.3.3",
     "svg-url-loader": "^8.0.0",
     "url-loader": "^4.1.1",

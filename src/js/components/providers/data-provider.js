@@ -29,4 +29,11 @@ export class DataProvider extends EventTarget {
   _dispatchMutated() {
     this.dispatchEvent(new Event("mutated"));
   }
+
+  _dispatchPropertyChanged(propertyName, newValue) {
+    const event = new Event("property-changed");
+    event.propertyName = propertyName;
+    event.newValue = newValue;
+    this.dispatchEvent(event);
+  }
 }

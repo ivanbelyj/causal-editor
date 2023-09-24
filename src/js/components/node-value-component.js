@@ -1,85 +1,124 @@
 import * as d3 from "d3";
+import { CausalFactProvider } from "./providers/causal-fact-provider";
 
 export class NodeValueComponent {
   causalView = null;
   selector = null;
-  causalModelFact = null;
 
-  constructor(selector, causalView, api) {
+  constructor(selector, causalView, api, undoRedoManager) {
     this.selector = selector;
     this.component = d3.select(selector);
     this.causalView = causalView;
 
+    this.causalFactProvider = new CausalFactProvider(undoRedoManager, null);
+
     api.onReset(
       function (event, data) {
-        this.reset(null);
+        this.resetProvider(null);
       }.bind(this)
     );
+
+    this.causalFactProvider.addEventListener("reset", () => this.reset());
+
+    this.causalFactProvider.addEventListener("mutated", () => {
+      console.log("mutated. new causal fact", this.causalFactProvider.get());
+    });
   }
 
-  init(causalModelFact) {
+  resetProvider(causalModelFact) {
+    this.causalFactProvider.set(causalModelFact);
+  }
+
+  init() {
     this.component.classed("component", true);
 
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
-      function (event) {
+      (event) => {
         const causalModelFact = event.data.node.data;
-        this.reset(causalModelFact);
-      }.bind(this)
+        this.resetProvider(causalModelFact);
+      }
     );
 
     this.causalView.selectionManager.addEventListener(
       "singleNodeNotSelected",
-      function (event) {
-        this.reset(null);
-      }.bind(this)
+      (event) => {
+        this.resetProvider(null);
+      }
     );
-
-    if (causalModelFact) this.reset(causalModelFact);
   }
 
-  reset(causalModelFact) {
+  reset() {
+    console.log("reset");
     this.component.html("");
-    if (!causalModelFact) return;
 
-    this.causalModelFact = causalModelFact;
+    const causalFact = this.causalFactProvider.get();
+    if (!causalFact) return;
+
+    // this.causalModelFact = causalFact;
 
     this.titleInput = this.appendInputItem({
       name: "Title",
+      factPropName: "Title",
       inputId: "node-title-input",
       dontShowLabel: true,
     });
     this.valueInput = this.appendInputItem({
       name: "Node Value",
+      factPropName: "NodeValue",
       inputId: "node-id-input",
       isReadonly: false,
       useTextArea: true,
     });
     this.idInput = this.appendInputItem({
       name: "Id",
+      factPropName: "Id",
       inputId: "node-id-input",
       isReadonly: true,
     });
 
-    [this.titleInput, this.valueInput].forEach((x) =>
-      x.on("change", this.onChange.bind(this))
+    this.getFactPropNamesAndInputs().forEach(([propertyName, input]) =>
+      input.on("input", () => {
+        // Todo: merge input commands
+        this.causalFactProvider.changeNonCauseProperty(
+          propertyName,
+          input.property("value"),
+          this.causalView.structure
+        );
+      })
     );
 
-    this.update({
-      id: causalModelFact["Id"],
-      title: causalModelFact["Title"],
-      value: causalModelFact["NodeValue"],
+    this.getFactPropNamesAndInputs().forEach(([propName, input]) => {
+      this.updateInputByPropName(input, propName);
+      this.causalFactProvider.addEventListener("property-changed", (event) => {
+        if (propName === event.propertyName) {
+          console.log("property changed", event.propertyName, event.newValue);
+          this.updateInputByPropName(input, event.propertyName);
+        }
+      });
     });
   }
 
-  update({ id, title, value }) {
-    this.idInput.property("value", id ?? "");
-    this.titleInput.property("value", title ?? "");
-    this.valueInput.property("value", value ?? "");
+  getFactPropNamesAndInputs() {
+    return Array.from(this.factPropNameToInput.entries());
+  }
+
+  updateInputByPropName(input, causalFactPropertyName) {
+    input.property(
+      "value",
+      this.causalFactProvider.get()[causalFactPropertyName] ?? ""
+    );
   }
 
   // Returns input (or textarea) containing in input-item
-  appendInputItem({ name, inputId, isReadonly, useTextArea, dontShowLabel }) {
+  appendInputItem({
+    name,
+    inputId,
+    isReadonly,
+    useTextArea,
+    dontShowLabel,
+    factPropName,
+  }) {
     const inputItem = this.component.append("div").attr("class", "input-item");
 
     if (!dontShowLabel)
@@ -97,15 +136,21 @@ export class NodeValueComponent {
       input.attr("type", "text");
     }
     if (isReadonly) input.attr("readonly", true);
+
+    if (!this.factPropNameToInput) {
+      this.factPropNameToInput = new Map();
+    }
+    if (factPropName) this.factPropNameToInput.set(factPropName, input);
+
     return input;
   }
 
-  onChange() {
-    if (!this.causalModelFact) return;
+  // onChange() {
+  //   if (!this.causalModelFact) return;
 
-    this.causalModelFact.Title = this.titleInput.property("value");
-    this.causalModelFact.NodeValue = this.valueInput.property("value");
+  //   this.causalModelFact.Title = this.titleInput.property("value");
+  //   this.causalModelFact.NodeValue = this.valueInput.property("value");
 
-    this.causalView.structure.render();
-  }
+  //   this.causalView.structure.render();
+  // }
 }
