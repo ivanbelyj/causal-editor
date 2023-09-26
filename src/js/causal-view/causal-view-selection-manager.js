@@ -26,7 +26,8 @@ export class CausalViewSelectionManager extends EventTarget {
 
   selectAll() {
     this.executeSelectNodeIds(
-      this._structure.getNodes().map((node) => node.data.Id)
+      this._structure.getNodeFacts().map((fact) => fact.Id)
+      // this._structure.getNodes().map((node) => node.data.fact.Id)
     );
   }
 
@@ -82,6 +83,8 @@ export class CausalViewSelectionManager extends EventTarget {
   }
 
   setSelectedNodeIds(ids) {
+    // throw new Error("set selected node ids " + ids.length);
+
     const prevSelected = this.selectedNodesIds;
     const toSelectAll = (this.selectedNodesIds = new Set(ids)); // Including already selected
 
@@ -117,16 +120,14 @@ export class CausalViewSelectionManager extends EventTarget {
     const event = new Event(
       ids.length == 1 ? "singleNodeSelected" : "singleNodeNotSelected"
     );
-    event.data = {
-      node: ids.length == 1 ? this._structure.getNodeById(ids[0]) : null,
-    };
+    if (ids.length == 1)
+      event.nodeData = this._structure.getNodeDataById(ids[0]);
     this.dispatchEvent(event);
   }
 
   onViewClicked(event) {
     if (!this.isSelectByClick) return;
     this.executeSelectNodeIds([]);
-    // this.setSelectedNodeIds([]);
   }
 
   executeSelectNodeIds(nodeIds) {
@@ -139,22 +140,23 @@ export class CausalViewSelectionManager extends EventTarget {
   }
 
   onNodeClicked(event) {
-    const eventData = event.data.d;
-    eventData.stopPropagation();
+    console.log("selection manager; nodeClicked, event", event);
+    const clickEvent = event.clickEvent;
+    event.clickEvent.stopPropagation();
 
     if (!this.isSelectByClick) return;
 
-    const nodeData = event.data.i.data;
+    const nodeFact = event.nodeSelection.data.fact;
 
-    const isMultiSelect = eventData.ctrlKey || eventData.metaKey;
+    const isMultiSelect = clickEvent.ctrlKey || clickEvent.metaKey;
     const removeClicked =
-      isMultiSelect && this.selectedNodesIds?.has(nodeData["Id"]);
+      isMultiSelect && this.selectedNodesIds?.has(nodeFact["Id"]);
     let newSelected = [
       ...(isMultiSelect ? this.selectedNodesIds ?? [] : []),
-      nodeData["Id"],
+      nodeFact["Id"],
     ];
     if (removeClicked)
-      newSelected = newSelected.filter((x) => x != nodeData["Id"]);
+      newSelected = newSelected.filter((x) => x != nodeFact["Id"]);
 
     this.executeSelectNodeIds(newSelected);
   }

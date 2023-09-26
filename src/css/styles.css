@@ -87,7 +87,8 @@ body,
 }
 
 .input-item {
-  margin-bottom: 1em;
+  margin-bottom: 0.75rem;
+  /* margin-bottom: 1em; */
 }
 
 .input-item__label {

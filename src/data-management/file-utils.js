@@ -1,14 +1,12 @@
-// file-operations.js
 const fs = require("fs").promises;
 const { dialog } = require("electron");
 const path = require("path");
 const os = require("os");
 
-const causalModelFilesFilters = [
-  { name: "JSON", extensions: ["json"] },
-  { name: "Causal model", extensions: ["cm"] },
-];
-class FileOperations {
+const defaultFileFilters = [{ name: "JSON", extensions: ["json"] }];
+
+// Utils for saving files in the app
+class FileUtils {
   static async save(filePath, data) {
     const isJson = path.extname(filePath) == ".json";
     const stringToSave =
@@ -22,21 +20,21 @@ class FileOperations {
     return fs.writeFile(filePath, stringToSave);
   }
 
-  // Saves data in a path selected by user
-  static async saveAs(data) {
+  // Saves data by a path selected by the user via dialog
+  static async saveByPathFromDialog(data, fileFilters) {
     const saveDialogRes = await dialog.showSaveDialog({
       properties: [],
-      filters: causalModelFilesFilters,
+      filters: fileFilters ?? defaultFileFilters,
     });
     if (!saveDialogRes.canceled) {
-      await FileOperations.save(saveDialogRes.filePath, data);
+      await FileUtils.save(saveDialogRes.filePath, data);
     }
     return saveDialogRes;
   }
 
-  static async open() {
+  static async openByDialog(fileFilters) {
     const openDialogRes = await dialog.showOpenDialog({
-      filters: causalModelFilesFilters,
+      filters: fileFilters ?? defaultFileFilters,
       properties: [],
     });
     if (!openDialogRes.canceled) {
@@ -48,5 +46,5 @@ class FileOperations {
 }
 
 module.exports = {
-  FileOperations: FileOperations,
+  FileUtils: FileUtils,
 };

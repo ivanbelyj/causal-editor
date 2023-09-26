@@ -1,8 +1,3 @@
-const RemovePlugin = require("remove-files-webpack-plugin");
-const fs = require("fs");
-const path = require("path");
-const { exec } = require("child_process");
-
 module.exports = {
   packagerConfig: {
     asar: false,

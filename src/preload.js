@@ -12,16 +12,17 @@ contextBridge.exposeInMainWorld("api", {
   sendNodeLeave: () => send("node-leave"),
   sendCausalViewEnter: () => send("causal-view-enter"),
   sendCausalViewLeave: () => send("causal-view-leave"),
-  sendNodes: (nodes) => send("send-nodes", nodes),
+
+  sendDataToSave: (nodes) => send("send-data-to-save", nodes),
 
   // When components are checked from the renderer process
   sendComponentActive: (componentData) =>
     send("send-component-active", componentData),
 
-  onGetNodesRequest: (func) => on("get-nodes-request", func),
+  onGetDataToSaveRequest: (func) => on("get-data-to-save-request", func),
   onCreateNode: (func) => on("create-node", func),
   onRemoveNode: (func) => on("remove-node", func),
-  onOpenCausalModel: (func) => on("open-causal-model", func),
+  onOpenData: (func) => on("open-data", func),
   onReset: (func) => on("reset", func),
 
   // When a component is checked in the menu

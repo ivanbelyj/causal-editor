@@ -137,7 +137,6 @@ export class AppLayoutManager {
         // { typeId: 2 /* FirstStack */, index: undefined },
         { typeId: 7 /* Root */, index: undefined },
       ];
-    console.log();
     if (isActive) {
       this.layout.addComponentAtLocation(
         componentType,

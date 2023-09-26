@@ -11,7 +11,7 @@ export class ChangePropertyCommand extends Command {
     this.oldValue = oldValue;
   }
 
-  // Todo: not merge, but separate into words
+  // Todo: not merge, but separate into words?
   mergedWith(command) {
     return new ChangePropertyCommand(
       this.setPropertyFunc,

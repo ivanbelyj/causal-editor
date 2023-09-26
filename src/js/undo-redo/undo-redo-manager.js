@@ -1,7 +1,7 @@
 import { ChangePropertyHandler } from "./command-handlers/change-property-handler";
 import { SelectionCommandsHandler } from "./command-handlers/selection-commands-handler";
 
-const isShowLogMessages = true;
+const isShowLogMessages = false;
 export class UndoRedoManager {
   constructor(api) {
     this.api = api;

@@ -1,7 +1,7 @@
 const { app, BrowserWindow } = require("electron");
 const { setContextMenu } = require("./set-context-menu.js");
-const { FilesManager } = require("./files-manager.js");
 const { MenuManager } = require("./menu-manager.js");
+const { ProjectManager } = require("./data-management/project-manager.js");
 
 // Creates the browser window
 function createWindow(appLocale) {
@@ -11,22 +11,16 @@ function createWindow(appLocale) {
     webPreferences: {
       contextIsolation: true,
       sandbox: true,
-      // preload: path.join(__dirname, "preload.js"),
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
 
       spellcheck: true,
     },
   });
 
-  // mainWindow.loadFile("index.html");
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   mainWindow.webContents.openDevTools();
   mainWindow.maximize();
-
-  // Spellcheck settings
-  // const possibleLanguages =
-  //   mainWindow.webContents.session.availableSpellCheckerLanguages;
 
   const languages = [appLocale, "en-US"];
   mainWindow.webContents.session.setSpellCheckerLanguages(languages);
@@ -44,8 +38,8 @@ app.whenReady().then(() => {
   mainWindow = createWindow(appLocale);
   setContextMenu(mainWindow);
 
-  const filesManager = new FilesManager();
-  const menuManager = new MenuManager(filesManager, mainWindow);
+  const projectManager = new ProjectManager(mainWindow);
+  const menuManager = new MenuManager(projectManager, mainWindow);
   menuManager.render();
 
   app.on("activate", function () {

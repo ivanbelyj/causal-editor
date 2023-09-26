@@ -23,14 +23,23 @@ export class CausesChangeManager {
       if (!addedCauseId)
         throw new Error("addedCauseId cannot be ", addedCauseId);
 
-      if (
-        !this.causalView.structure.getLinkBySourceAndTargetIds(
-          addedCauseId,
-          causalFact.Id
-        )
-      )
+      const curLink = this.causalView.structure.getLinkBySourceAndTargetIds(
+        addedCauseId,
+        causalFact.Id
+      );
+
+      console.log(
+        "curLink",
+        curLink,
+        "from",
+        addedCauseId,
+        "to",
+        causalFact.Id
+      );
+      if (!curLink) {
+        console.log("add");
         this.causalView.structure.addLink(addedCauseId, causalFact.Id);
-      else {
+      } else {
         // The link already exists in the causal-view
       }
     }
@@ -41,14 +50,6 @@ export class CausesChangeManager {
     // Pass added causes to update causal-view
     this.onCausesAdd(causalFact, CausalModelUtils.findCauseIds(exprToAdd));
   }
-
-  // Todo: fix bug
-  // 1. Create two nodes
-  // 2. Link with FACTOR in AND
-  // 3. Undo
-  // 4. Undo
-  // 5. Redo
-  // 6. Error: Cannot read properties of undefined (reading 'link')
 
   // !!! It is assumed that removeCauseIds are already removed from causalFact
   onCausesRemoved(causalFact, removedCauseIds) {
@@ -63,6 +64,7 @@ export class CausesChangeManager {
   }
 
   onCauseIdChanged(causalFact, oldId, newId) {
+    console.log("on cause id changed", causalFact);
     if (oldId) this.onCausesRemoved(causalFact, [oldId]);
     if (newId) this.onCausesAdd(causalFact, [newId]);
   }

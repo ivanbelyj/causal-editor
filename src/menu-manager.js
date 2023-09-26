@@ -1,23 +1,17 @@
-const {
-  nativeTheme,
-  shell,
-  ipcMain,
-  Menu,
-  globalShortcut,
-  BrowserWindow,
-} = require("electron");
+import { ProjectData } from "./data-management/project-data";
+
+const { nativeTheme, shell, ipcMain, Menu } = require("electron");
 
 const isMac = process.platform === "darwin";
 
 export class MenuManager {
-  // Information about app components in layout
+  // Information about app components in the layout
   componentMenuItems;
 
-  constructor(filesManager, window) {
-    this.filesManager = filesManager;
+  constructor(projectManager, window) {
+    this.projectManager = projectManager;
     this.window = window;
 
-    // ipcMain.on("components-registered", this.onComponentsRegistered.bind(this));
     ipcMain.on("send-component-active", this.onSendComponentActive.bind(this));
 
     window.webContents.on("before-input-event", (event, input) => {
@@ -35,12 +29,6 @@ export class MenuManager {
       }
     });
   }
-
-  //   onComponentsRegistered(event, data) {
-
-  //     console.log("registered components: ", data);
-  //     this.render();
-  //   }
 
   // Receive layout components data from the renderer process and render the menu
   onSendComponentActive(event, { componentType, isActive }) {
@@ -65,13 +53,6 @@ export class MenuManager {
   sendMessage(messageName, data) {
     this.window.webContents.send(messageName, data);
   }
-
-  sendOpenFile(causalModelFacts) {
-    this.sendMessage("open-causal-model", causalModelFacts);
-    this.sendMessage("reset");
-  }
-
-  // sendSetComponentActive(id, isActive) {}
 
   render() {
     const menu = (this.menu = Menu.buildFromTemplate(
@@ -150,31 +131,54 @@ export class MenuManager {
           {
             label: "New",
             accelerator: "CmdOrCtrl+N",
-            click: function () {
-              this.sendOpenFile(this.filesManager.openNewFileData());
-            }.bind(this),
+            click: () => {
+              this.projectManager.createNewProject();
+            },
           },
           {
             label: "Open",
             accelerator: "CmdOrCtrl+O",
-            click: async function () {
-              const data = await this.filesManager.openFileData();
-              if (data) this.sendOpenFile(data);
-            }.bind(this),
+            click: async () => {
+              await this.projectManager.openProjectAsync();
+            },
           },
           {
             label: "Save",
             accelerator: "CmdOrCtrl+S",
-            click: function () {
-              this.filesManager.initiateSaveAction("save");
-            }.bind(this),
+            click: () => {
+              this.projectManager.saveProject();
+            },
           },
           {
             label: "Save as...",
             accelerator: "CmdOrCtrl+Shift+S",
-            click: function () {
-              this.filesManager.initiateSaveAction("save-as");
-            }.bind(this),
+            click: () => {
+              this.projectManager.saveProjectAs();
+            },
+          },
+          {
+            label: "Import",
+            submenu: [
+              {
+                label: "Causal Model Facts",
+                accelerator: "CmdOrCtrl+I",
+                click: async () => {
+                  await this.projectManager.importCausalModelFactsAsync();
+                },
+              },
+            ],
+          },
+          {
+            label: "Export",
+            submenu: [
+              {
+                label: "Causal Model Facts",
+                accelerator: "CmdOrCtrl+E",
+                click: async () => {
+                  await this.projectManager.exportCausalModelFacts();
+                },
+              },
+            ],
           },
 
           isMac ? { role: "close" } : { role: "quit" },

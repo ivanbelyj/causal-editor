@@ -26,7 +26,11 @@ export class CausesComponent {
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
       function (event) {
-        const causalModelFact = event.data.node.data;
+        const causalModelFact = event.nodeData.fact;
+        console.log(
+          "causes component, fact single node selected",
+          causalModelFact
+        );
         this.reset(causalModelFact);
       }.bind(this)
     );
@@ -40,29 +44,33 @@ export class CausesComponent {
   }
 
   reset(causalModelFact) {
+    console.log("reset causes component with", causalModelFact);
     this.causalModelFact = causalModelFact;
+    console.log("reset causes component with", causalModelFact);
 
+    this.content.html("");
     if (!causalModelFact) {
-      this.content.html("");
       return;
     }
 
     const rootCausesExpr =
       this.causalModelFact.ProbabilityNest?.CausesExpression;
-    if (!this.rootCausesItem) {
-      this.rootCausesItem = new CausesItem({
-        selector: this.content.node(),
-        isRemovable: false,
-        isRoot: true,
-        rootCausesExpression: rootCausesExpr,
-        causalView: this.causalView,
-        causesExpressionProvider: new CausesExpressionProvider(
-          this.undoRedoManager,
-          this.causesChangeManager,
-          causalModelFact
-        ),
-      });
-    }
-    this.rootCausesItem.resetProvider(rootCausesExpr);
+    // if (!this.rootCausesItem) {
+    // this.rootCausesItem =
+    const rootCausesItem = new CausesItem({
+      selector: this.content.node(),
+      isRemovable: false,
+      isRoot: true,
+      rootCausesExpression: rootCausesExpr,
+      causalView: this.causalView,
+      causesExpressionProvider: new CausesExpressionProvider(
+        this.undoRedoManager,
+        this.causesChangeManager,
+        causalModelFact
+      ),
+    });
+    // }
+    // this.rootCausesItem
+    rootCausesItem.resetProvider(rootCausesExpr);
   }
 }

@@ -8,6 +8,7 @@ import { DataProvider } from "./data-provider";
 export class CausesExpressionProvider extends DataProvider {
   constructor(undoRedoManager, causesChangeManager, causalFact) {
     super(undoRedoManager, causesChangeManager);
+    console.log("create causes expression provider. causal fact", causalFact);
     this.causalFact = causalFact;
   }
 
@@ -126,8 +127,11 @@ export class CausesExpressionProvider extends DataProvider {
   }
 
   changeCauseId(causalFact, newCauseId) {
+    console.log("change cause id of fact", causalFact);
+
     const expr = this._causesExpression;
     const setCauseId = function (causeId) {
+      console.log("set cause id", causeId);
       const oldId = expr.Edge.CauseId;
       expr.Edge.CauseId = causeId;
 

@@ -54,6 +54,12 @@ export class SelectNodeElement {
       "display",
       !showSelectButtonOnly ? "inline-block" : "none"
     );
+
+    // [this.selectNodeButton, this.clearButton, this.cancelSelectButton].forEach(
+    //   (btn) => {
+    //     btn.style("display", showSelectButtonOnly ? "inline-block" : "none");
+    //   }
+    // );
   }
 
   onCancelButtonClick(event) {
@@ -65,7 +71,7 @@ export class SelectNodeElement {
   }
 
   onNodeClicked(event) {
-    const causalModelFact = event.data.i.data;
+    const causalModelFact = event.nodeSelection.data.fact;
     this.setIdInputAndCancelSelect(causalModelFact.Id);
   }
 

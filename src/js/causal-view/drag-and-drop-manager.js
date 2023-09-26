@@ -32,13 +32,17 @@ export class DragAndDropManager {
 
     let posDataBeforeDrag;
     function dragStarted(event, d) {
-      posDataBeforeDrag = dragAndDropManager.getNodesToDragPosData(d.data.Id);
+      posDataBeforeDrag = dragAndDropManager.getNodesToDragPosData(
+        d.data.fact.Id
+      );
 
       d3.select(this).attr("cursor", "grabbing");
     }
 
     function dragged(event, d) {
-      const posDataToDrag = dragAndDropManager.getNodesToDragPosData(d.data.Id);
+      const posDataToDrag = dragAndDropManager.getNodesToDragPosData(
+        d.data.fact.Id
+      );
 
       // Change positions of nodes that should be dragged
       posDataToDrag.forEach(({ nodeId }) => {
@@ -53,7 +57,7 @@ export class DragAndDropManager {
     }
 
     function dragEnded(event, d) {
-      const draggedNodeId = d.data.Id;
+      const draggedNodeId = d.data.fact.Id;
       const posDataAfterDrag =
         dragAndDropManager.getNodesToDragPosData(draggedNodeId);
 
@@ -88,9 +92,12 @@ export class DragAndDropManager {
       this.causalViewStructure
     );
   }
+
+  // Todo: refactor?
+
   getNodesToDragPosData(draggedNodeId) {
     return this.getNodesToDragData(draggedNodeId).map((nodeData) => ({
-      nodeId: nodeData.data.Id,
+      nodeId: nodeData.data.fact.Id,
       x: nodeData.ux,
       y: nodeData.uy,
     }));

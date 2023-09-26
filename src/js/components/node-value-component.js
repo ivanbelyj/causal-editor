@@ -35,7 +35,7 @@ export class NodeValueComponent {
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
       (event) => {
-        const causalModelFact = event.data.node.data;
+        const causalModelFact = event.nodeData.fact;
         this.resetProvider(causalModelFact);
       }
     );
@@ -79,7 +79,6 @@ export class NodeValueComponent {
 
     this.getFactPropNamesAndInputs().forEach(([propertyName, input]) =>
       input.on("input", () => {
-        // Todo: merge input commands
         this.causalFactProvider.changeNonCauseProperty(
           propertyName,
           input.property("value"),

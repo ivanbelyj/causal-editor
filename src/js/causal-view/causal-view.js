@@ -5,8 +5,10 @@ import { CausalViewSelectionManager } from "./causal-view-selection-manager.js";
 import * as d3 from "d3";
 import { NodesCreateRemoveManager } from "./nodes-create-remove-manager.js";
 import { CausesChangeManager } from "../components/causes-change-manager.js";
+import { ProjectData } from "../../data-management/project-data.js";
+import { CausalViewDataUtils } from "./causal-view-data-utils.js";
 
-// A component representing causal model
+// A component representing causal model visual structure
 export class CausalView {
   structure = null;
   selectionManager = null;
@@ -15,38 +17,39 @@ export class CausalView {
     this.undoRedoManager = undoRedoManager;
     this.causesChangeManager = new CausesChangeManager(this);
 
-    api.onCreateNode(
-      function (event, data) {
-        undoRedoManager.execute(
-          this.nodesCreateRemoveManager.getCreateNodeCommand(data.x, data.y)
+    api.onCreateNode((event, data) => {
+      undoRedoManager.execute(
+        this.nodesCreateRemoveManager.getCreateNodeCommand(data.x, data.y)
+      );
+    });
+    api.onRemoveNode((event, data) => {
+      console.log("remove node", data);
+      undoRedoManager.execute(
+        this.nodesCreateRemoveManager.getRemoveNodeCommand(data.x, data.y)
+      );
+    });
+    api.onGetDataToSaveRequest(() => {
+      const { facts, nodesData } =
+        CausalViewDataUtils.causalViewDataToFactsAndNodesData(
+          this.structure.getNodesData()
         );
-      }.bind(this)
-    );
-    api.onRemoveNode(
-      function (event, data) {
-        console.log("remove node", data);
-        undoRedoManager.execute(
-          this.nodesCreateRemoveManager.getRemoveNodeCommand(data.x, data.y)
+      api.sendDataToSave(new ProjectData(facts, nodesData));
+    });
+    api.onOpenData((event, projectData) => {
+      console.log("open project data", projectData);
+      console.log("facts", projectData.facts);
+      const causalViewData =
+        CausalViewDataUtils.factsAndNodesDataToCausalViewData(
+          projectData.facts,
+          projectData.nodesData
         );
-      }.bind(this)
-    );
-    api.onGetNodesRequest(
-      function () {
-        api.sendNodes(this.nodes());
-      }.bind(this)
-    );
-    api.onOpenCausalModel(
-      function (event, data) {
-        // console.log("open data", data);
-        this.reset(data);
-      }.bind(this)
-    );
+      console.log("causalViewData", causalViewData);
+      this.reset(causalViewData);
+    });
 
-    api.onReset(
-      function (event, data) {
-        this.selectionManager.reset();
-      }.bind(this)
-    );
+    api.onReset((event, data) => {
+      this.selectionManager.reset();
+    });
     this.api = api;
 
     const causalView = (this.component = d3.select(selector));
@@ -54,7 +57,7 @@ export class CausalView {
     causalView.on("mouseleave", () => api.sendCausalViewLeave());
   }
 
-  init(causalModelFacts) {
+  init(nodesData) {
     this.structure = new CausalViewStructure(this.undoRedoManager);
     this.structure.addEventListener("nodeEnter", () =>
       this.api.sendNodeEnter()
@@ -73,11 +76,7 @@ export class CausalView {
     );
 
     this.selectionManager.init(this.structure);
-    this.structure.init(
-      this.component,
-      causalModelFacts,
-      this.selectionManager
-    );
+    this.structure.init(this.component, nodesData, this.selectionManager);
 
     // Test of reset
     setTimeout(
@@ -91,11 +90,12 @@ export class CausalView {
     );
   }
 
-  reset(causalModelFacts) {
-    this.structure.reset(causalModelFacts);
+  reset(nodesData) {
+    this.structure.reset(nodesData);
     this.structure.setInitialZoom();
   }
 
+  // Todo: remove?
   nodes() {
     return this.structure.getNodes();
   }

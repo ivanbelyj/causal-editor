@@ -10,19 +10,18 @@ export class NodesCreateRemoveManager {
     this.causesChangeManager = causesChangeManager;
   }
 
-  getCreateNodeCommand(x, y, fact) {
-    console.log("causesChangeManager: ", this.causesChangeManager);
-    fact = fact ?? this.createCausalModelFact();
+  getCreateNodeCommand(x, y, nodeData) {
+    nodeData = nodeData ?? this.createNodeData();
     return new Command(
       () =>
         this.createNodeByMousePos(
-          fact,
+          nodeData,
           x,
           y
           // this.structure.nodeWidth,
           // this.structure.nodeHeight
         ),
-      () => this.#removeNodeById(fact.Id)
+      () => this.#removeNodeById(nodeData.fact.Id)
     );
   }
 
@@ -33,42 +32,44 @@ export class NodesCreateRemoveManager {
 
   getRemoveNodeCommand(x, y, factId) {
     factId = factId ?? this.getNodeIdByPos(x, y);
-    const node = this.structure.getNodeById(factId);
+    const nodeData = this.structure.getNodeDataById(factId);
     return new Command(
       () => this.#removeNodeById(factId),
       () =>
         this.createNodeWithNodeData(
-          node.data,
-          { x: node.ux, y: node.uy }
+          nodeData
+          // { x: node.ux, y: node.uy }
           // this.structure.nodeWidth,
           // this.structure.nodeHeight
         )
     );
   }
 
-  createCausalModelFact() {
+  createNodeData() {
     const newFact = CausalModelUtils.createNewFactWithFactor();
     newFact.Id = crypto.randomUUID();
-    return newFact;
+    return { fact: newFact };
   }
 
-  // Todo: handle causes changing after remove
-  createNodeWithNodeData(fact, nodeData) {
-    this.structure.addNode(fact, nodeData);
+  createNodeWithNodeData(nodeData) {
+    this.structure.addNodeWithData(nodeData);
 
     this.causesChangeManager.onCausesAdd(
-      fact,
-      CausalModelUtils.getCausesIdsUnique(fact)
+      nodeData,
+      CausalModelUtils.getCausesIdsUnique(nodeData.fact)
     );
 
     this.structure.render();
+
+    // Todo: handle causes changing after remove
+    // this.structure.reset();
 
     function getOffset(size) {
       return size ? size / 2 : 0;
     }
   }
 
-  createNodeByMousePos(fact, x, y, nodeWidth, nodeHeight) {
+  createNodeByMousePos(nodeData, x, y) {
     const causalViewElement = ScreenUtils.elementWithClassFrom(
       { x, y },
       "causal-view"
@@ -78,18 +79,19 @@ export class NodesCreateRemoveManager {
       return;
     }
 
-    this.createNodeWithNodeData(
-      fact,
-      ScreenUtils.screenPointToSvg({
-        x: x,
-        y: y,
-      })
-    );
+    const posInCausalView = ScreenUtils.screenPointToSvg({
+      x: x,
+      y: y,
+    });
+    nodeData.x = posInCausalView.x;
+    nodeData.y = posInCausalView.y;
+
+    this.createNodeWithNodeData(nodeData);
   }
 
   getNodeIdByPos(x, y) {
     const nodeElement = ScreenUtils.nodeElementFromPoint({ x, y }, "node");
     const nodeData = d3.select(nodeElement).data()[0];
-    return nodeData.data.Id;
+    return nodeData.data.fact.Id;
   }
 }

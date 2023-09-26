@@ -39,7 +39,7 @@ export class WeightsComponent {
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
       function (event) {
-        const causalModelFact = event.data.node.data;
+        const causalModelFact = event.nodeData.fact;
         this.resetProvider(causalModelFact);
       }.bind(this)
     );

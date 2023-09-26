@@ -1,21 +1,21 @@
 import * as d3 from "d3";
 import * as d3dag from "d3-dag";
-// import { zoom } from "d3-zoom";
 import { CausalModelUtils } from "./causal-model-utils.js";
-import { Command } from "../undo-redo/commands/command.js";
 import { DragAndDropManager } from "./drag-and-drop-manager.js";
 
+const showDebugMessages = false;
 // Displays interactive causal view elements and provides some of their common events
 // (node click, enter, etc.)
 export class CausalViewStructure extends EventTarget {
   // ===== Set in constructor / init =====
-  showDebugMessages = false;
 
+  // Default width and height
   nodeWidth = 140;
   nodeHeight = 40;
 
-  // The line for rendering edges may be required at different stages
-  line;
+  stratify;
+
+  line; // A line for rendering edges
 
   svg;
   svgChild;
@@ -31,7 +31,7 @@ export class CausalViewStructure extends EventTarget {
     this.undoRedoManager = undoRedoManager;
   }
 
-  init(svgParent, causalModelFacts, selectionManager) {
+  init(svgParent, nodesData, selectionManager) {
     this.selectionManager = selectionManager;
 
     this.line = d3
@@ -44,10 +44,9 @@ export class CausalViewStructure extends EventTarget {
       .sugiyama() // base layout
       .decross(d3dag.decrossOpt()) // minimize number of crossings
       // set node size instead of constraining to fit
-      .nodeSize((node) => [
-        (node ? 1.3 : 0) * this.nodeWidth,
-        3 * this.nodeHeight,
-      ]);
+      .nodeSize((node) => {
+        return [(node ? 1.3 : 0) * this.nodeWidth, 3 * this.nodeHeight];
+      });
 
     this.svg = svgParent
       .append("svg")
@@ -55,10 +54,11 @@ export class CausalViewStructure extends EventTarget {
       .attr("height", "100%")
       .on(
         "click",
-        function (d, i) {
-          const viewClickedEventData = new Event("viewClicked");
-          viewClickedEventData.data = { d, i };
-          this.dispatchEvent(viewClickedEventData);
+        function (event, svgSelection) {
+          const viewClickedEvent = new Event("viewClicked");
+          viewClickedEvent.clickEvent = event;
+          viewClickedEvent.svgSelection = svgSelection;
+          this.dispatchEvent(viewClickedEvent);
         }.bind(this)
       );
 
@@ -74,8 +74,17 @@ export class CausalViewStructure extends EventTarget {
     this.nodesParent = svgChild.append("g").attr("class", "nodes-parent");
     this.edgesDefs = svgChild.append("defs");
 
-    if (causalModelFacts) {
-      this.reset(causalModelFacts);
+    this.stratify = d3dag
+      .graphStratify()
+      .id(({ fact }) => fact.Id)
+      .parentIds(
+        function ({ fact }) {
+          return CausalModelUtils.getCausesIdsUnique(fact);
+        }.bind(this)
+      );
+
+    if (nodesData) {
+      this.reset(nodesData);
     }
   }
 
@@ -121,8 +130,17 @@ export class CausalViewStructure extends EventTarget {
     this.svg.call(this.zoom);
   }
 
-  reset(causalModelFacts) {
-    this.setDag(causalModelFacts);
+  reset(nodesData) {
+    if (!nodesData) {
+      nodesData = this.getNodesData();
+      if (!nodesData) {
+        console.error(
+          "Cannot reset empty causa-view-structure with",
+          nodesData
+        );
+      }
+    }
+    this.resetGraph(nodesData);
 
     const { width: dagWidth, height: dagHeight } = this.layout(this.mutGraph);
     this.dagWidth = dagWidth;
@@ -158,36 +176,42 @@ export class CausalViewStructure extends EventTarget {
     return Array.from(this.mutGraph.nodes());
   }
 
+  getNodesData() {
+    return this.getNodes().map((node) => node.data);
+  }
+
+  getNodeFacts() {
+    return this.getNodes().map((node) => node.data.fact);
+  }
+
   getNodeById(nodeId) {
-    return this.getNodes().find((node) => node.data.Id === nodeId);
+    return this.getNodes().find((node) => node.data.fact.Id === nodeId);
+  }
+
+  getNodeDataById(nodeId) {
+    return this.getNodeById(nodeId).data;
   }
 
   static getNodeSelectionById(nodeId) {
     return d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`);
   }
 
-  // Устанавливает dag на основе каузальной модели, а также способ
-  // получения набора ребер-реализаций абстрактных фактов в виде строк
-  setDag(causalModelFacts) {
-    this.mutGraph = d3dag
-      .graphStratify()
-      .id(({ Id: id }) => id)
-      .parentIds(
-        function (causalModelFact) {
-          return CausalModelUtils.getCausesIdsUnique(causalModelFact);
-        }.bind(this)
-      )(causalModelFacts);
+  // Sets directed acyclic graph by causal model facts
+  resetGraph(nodesData) {
+    this.mutGraph = this.stratify(nodesData);
   }
 
-  addNode(causalModelFact, nodeData) {
-    const newNode = this.mutGraph.node(causalModelFact);
+  addNodeWithData(nodeData) {
+    const newNode = this.mutGraph.node(nodeData);
+    console.log("add node ", newNode);
+
     newNode.ux = nodeData.x;
     newNode.uy = nodeData.y;
     return newNode;
   }
 
   removeNode(nodeId) {
-    const nodeToRemove = this.getNodes().find((x) => x.data.Id == nodeId);
+    const nodeToRemove = this.getNodeById(nodeId);
     if (!nodeToRemove) {
       console.error("Node to remove is not found. ", nodeToRemove);
       return;
@@ -198,13 +222,15 @@ export class CausalViewStructure extends EventTarget {
   addLink(sourceId, targetId) {
     const [source, target] = [sourceId, targetId].map(this.getNodeById, this);
 
+    console.log("add link ", source, target);
     this.mutGraph.link(source, target);
   }
 
   getLinkBySourceAndTargetIds(sourceId, targetId) {
     return Array.from(this.mutGraph.links()).find(
       (link) =>
-        link.source.data.Id == sourceId && link.target.data.Id == targetId
+        link.source.data.fact.Id === sourceId &&
+        link.target.data.fact.Id === targetId
     );
   }
 
@@ -229,11 +255,11 @@ export class CausalViewStructure extends EventTarget {
       }
     }
 
-    const showLog = this.showDebugMessages;
+    const showLog = showDebugMessages;
     if (showLog) console.log("nodes");
     d3.select(".nodes-parent")
       .selectAll("g")
-      .data(nodes, (node) => node.data.Id)
+      .data(nodes, (node) => node.data.fact.Id)
       .join(
         function (enter) {
           if (showLog) console.log("enter", Array.from(enter));
@@ -241,23 +267,26 @@ export class CausalViewStructure extends EventTarget {
             .append("g")
             .attr("class", (d) => {
               return `node ${CausalModelUtils.getNodeIdClassNameByNodeId(
-                d.data.Id
+                d.data.fact.Id
               )}`;
             })
             .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
-            .on("click", (d, i) => {
-              const nodeClickedEventData = new Event("nodeClicked");
-              nodeClickedEventData.data = { d, i };
-              this.dispatchEvent(nodeClickedEventData);
+            .on("click", (event, nodeSelection) => {
+              const nodeClickedEvent = new Event("nodeClicked");
+              nodeClickedEvent.nodeSelection = nodeSelection;
+              nodeClickedEvent.clickEvent = event;
+              this.dispatchEvent(nodeClickedEvent);
             })
-            .on("mouseenter", (d, i) => {
+            .on("mouseenter", (event, nodeSelection) => {
               const nodeEnterEvent = new Event("nodeEnter");
-              nodeEnterEvent.data = { d, i };
+              nodeEnterEvent.enterEvent = event;
+              nodeEnterEvent.nodeSelection = nodeSelection;
               this.dispatchEvent(nodeEnterEvent);
             })
-            .on("mouseleave", (d, i) => {
+            .on("mouseleave", (event, nodeSelection) => {
               const nodeLeaveEvent = new Event("nodeLeave");
-              nodeLeaveEvent.data = { d, i };
+              nodeLeaveEvent.enterEvent = event;
+              nodeLeaveEvent.nodeSelection = nodeSelection;
               this.dispatchEvent(nodeLeaveEvent);
             });
 
@@ -292,7 +321,7 @@ export class CausalViewStructure extends EventTarget {
   updateNodes() {
     this.updateNodeText(
       d3.select(".nodes-parent").selectAll("g").select("text"),
-      (d) => d.data["Title"] || d.data["NodeValue"] || d.data["Id"]
+      (d) => d.data["Title"] || d.data.fact["NodeValue"] || d.data.fact["Id"]
     );
   }
 
@@ -311,7 +340,7 @@ export class CausalViewStructure extends EventTarget {
   }
 
   edgeDataToString(d) {
-    return `edge (${d.source.data.NodeValue}, ${d.target.data.NodeValue})`;
+    return `edge (${d.source.data.fact.NodeValue}, ${d.target.data.fact.NodeValue})`;
   }
 
   printEdge(d) {
@@ -320,7 +349,7 @@ export class CausalViewStructure extends EventTarget {
 
   // Todo: show probabilities
   renderEdges() {
-    if (this.showDebugMessages)
+    if (showDebugMessages)
       console.log(
         "render edges. links",
         [...this.mutGraph.links()].map((d) => this.edgeDataToString(d), this)
@@ -330,8 +359,8 @@ export class CausalViewStructure extends EventTarget {
       .selectAll("path")
       .data(this.mutGraph.links(), ({ source, target }) => {
         return CausalModelUtils.sourceAndTargetIdsToEdgeId(
-          source.data.Id,
-          target.data.Id
+          source.data.fact.Id,
+          target.data.fact.Id
         );
       });
 
@@ -340,7 +369,7 @@ export class CausalViewStructure extends EventTarget {
 
     const edgeDataToString = this.edgeDataToString;
 
-    const showLog = this.showDebugMessages;
+    const showLog = showDebugMessages;
     if (showLog) console.log("edges");
     edgePathsSelection.join(
       function (enter) {
@@ -353,8 +382,8 @@ export class CausalViewStructure extends EventTarget {
           .attr("stroke", function ({ source, target }) {
             // Edges gradients
             const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
-              source.data["Id"],
-              target.data["Id"]
+              source.data.fact["Id"],
+              target.data.fact["Id"]
             );
 
             const grad = edgesDefs
@@ -364,11 +393,11 @@ export class CausalViewStructure extends EventTarget {
             grad
               .append("stop")
               .attr("offset", "0%")
-              .attr("stop-color", source.data.color ?? "#aaa");
+              .attr("stop-color", source.data.color);
             grad
               .append("stop")
               .attr("offset", "100%")
-              .attr("stop-color", target.data.color ?? "#aaa");
+              .attr("stop-color", target.data.color);
             return `url(#${gradId})`;
           })
           .attr("marker-end", "url(#arrowId)");
@@ -407,11 +436,11 @@ export class CausalViewStructure extends EventTarget {
 
     const edgePathsSelection = d3.selectAll(".edge");
     edgePathsSelection.attr("stroke-dasharray", ({ source, target }) => {
-      const nodeSrc = source.data;
-      const nodeTarget = target.data;
+      const factSrc = source.data.fact;
+      const factTarget = target.data.fact;
 
-      return nodeTarget.AbstractFactId &&
-        nodeTarget.AbstractFactId == nodeSrc.Id
+      return factTarget.AbstractFactId &&
+        factTarget.AbstractFactId == factSrc.Id
         ? ""
         : "5,5";
     });
@@ -427,8 +456,8 @@ export class CausalViewStructure extends EventTarget {
     edgePathsSelection.attr("stroke", ({ source, target }) => {
       // this.printEdge({ source, target });
       const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
-        source.data.Id,
-        target.data.Id
+        source.data.fact.Id,
+        target.data.fact.Id
       );
       d3.select(`#${gradId}`)
         .attr("x1", source.x)

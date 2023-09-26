@@ -172,6 +172,7 @@ export class CausalFactProvider extends DataProvider {
     // this.undoRedoManager.execute(cmd);
   }
 
+  // Todo: test with undo and non-clear redo stack selection
   changeWeightEdgeCauseId(weightEdge, newCauseId) {
     const causalFact = this._causalFact;
     const setWeightEdge = (newCauseId) => {
