@@ -51,12 +51,16 @@ const defaultConfig = {
 const defaultComponentTypesAndFactories = {
   "Causal View": function (container) {
     this.undoRedoManager = new UndoRedoManager(this.api);
+    // this.causesChangeManager = new CausesChangeManager(this.causalView);
 
     this.causalView = new CausalView(
       container.element,
       this.api,
       this.undoRedoManager
+      // this.causesChangeManager
     );
+
+    this.causesChangeManager = this.causalView.causesChangeManager;
 
     d3.select(container.element).classed("causal-view", true);
     const causalModelFacts = JSON.parse(factsCollection);
@@ -64,7 +68,7 @@ const defaultComponentTypesAndFactories = {
     this.causalView.init([]);
 
     // For tracking changes in external code to update causal-view
-    this.causesChangeManager = new CausesChangeManager(this.causalView);
+    // this.causesChangeManager = new CausesChangeManager(this.causalView);
     // this.causalView.selectionManager.addEventListener(
     //   "singleNodeSelected",
     //   (event) => {

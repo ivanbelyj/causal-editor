@@ -4,6 +4,7 @@ import { CausalViewSelectionManager } from "./causal-view-selection-manager.js";
 
 import * as d3 from "d3";
 import { NodesCreateRemoveManager } from "./nodes-create-remove-manager.js";
+import { CausesChangeManager } from "../components/causes-change-manager.js";
 
 // A component representing causal model
 export class CausalView {
@@ -12,6 +13,7 @@ export class CausalView {
 
   constructor(selector, api, undoRedoManager) {
     this.undoRedoManager = undoRedoManager;
+    this.causesChangeManager = new CausesChangeManager(this);
 
     api.onCreateNode(
       function (event, data) {
@@ -22,6 +24,7 @@ export class CausalView {
     );
     api.onRemoveNode(
       function (event, data) {
+        console.log("remove node", data);
         undoRedoManager.execute(
           this.nodesCreateRemoveManager.getRemoveNodeCommand(data.x, data.y)
         );
@@ -62,7 +65,7 @@ export class CausalView {
 
     this.nodesCreateRemoveManager = new NodesCreateRemoveManager(
       this.structure,
-      this.undoRedoManager
+      this.causesChangeManager
     );
     this.selectionManager = new CausalViewSelectionManager(
       this.api,

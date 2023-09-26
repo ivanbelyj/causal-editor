@@ -1,6 +1,7 @@
 import { SelectionCommand } from "../undo-redo/commands/selection-command.js";
 import { CausalModelUtils } from "./causal-model-utils.js";
 import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { CausalViewStructure } from "./causal-view-structure.js";
 
 const nodeSelectionStrokeWidth = 4;
 
@@ -58,7 +59,7 @@ export class CausalViewSelectionManager extends EventTarget {
   }
 
   setSelectedAppearance(nodeId) {
-    d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`)
+    CausalViewStructure.getNodeSelectionById(nodeId)
       .raise()
       .select("rect")
       .attr("stroke-width", this.getSelectionStrokeWidthIgnoreZoom())

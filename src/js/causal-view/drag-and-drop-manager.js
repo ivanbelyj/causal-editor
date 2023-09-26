@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { CausalModelUtils } from "./causal-model-utils";
 import { DragNodesCommand } from "../undo-redo/commands/drag-nodes-command";
+import { CausalViewStructure } from "./causal-view-structure";
 
 // Distances less than this value will not be considered as a node move
 // and won't execute a Command
@@ -41,7 +42,7 @@ export class DragAndDropManager {
 
       // Change positions of nodes that should be dragged
       posDataToDrag.forEach(({ nodeId }) => {
-        d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`)
+        CausalViewStructure.getNodeSelectionById(nodeId)
           .attr("transform", (d) => {
             return `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`;
           })

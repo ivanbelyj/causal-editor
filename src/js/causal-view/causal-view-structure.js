@@ -162,6 +162,10 @@ export class CausalViewStructure extends EventTarget {
     return this.getNodes().find((node) => node.data.Id === nodeId);
   }
 
+  static getNodeSelectionById(nodeId) {
+    return d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`);
+  }
+
   // Устанавливает dag на основе каузальной модели, а также способ
   // получения набора ребер-реализаций абстрактных фактов в виде строк
   setDag(causalModelFacts) {
