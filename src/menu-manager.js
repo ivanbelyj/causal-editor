@@ -16,14 +16,14 @@ export class MenuManager {
 
     window.webContents.on("before-input-event", (event, input) => {
       // accelerator not working
-      // if (input.control && input.key.toLowerCase() === "a") {
+      // if (input.control && input.code === "keyA") {
       //   this.selectAllHandler();
       // }
-      if (input.control && input.key.toLowerCase() === "z") {
+      if (input.control && input.code === "KeyZ") {
         this.undoHandler();
         event.preventDefault();
       }
-      if (input.control && input.key.toLowerCase() === "y") {
+      if (input.control && input.code === "KeyY") {
         this.redoHandler();
         event.preventDefault();
       }

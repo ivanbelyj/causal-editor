@@ -27,10 +27,6 @@ export class CausesComponent {
       "singleNodeSelected",
       function (event) {
         const causalModelFact = event.nodeData.fact;
-        console.log(
-          "causes component, fact single node selected",
-          causalModelFact
-        );
         this.reset(causalModelFact);
       }.bind(this)
     );
@@ -44,9 +40,7 @@ export class CausesComponent {
   }
 
   reset(causalModelFact) {
-    console.log("reset causes component with", causalModelFact);
     this.causalModelFact = causalModelFact;
-    console.log("reset causes component with", causalModelFact);
 
     this.content.html("");
     if (!causalModelFact) {

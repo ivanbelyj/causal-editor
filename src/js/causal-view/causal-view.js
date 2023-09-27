@@ -23,7 +23,6 @@ export class CausalView {
       );
     });
     api.onRemoveNode((event, data) => {
-      console.log("remove node", data);
       undoRedoManager.execute(
         this.nodesCreateRemoveManager.getRemoveNodeCommand(data.x, data.y)
       );
@@ -36,14 +35,11 @@ export class CausalView {
       api.sendDataToSave(new ProjectData(facts, nodesData));
     });
     api.onOpenData((event, projectData) => {
-      console.log("open project data", projectData);
-      console.log("facts", projectData.facts);
       const causalViewData =
         CausalViewDataUtils.factsAndNodesDataToCausalViewData(
           projectData.facts,
           projectData.nodesData
         );
-      console.log("causalViewData", causalViewData);
       this.reset(causalViewData);
     });
 

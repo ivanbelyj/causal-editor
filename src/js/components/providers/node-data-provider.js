@@ -42,8 +42,6 @@ export class NodeDataProvider extends DataProvider {
     // );
     const causalFact = this._causalFact;
 
-    console.log("add new weight edge to causal fact", causalFact);
-
     CommandUtils.executeUndoRedoActionCommand(
       this.undoRedoManager,
       this.#addWeightEdge.bind(this, causalFact),
@@ -60,7 +58,6 @@ export class NodeDataProvider extends DataProvider {
   }
 
   #addWeightEdge(causalFact, newWeight) {
-    console.log("#addWeightEdge to ", causalFact, "newWeight", newWeight);
     if (!this.#getWeights(causalFact)) {
       this.#setInitialWeightNest(causalFact);
     }
@@ -81,13 +78,11 @@ export class NodeDataProvider extends DataProvider {
       const edgeToRemove = weights[removeIndex];
       weights.splice(removeIndex, 1);
       if (edgeToRemove.CauseId) {
-        console.log("on removed causes: ", edgeToRemove);
         this.causesChangeManager.onCausesRemoved(causalFact, [
           edgeToRemove.CauseId,
         ]);
       } else {
         // There is no removed causes
-        console.log("removed weight edge had no causeId. edge:", edgeToRemove);
       }
 
       if (weights.length === 0) {
@@ -145,13 +140,7 @@ export class NodeDataProvider extends DataProvider {
   #changeAbstractFactId(causalFact, newId) {
     const oldAbstrId = causalFact.AbstractFactId;
     causalFact.AbstractFactId = newId;
-    console.log("before on cause id change", causalFact);
-    console.log("abstract id must be updated");
-    console.log(
-      "fact ins causes change manager",
-      this.causesChangeManager.causalModelFact,
-      "(must be the same)"
-    );
+
     this.causesChangeManager.onCauseIdChanged(causalFact, oldAbstrId, newId);
 
     this._dispatchMutated();
@@ -229,7 +218,8 @@ export class NodeDataProvider extends DataProvider {
           causalViewStructureToRender.render();
         },
         propertyValue,
-        oldValue
+        oldValue,
+        propertyName
       )
     );
   }

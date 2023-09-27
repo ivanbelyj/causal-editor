@@ -186,10 +186,6 @@ export class CausesItem {
       this.content.append("div").node(),
       this.causalView,
       (newCauseId) => {
-        console.log(
-          "change cause for ",
-          this.causesExpressionProvider.causalFact
-        );
         this.causesExpressionProvider.changeCauseId(
           this.causesExpressionProvider.causalFact,
           newCauseId

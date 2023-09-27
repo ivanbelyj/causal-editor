@@ -48,7 +48,6 @@ export class NodeValueComponent {
   }
 
   reset() {
-    console.log("reset");
     this.component.html("");
 
     if (!this.nodeDataProvider.getFact()) return;
@@ -110,12 +109,6 @@ export class NodeValueComponent {
     const objToGetProp = isFactProp
       ? this.nodeDataProvider.getFact()
       : this.nodeDataProvider.get();
-    console.log(
-      "update input. prop ",
-      propertyName,
-      "will be get from ",
-      objToGetProp
-    );
     input.property("value", objToGetProp[propertyName] ?? "");
   }
 

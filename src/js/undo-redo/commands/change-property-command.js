@@ -1,7 +1,8 @@
 import { Command } from "./command";
 
 export class ChangePropertyCommand extends Command {
-  constructor(setPropertyFunc, newValue, oldValue) {
+  // propertyId is required to distinguish different properties change
+  constructor(setPropertyFunc, newValue, oldValue, propertyId) {
     super(
       () => setPropertyFunc(newValue),
       () => setPropertyFunc(oldValue)
@@ -9,6 +10,7 @@ export class ChangePropertyCommand extends Command {
     this.setPropertyFunc = setPropertyFunc;
     this.newValue = newValue;
     this.oldValue = oldValue;
+    this.propertyId = propertyId;
   }
 
   // Todo: not merge, but separate into words?
@@ -16,7 +18,8 @@ export class ChangePropertyCommand extends Command {
     return new ChangePropertyCommand(
       this.setPropertyFunc,
       command.newValue,
-      this.oldValue
+      this.oldValue,
+      this.propertyId
     );
   }
 }

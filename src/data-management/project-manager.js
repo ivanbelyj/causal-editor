@@ -60,12 +60,9 @@ export class ProjectManager {
       causalModelFactsFileFilters,
       false
     );
-    console.log("openedData", openedData);
 
     if (openedData) {
       const projectData = ProjectData.fromCausalModelFacts(openedData);
-      console.log("projectData", projectData);
-      console.log("projectData.facts", projectData.facts);
       this.#sendOpenData(projectData);
     }
   }

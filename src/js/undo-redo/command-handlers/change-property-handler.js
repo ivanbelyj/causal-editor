@@ -24,10 +24,12 @@ export class ChangePropertyHandler extends CommandsHandler {
         executedCommand
       )
     ) {
+      const prevCmd = this.undoRedoManager.undoStack.pop();
       // Replace with a merged command
-      cmdToPush = this.undoRedoManager.undoStack
-        .pop()
-        .mergedWith(executedCommand);
+      cmdToPush = prevCmd.mergedWith(executedCommand);
+      console.log("commands are merged", prevCmd, executedCommand);
+    } else {
+      console.log("commands was not merged");
     }
     return cmdToPush;
   }
@@ -37,7 +39,9 @@ export class ChangePropertyHandler extends CommandsHandler {
       cmd1 &&
       cmd2 &&
       ChangePropertyHandler.isChangePropertyCommand(cmd1) &&
-      ChangePropertyHandler.isChangePropertyCommand(cmd2)
+      ChangePropertyHandler.isChangePropertyCommand(cmd2) &&
+      cmd1.propertyId === cmd2.propertyId
+      // Only commands applied to the same property can be merged
     );
   }
 }

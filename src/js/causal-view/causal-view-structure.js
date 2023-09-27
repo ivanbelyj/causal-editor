@@ -203,7 +203,6 @@ export class CausalViewStructure extends EventTarget {
 
   addNodeWithData(nodeData) {
     const newNode = this.mutGraph.node(nodeData);
-    console.log("add node ", newNode);
 
     newNode.ux = nodeData.x;
     newNode.uy = nodeData.y;
@@ -222,7 +221,6 @@ export class CausalViewStructure extends EventTarget {
   addLink(sourceId, targetId) {
     const [source, target] = [sourceId, targetId].map(this.getNodeById, this);
 
-    console.log("add link ", source, target);
     this.mutGraph.link(source, target);
   }
 

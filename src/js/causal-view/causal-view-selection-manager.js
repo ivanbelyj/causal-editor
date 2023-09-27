@@ -140,7 +140,6 @@ export class CausalViewSelectionManager extends EventTarget {
   }
 
   onNodeClicked(event) {
-    console.log("selection manager; nodeClicked, event", event);
     const clickEvent = event.clickEvent;
     event.clickEvent.stopPropagation();
 

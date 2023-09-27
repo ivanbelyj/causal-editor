@@ -84,7 +84,6 @@ export class WeightsComponent {
     }
 
     const weights = this.getWeights();
-    console.log("resetItems. weights", weights);
     if (weights)
       for (const weightEdge of weights) {
         this.appendItem(weightEdge);

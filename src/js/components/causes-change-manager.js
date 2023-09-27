@@ -28,14 +28,14 @@ export class CausesChangeManager {
         causalFact.Id
       );
 
-      console.log(
-        "curLink",
-        curLink,
-        "from",
-        addedCauseId,
-        "to",
-        causalFact.Id
-      );
+      // console.log(
+      //   "curLink",
+      //   curLink,
+      //   "from",
+      //   addedCauseId,
+      //   "to",
+      //   causalFact.Id
+      // );
       if (!curLink) {
         console.log("add");
         this.causalView.structure.addLink(addedCauseId, causalFact.Id);
@@ -64,7 +64,6 @@ export class CausesChangeManager {
   }
 
   onCauseIdChanged(causalFact, oldId, newId) {
-    console.log("on cause id changed", causalFact);
     if (oldId) this.onCausesRemoved(causalFact, [oldId]);
     if (newId) this.onCausesAdd(causalFact, [newId]);
   }

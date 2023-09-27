@@ -28,7 +28,6 @@ import * as d3 from "d3";
 function preventDefaultSelectAll() {
   document.addEventListener("keydown", function (e) {
     if (e.ctrlKey && e.code === "KeyA" && !isTextInputInFocus()) {
-      console.log("CTRL+A!");
       e.preventDefault();
     }
   });
