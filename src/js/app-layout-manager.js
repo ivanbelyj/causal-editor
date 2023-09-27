@@ -4,11 +4,9 @@ import { CausesComponent } from "./components/causes-component/causes-component.
 import { NodeValueComponent } from "./components/node-value-component.js";
 import { WeightsComponent } from "./components/weights-component/weights-component.js";
 import { factsCollection } from "./test-data.js";
-import { GoldenLayout, LayoutManager } from "golden-layout";
+import { GoldenLayout } from "golden-layout";
 import * as d3 from "d3";
 import { UndoRedoManager } from "./undo-redo/undo-redo-manager.js";
-import { CausalFactProvider } from "./components/providers/causal-fact-provider.js";
-import { CausesChangeManager } from "./components/causes-change-manager.js";
 
 const defaultConfig = {
   root: {

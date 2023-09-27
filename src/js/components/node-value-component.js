@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { CausalFactProvider } from "./providers/causal-fact-provider";
+import { NodeDataProvider } from "./providers/node-data-provider";
 
 export class NodeValueComponent {
   causalView = null;
@@ -10,7 +10,7 @@ export class NodeValueComponent {
     this.component = d3.select(selector);
     this.causalView = causalView;
 
-    this.causalFactProvider = new CausalFactProvider(undoRedoManager, null);
+    this.nodeDataProvider = new NodeDataProvider(undoRedoManager, null);
 
     api.onReset(
       function (event, data) {
@@ -18,15 +18,15 @@ export class NodeValueComponent {
       }.bind(this)
     );
 
-    this.causalFactProvider.addEventListener("reset", () => this.reset());
+    this.nodeDataProvider.addEventListener("reset", () => this.reset());
 
-    this.causalFactProvider.addEventListener("mutated", () => {
-      console.log("mutated. new causal fact", this.causalFactProvider.get());
+    this.nodeDataProvider.addEventListener("mutated", () => {
+      console.log("mutated. new causal fact", this.nodeDataProvider.getFact());
     });
   }
 
-  resetProvider(causalModelFact) {
-    this.causalFactProvider.set(causalModelFact);
+  resetProvider(nodeData) {
+    this.nodeDataProvider.set(nodeData);
   }
 
   init() {
@@ -35,8 +35,7 @@ export class NodeValueComponent {
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
       (event) => {
-        const causalModelFact = event.nodeData.fact;
-        this.resetProvider(causalModelFact);
+        this.resetProvider(event.nodeData);
       }
     );
 
@@ -52,16 +51,14 @@ export class NodeValueComponent {
     console.log("reset");
     this.component.html("");
 
-    const causalFact = this.causalFactProvider.get();
-    if (!causalFact) return;
-
-    // this.causalModelFact = causalFact;
+    if (!this.nodeDataProvider.getFact()) return;
 
     this.titleInput = this.appendInputItem({
       name: "Title",
       factPropName: "Title",
       inputId: "node-title-input",
       dontShowLabel: true,
+      isFactProp: false,
     });
     this.valueInput = this.appendInputItem({
       name: "Node Value",
@@ -69,44 +66,57 @@ export class NodeValueComponent {
       inputId: "node-id-input",
       isReadonly: false,
       useTextArea: true,
+      isFactProp: true,
     });
     this.idInput = this.appendInputItem({
       name: "Id",
       factPropName: "Id",
       inputId: "node-id-input",
       isReadonly: true,
+      isFactProp: true,
     });
 
-    this.getFactPropNamesAndInputs().forEach(([propertyName, input]) =>
-      input.on("input", () => {
-        this.causalFactProvider.changeNonCauseProperty(
-          propertyName,
-          input.property("value"),
-          this.causalView.structure
-        );
-      })
+    this.getFactPropNamesToData().forEach(
+      ([propertyName, { input, isFactProp }]) =>
+        input.on("input", () => {
+          this.nodeDataProvider.changeNonCauseProperty(
+            propertyName,
+            isFactProp,
+            input.property("value"),
+            this.causalView.structure
+          );
+        })
     );
 
-    this.getFactPropNamesAndInputs().forEach(([propName, input]) => {
-      this.updateInputByPropName(input, propName);
-      this.causalFactProvider.addEventListener("property-changed", (event) => {
-        if (propName === event.propertyName) {
-          console.log("property changed", event.propertyName, event.newValue);
-          this.updateInputByPropName(input, event.propertyName);
-        }
-      });
-    });
-  }
-
-  getFactPropNamesAndInputs() {
-    return Array.from(this.factPropNameToInput.entries());
-  }
-
-  updateInputByPropName(input, causalFactPropertyName) {
-    input.property(
-      "value",
-      this.causalFactProvider.get()[causalFactPropertyName] ?? ""
+    // Todo: rename provider
+    this.getFactPropNamesToData().forEach(
+      ([propName, { input, isFactProp }]) => {
+        this.updateInput(input, propName, isFactProp);
+        this.nodeDataProvider.addEventListener("property-changed", (event) => {
+          if (propName === event.propertyName) {
+            console.log("property changed", event.propertyName, event.newValue);
+            this.updateInput(input, event.propertyName, isFactProp);
+          }
+        });
+      }
     );
+  }
+
+  getFactPropNamesToData() {
+    return Array.from(this.factPropNameToData.entries());
+  }
+
+  updateInput(input, propertyName, isFactProp) {
+    const objToGetProp = isFactProp
+      ? this.nodeDataProvider.getFact()
+      : this.nodeDataProvider.get();
+    console.log(
+      "update input. prop ",
+      propertyName,
+      "will be get from ",
+      objToGetProp
+    );
+    input.property("value", objToGetProp[propertyName] ?? "");
   }
 
   // Returns input (or textarea) containing in input-item
@@ -117,6 +127,7 @@ export class NodeValueComponent {
     useTextArea,
     dontShowLabel,
     factPropName,
+    isFactProp,
   }) {
     const inputItem = this.component.append("div").attr("class", "input-item");
 
@@ -136,20 +147,12 @@ export class NodeValueComponent {
     }
     if (isReadonly) input.attr("readonly", true);
 
-    if (!this.factPropNameToInput) {
-      this.factPropNameToInput = new Map();
+    if (!this.factPropNameToData) {
+      this.factPropNameToData = new Map();
     }
-    if (factPropName) this.factPropNameToInput.set(factPropName, input);
+    if (factPropName)
+      this.factPropNameToData.set(factPropName, { input, isFactProp });
 
     return input;
   }
-
-  // onChange() {
-  //   if (!this.causalModelFact) return;
-
-  //   this.causalModelFact.Title = this.titleInput.property("value");
-  //   this.causalModelFact.NodeValue = this.valueInput.property("value");
-
-  //   this.causalView.structure.render();
-  // }
 }

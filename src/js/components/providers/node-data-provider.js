@@ -4,16 +4,24 @@ import { CommandUtils } from "../../undo-redo/commands/command-utils";
 import { MacroCommand } from "../../undo-redo/commands/macro-command";
 import { ChangePropertyCommand } from "../../undo-redo/commands/change-property-command";
 
-export class CausalFactProvider extends DataProvider {
+export class NodeDataProvider extends DataProvider {
   constructor(undoRedoManager, causesChangeManager) {
     super(undoRedoManager, causesChangeManager);
   }
 
   get _causalFact() {
+    return this._data?.fact;
+  }
+  // set _causalFact(value) {
+  //   this._data = value;
+  // }
+
+  get _nodeData() {
     return this._data;
   }
-  set _causalFact(value) {
-    this._data = value;
+
+  getFact() {
+    return this._getFrozenOrNull(this._causalFact);
   }
 
   #getWeights(causalFact) {
@@ -34,6 +42,8 @@ export class CausalFactProvider extends DataProvider {
     // );
     const causalFact = this._causalFact;
 
+    console.log("add new weight edge to causal fact", causalFact);
+
     CommandUtils.executeUndoRedoActionCommand(
       this.undoRedoManager,
       this.#addWeightEdge.bind(this, causalFact),
@@ -50,6 +60,7 @@ export class CausalFactProvider extends DataProvider {
   }
 
   #addWeightEdge(causalFact, newWeight) {
+    console.log("#addWeightEdge to ", causalFact, "newWeight", newWeight);
     if (!this.#getWeights(causalFact)) {
       this.#setInitialWeightNest(causalFact);
     }
@@ -203,16 +214,17 @@ export class CausalFactProvider extends DataProvider {
 
   changeNonCauseProperty(
     propertyName,
+    isFactProp,
     propertyValue,
     causalViewStructureToRender
   ) {
     // this._causalFact can change after selecting another node
-    const causalFact = this._causalFact;
-    const oldValue = causalFact[propertyName];
+    const objToMutate = isFactProp ? this._causalFact : this._nodeData;
+    const oldValue = objToMutate[propertyName];
     this.undoRedoManager.execute(
       new ChangePropertyCommand(
         (newVal) => {
-          causalFact[propertyName] = newVal;
+          objToMutate[propertyName] = newVal;
           this._dispatchPropertyChanged(propertyName, propertyValue);
           causalViewStructureToRender.render();
         },

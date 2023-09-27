@@ -14,8 +14,12 @@ export class DataProvider extends EventTarget {
     // console.log("reset data provider with ", value);
   }
 
+  _getFrozenOrNull(obj) {
+    return obj ? Object.freeze({ ...obj }) : null;
+  }
+
   get() {
-    return this._data ? Object.freeze({ ...this._data }) : null;
+    return this._getFrozenOrNull(this._data);
   }
 
   set(newData) {
@@ -30,6 +34,7 @@ export class DataProvider extends EventTarget {
     this.dispatchEvent(new Event("mutated"));
   }
 
+  // Todo: property changed and fact property changed
   _dispatchPropertyChanged(propertyName, newValue) {
     const event = new Event("property-changed");
     event.propertyName = propertyName;

@@ -1,8 +1,7 @@
 import * as d3 from "d3";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
-import { CausesChangeManager } from "../causes-change-manager.js";
 import binSrc from "../../../images/bin.svg";
-import { CausalFactProvider } from "../providers/causal-fact-provider.js";
+import { NodeDataProvider } from "../providers/node-data-provider.js";
 
 // Block is used as a part of a component
 export class WeightsComponent {
@@ -21,16 +20,16 @@ export class WeightsComponent {
 
     this.undoRedoManager = undoRedoManager;
 
-    this.causalFactProvider = new CausalFactProvider(
+    this.nodeDataProvider = new NodeDataProvider(
       this.undoRedoManager,
       this.causesChangeManager
     );
-    this.causalFactProvider.addEventListener("mutated", this.reset.bind(this));
-    this.causalFactProvider.addEventListener("reset", this.reset.bind(this));
+    this.nodeDataProvider.addEventListener("mutated", this.reset.bind(this));
+    this.nodeDataProvider.addEventListener("reset", this.reset.bind(this));
   }
 
-  resetProvider(causalModelFact) {
-    this.causalFactProvider.set(causalModelFact);
+  resetProvider(nodeData) {
+    this.nodeDataProvider.set(nodeData);
   }
 
   init() {
@@ -39,8 +38,7 @@ export class WeightsComponent {
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
       function (event) {
-        const causalModelFact = event.nodeData.fact;
-        this.resetProvider(causalModelFact);
+        this.resetProvider(event.nodeData);
       }.bind(this)
     );
 
@@ -57,7 +55,7 @@ export class WeightsComponent {
   reset() {
     this.component.html("");
 
-    const causalFact = this.causalFactProvider.get();
+    const causalFact = this.nodeDataProvider.get()?.fact;
     if (!causalFact) return;
 
     // this.causesChangeManager.reset(causalFact);
@@ -69,16 +67,13 @@ export class WeightsComponent {
       .append("button")
       .attr("class", "button input-item")
       .text("Add Weight Edge")
-      .on(
-        "click",
-        this.causalFactProvider.addNewWeightEdge.bind(this.causalFactProvider)
-      );
+      .on("click", () => this.nodeDataProvider.addNewWeightEdge());
 
     this.resetItems();
   }
 
   getWeights() {
-    return this.causalFactProvider.get().WeightNest?.Weights;
+    return this.nodeDataProvider.get()?.fact.WeightNest?.Weights;
   }
 
   // Content is a part of component that is changing
@@ -88,12 +83,8 @@ export class WeightsComponent {
       this.itemsParent = null;
     }
 
-    // this.causalFactProvider;
-    // if (!this.causalModelFact.WeightNest?.Weights)
-    //   this.causalModelFact.WeightNest = { Weights: [] };
-    // this.weights = this.causalModelFact.WeightNest.Weights;
-
     const weights = this.getWeights();
+    console.log("resetItems. weights", weights);
     if (weights)
       for (const weightEdge of weights) {
         this.appendItem(weightEdge);
@@ -109,8 +100,8 @@ export class WeightsComponent {
     new SelectNodeElement(
       this.component.append("div").node(),
       this.causalView,
-      this.causalFactProvider.changeAbstractFactId.bind(this.causalFactProvider)
-    ).init(this.causalFactProvider.get().AbstractFactId);
+      this.nodeDataProvider.changeAbstractFactId.bind(this.nodeDataProvider)
+    ).init(this.nodeDataProvider.getFact().AbstractFactId);
   }
 
   appendItem(weightEdge) {
@@ -138,7 +129,7 @@ export class WeightsComponent {
       "change",
       function (event) {
         const newWeight = parseFloat(d3.select(event.target).property("value"));
-        this.causalFactProvider.changeWeightEdgeWeight(weightEdge, newWeight);
+        this.nodeDataProvider.changeWeightEdgeWeight(weightEdge, newWeight);
       }.bind(this)
     );
 
@@ -151,7 +142,7 @@ export class WeightsComponent {
         "click",
         function (event) {
           item.remove();
-          this.causalFactProvider.removeEdge(weightEdge);
+          this.nodeDataProvider.removeEdge(weightEdge);
         }.bind(this)
       );
 
@@ -159,7 +150,7 @@ export class WeightsComponent {
       itemContent.append("div").node(),
       this.causalView,
       function (newId) {
-        this.causalFactProvider.changeWeightEdgeCauseId(weightEdge, newId);
+        this.nodeDataProvider.changeWeightEdgeCauseId(weightEdge, newId);
       }.bind(this)
     ).init(weightEdge.CauseId);
   }
