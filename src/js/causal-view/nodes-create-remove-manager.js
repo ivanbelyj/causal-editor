@@ -69,6 +69,7 @@ export class NodesCreateRemoveManager {
     }
   }
 
+  // Todo: fix node creating in incorrect position after redo
   createNodeByMousePos(nodeData, x, y) {
     const causalViewElement = ScreenUtils.elementWithClassFrom(
       { x, y },

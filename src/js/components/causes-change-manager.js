@@ -37,7 +37,6 @@ export class CausesChangeManager {
       //   causalFact.Id
       // );
       if (!curLink) {
-        console.log("add");
         this.causalView.structure.addLink(addedCauseId, causalFact.Id);
       } else {
         // The link already exists in the causal-view

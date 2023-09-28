@@ -27,9 +27,7 @@ export class ChangePropertyHandler extends CommandsHandler {
       const prevCmd = this.undoRedoManager.undoStack.pop();
       // Replace with a merged command
       cmdToPush = prevCmd.mergedWith(executedCommand);
-      console.log("commands are merged", prevCmd, executedCommand);
     } else {
-      console.log("commands was not merged");
     }
     return cmdToPush;
   }

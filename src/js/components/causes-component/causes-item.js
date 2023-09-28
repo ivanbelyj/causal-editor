@@ -42,8 +42,9 @@ export class CausesItem {
   }
 
   reset() {
+    this.component.html("");
+
     const expr = this.causesExpressionProvider.get();
-    // console.log("reset causes-item. expr:", expr);
 
     this.resetItemTop();
 
@@ -70,7 +71,7 @@ export class CausesItem {
 
   resetItemTop() {
     if (this.itemTop) {
-      this.itemTop.remove();
+      // this.itemTop.remove();
     }
 
     // Every causes-item has item top (for selecting the type
@@ -133,7 +134,7 @@ export class CausesItem {
   // item content itself only (without inner items)
   resetContent() {
     if (this.content) {
-      this.content.remove();
+      // this.content.remove();
     }
     this.content = this.component.append("div");
     if (this.innerItemsParent) {

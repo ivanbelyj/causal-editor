@@ -11,6 +11,13 @@ export class CausesExpressionProvider extends DataProvider {
     this.causalFact = causalFact;
   }
 
+  // Todo: fix bug
+  // 1. add Or -> Factor link (Or just factor)
+  // 2. select other node
+  // 3. Undo select
+  // 4. undo link
+  // 5. after undo link is hidden, but it's still in Causes Component
+
   get _causesExpression() {
     return this._data;
   }
