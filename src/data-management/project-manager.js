@@ -1,9 +1,10 @@
 import { FilesManager } from "./files-manager";
 import { ProjectData } from "./project-data";
 
+// Todo: change filters older in release
 const projectFileFilters = [
-  { name: "Causal Model Project", extensions: ["cmprj"] },
   { name: "JSON", extensions: ["json"] },
+  { name: "Causal Model Project", extensions: ["cmprj"] },
 ];
 
 const causalModelFactsFileFilters = [
@@ -13,8 +14,13 @@ const causalModelFactsFileFilters = [
 
 export class ProjectManager {
   constructor(window) {
-    this.filesManager = new FilesManager();
     this.window = window;
+
+    // Adding $type: "variant" is necessary for implementation nodes
+    // for correct deserialization in Causal Model library
+    this.filesManager = new FilesManager(
+      ProjectManager.addVariantPropertyToFacts
+    );
   }
   createNewProject() {
     this.filesManager.currentFilePath = null;
@@ -65,5 +71,15 @@ export class ProjectManager {
       const projectData = ProjectData.fromCausalModelFacts(openedData);
       this.#sendOpenData(projectData);
     }
+  }
+
+  static addVariantPropertyToFacts(projectData) {
+    const processedFacts = projectData.facts.map((fact) => {
+      return Object.assign(
+        fact.AbstractFactId ? { $type: "variant" } : {},
+        fact
+      );
+    });
+    return new ProjectData(processedFacts, projectData.nodesData);
   }
 }

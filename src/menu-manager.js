@@ -143,14 +143,14 @@ export class MenuManager {
             },
           },
           {
-            label: "Save",
+            label: "Save project",
             accelerator: "CmdOrCtrl+S",
             click: () => {
               this.projectManager.saveProject();
             },
           },
           {
-            label: "Save as...",
+            label: "Save project as...",
             accelerator: "CmdOrCtrl+Shift+S",
             click: () => {
               this.projectManager.saveProjectAs();

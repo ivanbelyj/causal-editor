@@ -18,10 +18,17 @@ class FilesManager {
     this.setTitleFromFullPath(this.#currentFilePath);
   }
 
-  constructor() {
+  constructor(processDataBeforeSaveCallback) {
+    // this.processDataBeforeSaveCallback = processDataBeforeSaveCallback;
+
     ipcMain.on("send-data-to-save", async (event, dataToSave) => {
+      const processedDataToSave = processDataBeforeSaveCallback?.(dataToSave);
+      // console.log("process callback", processDataBeforeSaveCallback);
+      // console.log("processed data to save", processedDataToSave);
       const mappedDataToSave =
-        this.savedDataMapFunc?.(dataToSave) ?? dataToSave;
+        this.mapDataBeforeSaveCallback?.(processedDataToSave ?? dataToSave) ??
+        processedDataToSave ??
+        dataToSave;
 
       if (
         (this.isPrevPathSave &&
@@ -78,12 +85,12 @@ class FilesManager {
     actionName,
     fileFilters,
     isPrevPathSave,
-    savedDataMapFunc
+    mapDataBeforeSaveCallback
   ) {
     this.action = actionName;
     this.fileFilters = fileFilters;
     this.isPrevPathSave = isPrevPathSave;
-    this.savedDataMapFunc = savedDataMapFunc;
+    this.mapDataBeforeSaveCallback = mapDataBeforeSaveCallback;
 
     BrowserWindow.getFocusedWindow().webContents.send(
       "get-data-to-save-request"
