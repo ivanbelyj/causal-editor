@@ -1,4 +1,6 @@
-import { FilesManager } from "./files-manager";
+import { dialog, ipcMain, app } from "electron";
+import { AppTitleManager } from "../app-title-manager";
+import { CurrentFileManager } from "./current-file-manager";
 import { ProjectData } from "./project-data";
 
 // Todo: change filters older in release
@@ -13,30 +15,80 @@ const causalModelFactsFileFilters = [
 ];
 
 export class ProjectManager {
+  #isUnsavedChanges;
+
   constructor(window) {
     this.window = window;
 
+    this.appTitleManager = new AppTitleManager(window);
+
     // Adding $type: "variant" is necessary for implementation nodes
     // for correct deserialization in Causal Model library
-    this.filesManager = new FilesManager(
-      ProjectManager.addVariantPropertyToFacts
+    this.filesManager = new CurrentFileManager(
+      this.appTitleManager,
+      ProjectManager.addVariantPropertyToFacts,
+      window
     );
-  }
-  createNewProject() {
-    this.filesManager.currentFilePath = null;
-    this.#sendOpenData(ProjectData.createEmptyProjectData());
+
+    ipcMain.on("send-is-unsaved-changes", (event, isUnsavedChanges) => {
+      this.appTitleManager.isUnsavedChanges = isUnsavedChanges;
+      this.#isUnsavedChanges = isUnsavedChanges;
+    });
+
+    window.on("close", async (event) => {
+      event.preventDefault();
+      await this.confirmUnsavedChanges(() => {
+        app.exit();
+      });
+    });
   }
 
-  saveProject() {
-    this.filesManager.initiateSaveAction("save", projectFileFilters, true);
+  async confirmUnsavedChanges(onConfirmed, onCancelled) {
+    // If there are no unsaved changes, confirmation is not required
+    if (!this.#isUnsavedChanges) {
+      await onConfirmed?.();
+      return;
+    }
+
+    const fileNameToDisplay = this.filesManager.currentFilePath;
+    const { response } = await dialog.showMessageBox(this.window, {
+      type: "warning",
+      buttons: ["Yes", "No", "Cancel"],
+      message: `Do you want to save the changes you made ${
+        fileNameToDisplay ? "to " + fileNameToDisplay : ""
+      }?`,
+      detail: "Your changes will be lost if you don't save them.",
+    });
+
+    if (response === 0) {
+      await this.saveProject();
+      // onSavedCallback?.();
+    }
+    if (response === 2) {
+      // Promise.resolve().then(onCancelled);
+      await onCancelled?.();
+    } else {
+      await onConfirmed?.();
+    }
   }
 
-  saveProjectAs() {
-    this.filesManager.initiateSaveAction("save-as", projectFileFilters, true);
+  async createNewProject() {
+    await this.confirmUnsavedChanges(async () => {
+      this.filesManager.currentFilePath = null;
+      this.#sendOpenData(ProjectData.createEmptyProjectData());
+    });
   }
 
-  exportCausalModelFacts() {
-    this.filesManager.initiateSaveAction(
+  async saveProject() {
+    await this.filesManager.saveData("save", projectFileFilters, true);
+  }
+
+  async saveProjectAs() {
+    await this.filesManager.saveData("save-as", projectFileFilters, true);
+  }
+
+  async exportCausalModelFacts() {
+    this.filesManager.saveData(
       "save",
       causalModelFactsFileFilters,
       false,
@@ -49,28 +101,33 @@ export class ProjectManager {
   }
 
   #sendOpenData(projectData) {
+    this.appTitleManager.reset();
     this.#sendMessage("open-data", projectData);
     this.#sendMessage("reset");
   }
 
-  async openProjectAsync() {
-    const projectData = await this.filesManager.openFileData(
-      projectFileFilters,
-      true
-    );
-    if (projectData) this.#sendOpenData(projectData);
+  async openProject() {
+    await this.confirmUnsavedChanges(async () => {
+      const projectData = await this.filesManager.openFileData(
+        projectFileFilters,
+        true
+      );
+      if (projectData) this.#sendOpenData(projectData);
+    });
   }
 
-  async importCausalModelFactsAsync() {
-    const openedData = await this.filesManager.openFileData(
-      causalModelFactsFileFilters,
-      false
-    );
+  async importCausalModelFacts() {
+    await this.confirmUnsavedChanges(async () => {
+      const openedData = await this.filesManager.openFileData(
+        causalModelFactsFileFilters,
+        false
+      );
 
-    if (openedData) {
-      const projectData = ProjectData.fromCausalModelFacts(openedData);
-      this.#sendOpenData(projectData);
-    }
+      if (openedData) {
+        const projectData = ProjectData.fromCausalModelFacts(openedData);
+        this.#sendOpenData(projectData);
+      }
+    });
   }
 
   static addVariantPropertyToFacts(projectData) {

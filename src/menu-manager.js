@@ -1,5 +1,3 @@
-import { ProjectData } from "./data-management/project-data";
-
 const { nativeTheme, shell, ipcMain, Menu } = require("electron");
 
 const isMac = process.platform === "darwin";
@@ -131,29 +129,29 @@ export class MenuManager {
           {
             label: "New",
             accelerator: "CmdOrCtrl+N",
-            click: () => {
-              this.projectManager.createNewProject();
+            click: async () => {
+              await this.projectManager.createNewProject();
             },
           },
           {
             label: "Open",
             accelerator: "CmdOrCtrl+O",
             click: async () => {
-              await this.projectManager.openProjectAsync();
+              await this.projectManager.openProject();
             },
           },
           {
             label: "Save project",
             accelerator: "CmdOrCtrl+S",
-            click: () => {
-              this.projectManager.saveProject();
+            click: async () => {
+              await this.projectManager.saveProject();
             },
           },
           {
             label: "Save project as...",
             accelerator: "CmdOrCtrl+Shift+S",
-            click: () => {
-              this.projectManager.saveProjectAs();
+            click: async () => {
+              await this.projectManager.saveProjectAs();
             },
           },
           {
@@ -163,7 +161,7 @@ export class MenuManager {
                 label: "Causal Model Facts",
                 accelerator: "CmdOrCtrl+I",
                 click: async () => {
-                  await this.projectManager.importCausalModelFactsAsync();
+                  await this.projectManager.importCausalModelFacts();
                 },
               },
             ],

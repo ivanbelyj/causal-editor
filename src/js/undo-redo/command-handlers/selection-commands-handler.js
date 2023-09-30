@@ -6,9 +6,9 @@ export class SelectionCommandsHandler extends CommandsHandler {
     return this.#isSelectionCommand(cmd);
   }
 
-  shouldClearRedoStack(cmd) {
-    return !this.#isSelectionCommand(cmd);
-  }
+  // shouldClearRedoStack(cmd) {
+  //   return !this.#isSelectionCommand(cmd);
+  // }
 
   #isSelectionCommand(cmd) {
     return cmd instanceof SelectionCommand;

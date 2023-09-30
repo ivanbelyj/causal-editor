@@ -10,7 +10,8 @@ export class SelectionCommand extends Command {
       selectionManager.setSelectedNodeIds.bind(
         selectionManager,
         prevSelectedNodeIds
-      )
+      ),
+      true
     );
 
     this.newSelectedNodeIds = [...newSelectedNodeIds];

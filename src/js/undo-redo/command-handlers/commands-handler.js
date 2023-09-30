@@ -12,7 +12,7 @@ export class CommandsHandler {
     return command;
   }
 
-  shouldClearRedoStack() {
-    return true;
-  }
+  // shouldClearRedoStack() {
+  //   return true;
+  // }
 }

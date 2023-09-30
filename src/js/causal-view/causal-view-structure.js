@@ -3,7 +3,7 @@ import * as d3dag from "d3-dag";
 import { CausalModelUtils } from "./causal-model-utils.js";
 import { DragAndDropManager } from "./drag-and-drop-manager.js";
 
-const maxNodeTextLength = 24;
+const maxNodeTextLength = 22;
 
 const showDebugMessages = false;
 // Displays interactive causal view elements and provides some of their common events

@@ -5,9 +5,9 @@ export class ChangePropertyHandler extends CommandsHandler {
     return ChangePropertyHandler.isChangePropertyCommand(cmd);
   }
 
-  shouldClearRedoStack(cmd) {
-    return ChangePropertyHandler.isChangePropertyCommand(cmd);
-  }
+  // shouldClearRedoStack(cmd) {
+  //   return ChangePropertyHandler.isChangePropertyCommand(cmd);
+  // }
 
   static isChangePropertyCommand(cmd) {
     return cmd instanceof ChangePropertyCommand;

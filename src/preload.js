@@ -5,7 +5,7 @@
  *
  * https://www.electronjs.org/docs/latest/tutorial/sandbox
  */
-const { ipcRenderer, contextBridge } = require("electron");
+const { ipcRenderer, contextBridge, ipcMain } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
   sendNodeEnter: () => send("node-enter"),
@@ -13,13 +13,16 @@ contextBridge.exposeInMainWorld("api", {
   sendCausalViewEnter: () => send("causal-view-enter"),
   sendCausalViewLeave: () => send("causal-view-leave"),
 
-  sendDataToSave: (nodes) => send("send-data-to-save", nodes),
+  // sendDataToSave: (nodes) => send("send-data-to-save", nodes),
 
   // When components are checked from the renderer process
   sendComponentActive: (componentData) =>
     send("send-component-active", componentData),
 
-  onGetDataToSaveRequest: (func) => on("get-data-to-save-request", func),
+  sendIsUnsavedChanges: (isUnsavedChanges) =>
+    send("send-is-unsaved-changes", isUnsavedChanges),
+
+  // onGetDataToSaveRequest: (func) => on("get-data-to-save-request", func),
   onCreateNode: (func) => on("create-node", func),
   onRemoveNode: (func) => on("remove-node", func),
   onOpenData: (func) => on("open-data", func),
@@ -32,7 +35,13 @@ contextBridge.exposeInMainWorld("api", {
   onRedo: (func) => on("redo", func),
 
   onSelectAll: (func) => on("select-all", func),
+
+  handleSaveData: (func) => on("save-data", func),
 });
+
+function invoke(channelName, data) {
+  ipcRenderer.invoke(channelName, data);
+}
 
 function send(channelName, data) {
   ipcRenderer.send(channelName, data);

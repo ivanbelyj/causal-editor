@@ -34,12 +34,14 @@ export class UndoRedoManager {
     else return null;
   }
 
+  // Todo: sendIsUnsavedChanges
   execute(command) {
     const cmdHandler = this.getCommandHandler(command);
 
     // if (isShowLogMessages)
     //   console.log("before command execute", this.undoStack, this.redoStack);
-    command.execute();
+    // command.execute();
+    this.executeCommand(command);
 
     const cmdToPush =
       cmdHandler?.getCommandToPushToUndoStack(command) ?? command;
@@ -48,7 +50,7 @@ export class UndoRedoManager {
       this.undoStack.push(cmdToPush);
 
       // Some commands don't clear redoStack
-      if (!cmdHandler || cmdHandler.shouldClearRedoStack(cmdToPush)) {
+      if (!cmdHandler || !command.isSafeForData) {
         this.redoStack = [];
       }
     }
@@ -84,10 +86,29 @@ export class UndoRedoManager {
         if (isShowLogMessages) console.log("undo", command);
 
         this.redoStack.push(command);
-        command.undo();
+        // command.undo();
+        this.undoCommand(command);
       }
     } catch (err) {
       console.error("catched error", err);
+    }
+  }
+
+  #firstUnsavedChangesCommand;
+
+  executeCommand(cmd) {
+    cmd.execute();
+    if (!this.#firstUnsavedChangesCommand && !cmd.isSafeForData) {
+      this.#firstUnsavedChangesCommand = cmd;
+      this.api.sendIsUnsavedChanges(true);
+    }
+  }
+
+  undoCommand(cmd) {
+    cmd.undo();
+    if (cmd === this.#firstUnsavedChangesCommand) {
+      this.#firstUnsavedChangesCommand = null;
+      this.api.sendIsUnsavedChanges(false);
     }
   }
 
@@ -98,7 +119,8 @@ export class UndoRedoManager {
         if (isShowLogMessages) console.log("redo", command);
 
         this.undoStack.push(command);
-        command.execute();
+        this.executeCommand(command);
+        // command.execute();
       }
     } catch (err) {
       console.error("catched error", err);

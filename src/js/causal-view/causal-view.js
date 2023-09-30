@@ -27,12 +27,21 @@ export class CausalView {
         this.nodesCreateRemoveManager.getRemoveNodeCommand(data.x, data.y)
       );
     });
-    api.onGetDataToSaveRequest(() => {
+
+    // Todo: rename id ?
+    api.handleSaveData((event, { id }) => {
       const { facts, nodesData } =
         CausalViewDataUtils.causalViewDataToFactsAndNodesData(
           this.structure.getNodesData()
         );
-      api.sendDataToSave(new ProjectData(facts, nodesData));
+
+      console.log("causal-view handleSaveData");
+      console.log(id);
+
+      event.sender.send(`data-to-save-${id}`, {
+        // ...arg,
+        dataToSave: new ProjectData(facts, nodesData),
+      });
     });
     api.onOpenData((event, projectData) => {
       const causalViewData =
