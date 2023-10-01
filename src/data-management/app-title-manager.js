@@ -27,11 +27,11 @@ export class AppTitleManager {
     this.#render();
   }
 
-  reset() {
-    this.#fullPath = null;
-    this.#isUnsavedChanges = false;
-    this.#render();
-  }
+  // reset() {
+  //   this.#fullPath = null;
+  //   this.#isUnsavedChanges = false;
+  //   this.#render();
+  // }
 
   #render() {
     let titleToSet = `${this.#isUnsavedChanges ? "*" : ""}`;

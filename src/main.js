@@ -1,7 +1,7 @@
 const { app, BrowserWindow } = require("electron");
-const { setContextMenu } = require("./set-context-menu.js");
 const { MenuManager } = require("./menu-manager.js");
 const { ProjectManager } = require("./data-management/project-manager.js");
+const { ContextMenuManager } = require("./js/context-menu-manager.js");
 
 // Creates the browser window
 function createWindow(appLocale) {
@@ -36,7 +36,9 @@ let mainWindow;
 app.whenReady().then(() => {
   const appLocale = app.getLocale();
   mainWindow = createWindow(appLocale);
-  setContextMenu(mainWindow);
+
+  const contextMenuManager = new ContextMenuManager(mainWindow);
+  contextMenuManager.setContextMenu();
 
   const projectManager = new ProjectManager(mainWindow);
   const menuManager = new MenuManager(projectManager, mainWindow);

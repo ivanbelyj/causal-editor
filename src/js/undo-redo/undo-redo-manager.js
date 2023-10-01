@@ -3,12 +3,19 @@ import { SelectionCommandsHandler } from "./command-handlers/selection-commands-
 
 const isShowLogMessages = false;
 export class UndoRedoManager {
+  #firstUnsavedChangesCommand;
   constructor(api) {
     this.api = api;
     api.onUndo(this.undo.bind(this));
     api.onRedo(this.redo.bind(this));
 
     this.api.onReset(this.reset.bind(this));
+    this.api.onSavedToCurrentFile(() => {
+      this.#firstUnsavedChangesCommand = null;
+
+      // Current file is saved, there's no unsaved changes
+      this.#sendIsUnsavedChanges(false);
+    });
 
     this.reset();
 
@@ -18,8 +25,13 @@ export class UndoRedoManager {
     ];
   }
 
+  #sendIsUnsavedChanges(isUnsavedChangesInCurrentFile) {
+    this.api.sendIsUnsavedChanges({ isUnsavedChangesInCurrentFile });
+  }
+
   reset() {
     // console.log("reset undoRedoManager");
+    this.#firstUnsavedChangesCommand = null;
     this.undoStack = [];
     this.redoStack = [];
   }
@@ -34,7 +46,6 @@ export class UndoRedoManager {
     else return null;
   }
 
-  // Todo: sendIsUnsavedChanges
   execute(command) {
     const cmdHandler = this.getCommandHandler(command);
 
@@ -94,13 +105,13 @@ export class UndoRedoManager {
     }
   }
 
-  #firstUnsavedChangesCommand;
-
   executeCommand(cmd) {
     cmd.execute();
     if (!this.#firstUnsavedChangesCommand && !cmd.isSafeForData) {
       this.#firstUnsavedChangesCommand = cmd;
-      this.api.sendIsUnsavedChanges(true);
+
+      // Commands are applied to current data
+      this.#sendIsUnsavedChanges(true);
     }
   }
 
@@ -108,7 +119,7 @@ export class UndoRedoManager {
     cmd.undo();
     if (cmd === this.#firstUnsavedChangesCommand) {
       this.#firstUnsavedChangesCommand = null;
-      this.api.sendIsUnsavedChanges(false);
+      this.#sendIsUnsavedChanges(false);
     }
   }
 

@@ -13,16 +13,12 @@ contextBridge.exposeInMainWorld("api", {
   sendCausalViewEnter: () => send("causal-view-enter"),
   sendCausalViewLeave: () => send("causal-view-leave"),
 
-  // sendDataToSave: (nodes) => send("send-data-to-save", nodes),
-
   // When components are checked from the renderer process
   sendComponentActive: (componentData) =>
     send("send-component-active", componentData),
 
-  sendIsUnsavedChanges: (isUnsavedChanges) =>
-    send("send-is-unsaved-changes", isUnsavedChanges),
+  sendIsUnsavedChanges: (data) => send("send-is-unsaved-changes", data),
 
-  // onGetDataToSaveRequest: (func) => on("get-data-to-save-request", func),
   onCreateNode: (func) => on("create-node", func),
   onRemoveNode: (func) => on("remove-node", func),
   onOpenData: (func) => on("open-data", func),
@@ -36,7 +32,10 @@ contextBridge.exposeInMainWorld("api", {
 
   onSelectAll: (func) => on("select-all", func),
 
-  handleSaveData: (func) => on("save-data", func),
+  onSaveData: (func) => on("save-data", func),
+
+  // Called to handle saving in undo-redo-manager
+  onSavedToCurrentFile: (func) => on("on-saved-to-current-file", func),
 });
 
 function invoke(channelName, data) {

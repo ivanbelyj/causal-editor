@@ -28,17 +28,13 @@ export class CausalView {
       );
     });
 
-    // Todo: rename id ?
-    api.handleSaveData((event, { id }) => {
+    api.onSaveData((event, { dataToSaveId }) => {
       const { facts, nodesData } =
         CausalViewDataUtils.causalViewDataToFactsAndNodesData(
           this.structure.getNodesData()
         );
 
-      console.log("causal-view handleSaveData");
-      console.log(id);
-
-      event.sender.send(`data-to-save-${id}`, {
+      event.sender.send(`data-to-save-${dataToSaveId}`, {
         // ...arg,
         dataToSave: new ProjectData(facts, nodesData),
       });

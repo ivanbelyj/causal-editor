@@ -1,4 +1,4 @@
-const { ipcMain, BrowserWindow } = require("electron");
+const { ipcMain } = require("electron");
 const { FileUtils } = require("./file-utils.js");
 
 // Responsible for saving and opening files
@@ -14,6 +14,7 @@ export class CurrentFileManager {
   set currentFilePath(val) {
     this.#currentFilePath = val;
     this.appTitleManager.fullPath = val;
+    this.appTitleManager.isUnsavedChanges = false;
   }
 
   constructor(appTitleManager, processDataBeforeSaveCallback, window) {
@@ -23,12 +24,8 @@ export class CurrentFileManager {
   }
 
   async handleDataToSave(saveType, dataToSave, isPrevPathSave) {
-    console.log("handle data to save in main process");
-    console.log(saveType, dataToSave, isPrevPathSave);
     const processedDataToSave =
       this.processDataBeforeSaveCallback?.(dataToSave);
-    // console.log("process callback", processDataBeforeSaveCallback);
-    // console.log("processed data to save", processedDataToSave);
 
     // Todo: don't pass mapDataBeforeSaveCallback via this?
     const mappedDataToSave =
@@ -49,15 +46,17 @@ export class CurrentFileManager {
           mappedDataToSave,
           this.fileFilters ?? null // Todo: don't pass via this?
         );
-        if (!saveRes.canceled) {
-          this.currentFilePath = isPrevPathSave
-            ? saveRes.filePath
-            : this.currentFilePath;
+        if (!saveRes.canceled && isPrevPathSave) {
+          this.currentFilePath = saveRes.filePath;
         }
         break;
       case "save":
         await FileUtils.save(this.currentFilePath, mappedDataToSave);
         break;
+    }
+
+    if (isPrevPathSave) {
+      this.window.webContents.send("on-saved-to-current-file");
     }
   }
 
@@ -84,18 +83,20 @@ export class CurrentFileManager {
 
     return new Promise((resolve, reject) => {
       // Generate a unique Id for this request
-      const id = Math.random().toString();
+      const dataToSaveId = Math.random().toString();
 
       // Listen for the response just once
-      ipcMain.once(`data-to-save-${id}`, async (event, { dataToSave }) => {
-        await this.handleDataToSave(saveType, dataToSave, isPrevPathSave);
-        console.log("resolve data-to-save");
-        resolve();
-      });
+      ipcMain.once(
+        `data-to-save-${dataToSaveId}`,
+        async (event, { dataToSave }) => {
+          await this.handleDataToSave(saveType, dataToSave, isPrevPathSave);
+          resolve();
+        }
+      );
 
       // Send the request
       this.window.webContents.send("save-data", {
-        id,
+        dataToSaveId,
       });
     });
   }

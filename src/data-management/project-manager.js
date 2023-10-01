@@ -1,5 +1,5 @@
 import { dialog, ipcMain, app } from "electron";
-import { AppTitleManager } from "../app-title-manager";
+import { AppTitleManager } from "./app-title-manager";
 import { CurrentFileManager } from "./current-file-manager";
 import { ProjectData } from "./project-data";
 
@@ -30,10 +30,13 @@ export class ProjectManager {
       window
     );
 
-    ipcMain.on("send-is-unsaved-changes", (event, isUnsavedChanges) => {
-      this.appTitleManager.isUnsavedChanges = isUnsavedChanges;
-      this.#isUnsavedChanges = isUnsavedChanges;
-    });
+    ipcMain.on(
+      "send-is-unsaved-changes",
+      (event, { isUnsavedChangesInCurrentFile }) => {
+        this.appTitleManager.isUnsavedChanges = isUnsavedChangesInCurrentFile;
+        this.#isUnsavedChanges = isUnsavedChangesInCurrentFile;
+      }
+    );
 
     window.on("close", async (event) => {
       event.preventDefault();
@@ -101,7 +104,7 @@ export class ProjectManager {
   }
 
   #sendOpenData(projectData) {
-    this.appTitleManager.reset();
+    // this.appTitleManager.reset();
     this.#sendMessage("open-data", projectData);
     this.#sendMessage("reset");
   }
