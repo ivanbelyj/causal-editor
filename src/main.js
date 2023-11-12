@@ -12,8 +12,8 @@ function createWindow(appLocale) {
       contextIsolation: true,
       sandbox: true,
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-
       spellcheck: true,
+      // Todo: icon on linux
     },
   });
 

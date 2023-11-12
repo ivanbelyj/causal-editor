@@ -1,12 +1,15 @@
 module.exports = {
   packagerConfig: {
     asar: false,
+    icon: "./src/images/causal-studio-icon",
   },
   rebuildConfig: {},
   makers: [
     {
       name: "@electron-forge/maker-squirrel",
-      config: {},
+      config: {
+        setupIcon: "./src/images/causal-studio-icon.ico",
+      },
     },
     {
       name: "@electron-forge/maker-zip",
@@ -14,7 +17,11 @@ module.exports = {
     },
     {
       name: "@electron-forge/maker-deb",
-      config: {},
+      config: {
+        options: {
+          icon: "./src/images/causal-studio-icon.png",
+        },
+      },
     },
     {
       name: "@electron-forge/maker-rpm",
