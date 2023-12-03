@@ -2,6 +2,7 @@ import { dialog, ipcMain, app } from "electron";
 import { AppTitleManager } from "./app-title-manager";
 import { CurrentFileManager } from "./current-file-manager";
 import { ProjectData } from "./project-data";
+import { FormattingUtils } from "./formatting-utils";
 
 // Todo: change filters older in release
 const projectFileFilters = [
@@ -26,7 +27,7 @@ export class ProjectManager {
     // for correct deserialization in Causal Model library
     this.filesManager = new CurrentFileManager(
       this.appTitleManager,
-      ProjectManager.addVariantPropertyToFacts,
+      ProjectManager.processProjectDataBeforeSave,
       window
     );
 
@@ -133,13 +134,10 @@ export class ProjectManager {
     });
   }
 
-  static addVariantPropertyToFacts(projectData) {
-    const processedFacts = projectData.facts.map((fact) => {
-      return Object.assign(
-        fact.AbstractFactId ? { $type: "variant" } : {},
-        fact
-      );
+  static processProjectDataBeforeSave(projectData) {
+    projectData.facts.forEach((fact) => {
+      FormattingUtils.addFactVariantProperty(fact);
+      FormattingUtils.moveUpTypePropertiesRecursively(fact);
     });
-    return new ProjectData(processedFacts, projectData.nodesData);
   }
 }

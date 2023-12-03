@@ -21,6 +21,21 @@ export class CausalModelUtils {
     return [...edgeProps];
   }
 
+  // static traverseInnerExpressions(obj, func) {
+  //   for (let prop in obj) {
+  //     if (
+  //       ["Operands", "Edge"].find(
+  //         (exprProp) => obj[prop] && obj[prop].hasOwnProperty(exprProp)
+  //       )
+  //     )
+  //       func(obj[prop]);
+
+  //     if (typeof obj[prop] === "object") {
+  //       CausalModelUtils.traverseInnerExpressions(obj[prop], func);
+  //     }
+  //   }
+  // }
+
   static getWeightsEdgesIds(causalModelFact) {
     const weightEdges = causalModelFact.WeightNest?.Weights;
     if (!weightEdges) return [];
