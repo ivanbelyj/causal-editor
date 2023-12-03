@@ -1,5 +1,3 @@
-import { ProjectData } from "./project-data";
-
 /**
  * Utils for causal model formatting
  */

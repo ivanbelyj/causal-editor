@@ -21,10 +21,11 @@ class FileUtils {
   }
 
   // Saves data by a path selected by the user via dialog
-  static async saveByPathFromDialog(data, fileFilters) {
+  static async saveByPathFromDialog(data, fileFilters, title) {
     const saveDialogRes = await dialog.showSaveDialog({
       properties: [],
       filters: fileFilters ?? defaultFileFilters,
+      title,
     });
     if (!saveDialogRes.canceled) {
       await FileUtils.save(saveDialogRes.filePath, data);
@@ -32,8 +33,9 @@ class FileUtils {
     return saveDialogRes;
   }
 
-  static async openByDialog(fileFilters) {
+  static async openByDialog(fileFilters, title) {
     const openDialogRes = await dialog.showOpenDialog({
+      title,
       filters: fileFilters ?? defaultFileFilters,
       properties: [],
     });

@@ -28,7 +28,7 @@ export class CausalView {
       );
     });
 
-    api.onSaveData((event, { dataToSaveId }) => {
+    api.onSaveData((event, { dataToSaveId, title }) => {
       const { facts, nodesData } =
         CausalViewDataUtils.causalViewDataToFactsAndNodesData(
           this.structure.getNodesData()
@@ -37,6 +37,7 @@ export class CausalView {
       event.sender.send(`data-to-save-${dataToSaveId}`, {
         // ...arg,
         dataToSave: new ProjectData(facts, nodesData),
+        title,
       });
     });
     api.onOpenData((event, projectData) => {

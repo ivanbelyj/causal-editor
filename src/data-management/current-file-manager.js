@@ -23,7 +23,7 @@ export class CurrentFileManager {
     this.window = window;
   }
 
-  async handleDataToSave(saveType, dataToSave, isPrevPathSave) {
+  async handleDataToSave(saveType, dataToSave, isPrevPathSave, title) {
     const processedDataToSave =
       this.processDataBeforeSaveCallback?.(dataToSave);
 
@@ -44,7 +44,8 @@ export class CurrentFileManager {
       case "save-as":
         const saveRes = await FileUtils.saveByPathFromDialog(
           mappedDataToSave,
-          this.fileFilters ?? null // Todo: don't pass via this?
+          this.fileFilters ?? null, // Todo: don't pass via this?
+          title
         );
         if (!saveRes.canceled && isPrevPathSave) {
           this.currentFilePath = saveRes.filePath;
@@ -60,8 +61,11 @@ export class CurrentFileManager {
     }
   }
 
-  async openFileData(fileFilters, isPrevPathSave) {
-    const { openDialogRes, data } = await FileUtils.openByDialog(fileFilters);
+  async openFileData(fileFilters, isPrevPathSave, title) {
+    const { openDialogRes, data } = await FileUtils.openByDialog(
+      fileFilters,
+      title
+    );
     if (!openDialogRes.canceled) {
       this.currentFilePath = isPrevPathSave ? openDialogRes.filePaths[0] : null;
       return data;
@@ -75,6 +79,7 @@ export class CurrentFileManager {
   async saveData(
     saveType,
     fileFilters,
+    title,
     isPrevPathSave,
     mapDataBeforeSaveCallback
   ) {
@@ -88,8 +93,13 @@ export class CurrentFileManager {
       // Listen for the response just once
       ipcMain.once(
         `data-to-save-${dataToSaveId}`,
-        async (event, { dataToSave }) => {
-          await this.handleDataToSave(saveType, dataToSave, isPrevPathSave);
+        async (event, { dataToSave, title }) => {
+          await this.handleDataToSave(
+            saveType,
+            dataToSave,
+            isPrevPathSave,
+            title
+          );
           resolve();
         }
       );
@@ -97,6 +107,7 @@ export class CurrentFileManager {
       // Send the request
       this.window.webContents.send("save-data", {
         dataToSaveId,
+        title,
       });
     });
   }

@@ -4,16 +4,18 @@ import { CurrentFileManager } from "./current-file-manager";
 import { ProjectData } from "./project-data";
 import { FormattingUtils } from "./formatting-utils";
 
-// Todo: change filters older in release
-const projectFileFilters = [
-  { name: "JSON", extensions: ["json"] },
-  { name: "Causal Model Project", extensions: ["cmprj"] },
-];
+const cmPrjFilter = {
+  name: "Causal Model Project",
+  extensions: ["cmprj", "json"],
+};
+const cmFactsFilter = {
+  name: "Causal Model Facts",
+  extensions: ["cm", "json"],
+};
+const jsonFilter = { name: "JSON", extensions: ["json"] };
 
-const causalModelFactsFileFilters = [
-  { name: "JSON", extensions: ["json"] },
-  { name: "Causal Model Facts", extensions: ["cm"] },
-];
+const projectFileFilters = [cmPrjFilter];
+const causalModelFactsFileFilters = [cmFactsFilter];
 
 export class ProjectManager {
   #isUnsavedChanges;
@@ -84,17 +86,28 @@ export class ProjectManager {
   }
 
   async saveProject() {
-    await this.filesManager.saveData("save", projectFileFilters, true);
+    await this.filesManager.saveData(
+      "save",
+      projectFileFilters,
+      "Save project",
+      true
+    );
   }
 
   async saveProjectAs() {
-    await this.filesManager.saveData("save-as", projectFileFilters, true);
+    await this.filesManager.saveData(
+      "save-as",
+      projectFileFilters,
+      "Save project as",
+      true
+    );
   }
 
   async exportCausalModelFacts() {
     this.filesManager.saveData(
       "save",
       causalModelFactsFileFilters,
+      "Export facts",
       false,
       (projectData) => projectData.facts
     );
@@ -114,7 +127,8 @@ export class ProjectManager {
     await this.confirmUnsavedChanges(async () => {
       const projectData = await this.filesManager.openFileData(
         projectFileFilters,
-        true
+        true,
+        "Open project"
       );
       if (projectData) this.#sendOpenData(projectData);
     });
@@ -124,7 +138,8 @@ export class ProjectManager {
     await this.confirmUnsavedChanges(async () => {
       const openedData = await this.filesManager.openFileData(
         causalModelFactsFileFilters,
-        false
+        false,
+        "Import facts"
       );
 
       if (openedData) {
