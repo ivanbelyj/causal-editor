@@ -1,4 +1,3 @@
-import Mousetrap from "mousetrap";
 import { AppLayoutManager } from "./app-layout-manager.js";
 import * as d3 from "d3";
 // import * as glDark from "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";

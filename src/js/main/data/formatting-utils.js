@@ -1,5 +1,6 @@
 /**
- * Utils for causal model formatting
+ * Utils for causal model formatting.
+ * Responsible for saving data, not upgrading causal model versions
  */
 export class FormattingUtils {
   static moveUpTypePropertiesRecursively(parentObj) {
@@ -28,12 +29,6 @@ export class FormattingUtils {
       if (typeof obj[prop] === "object") {
         FormattingUtils.traverseObject(obj[prop], func);
       }
-    }
-  }
-
-  static addFactVariantProperty(fact) {
-    if (fact.AbstractFactId && !fact.$type) {
-      fact.$type = "variant";
     }
   }
 }

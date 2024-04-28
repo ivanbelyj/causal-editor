@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
-import binSrc from "../../../images/bin.svg";
+import binSrc from "../../../../images/bin.svg";
 import { NodeDataProvider } from "../providers/node-data-provider.js";
 
 // Block is used as a part of a component

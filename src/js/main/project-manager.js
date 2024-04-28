@@ -1,8 +1,8 @@
 import { dialog, ipcMain, app } from "electron";
 import { AppTitleManager } from "./app-title-manager";
-import { CurrentFileManager } from "./current-file-manager";
-import { ProjectData } from "./project-data";
-import { FormattingUtils } from "./formatting-utils";
+import { CurrentFileManager } from "./data/current-file-manager";
+import { ProjectData } from "./data/project-data";
+import { FormattingUtils } from "./data/formatting-utils";
 
 const cmPrjFilter = {
   name: "Causal Model Project",

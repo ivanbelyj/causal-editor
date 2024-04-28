@@ -5,7 +5,7 @@ import { CausalViewSelectionManager } from "./causal-view-selection-manager.js";
 import * as d3 from "d3";
 import { NodesCreateRemoveManager } from "./nodes-create-remove-manager.js";
 import { CausesChangeManager } from "../components/causes-change-manager.js";
-import { ProjectData } from "../../data-management/project-data.js";
+import { ProjectData } from "../../main/data/project-data.js";
 import { CausalViewDataUtils } from "./causal-view-data-utils.js";
 
 // A component representing causal model visual structure

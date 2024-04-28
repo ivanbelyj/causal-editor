@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
-import binImgSrc from "../../../images/bin.svg";
+import binImgSrc from "../../../../images/bin.svg";
 
 // CausesItem is a UI element representing causes expression.
 // It includes top (with type dropdown) and content that can include
