@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require("electron");
 const { MenuManager } = require("./menu/menu-manager.js");
-const { ProjectManager } = require("./project-manager.js");
+const { ProjectManager } = require("./project-management/project-manager.js");
 const { ContextMenuManager } = require("./context-menu-manager.js");
 
 // Creates the browser window
