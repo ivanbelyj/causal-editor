@@ -4,15 +4,16 @@
  */
 export class FormattingUtils {
   static moveUpTypePropertiesRecursively(parentObj) {
-    FormattingUtils.moveUpTypeProperty(parentObj);
-    FormattingUtils.traverseObject(
+    FormattingUtils.#moveUpTypeProperty(parentObj);
+    FormattingUtils.#traverseObject(
       parentObj,
-      FormattingUtils.moveUpTypeProperty
+      FormattingUtils.#moveUpTypeProperty
     );
   }
 
-  static moveUpTypeProperty(obj) {
-    if (obj.hasOwnProperty("$type")) {
+  static #moveUpTypeProperty(obj) {
+    console.log("move up type property", obj);
+    if (typeof obj === "object" && obj.hasOwnProperty("$type")) {
       const { $type, ...objWithoutType } = obj;
 
       for (const prop in obj) {
@@ -22,12 +23,12 @@ export class FormattingUtils {
     }
   }
 
-  static traverseObject(obj, func) {
+  static #traverseObject(obj, func) {
     for (let prop in obj) {
       func(obj[prop]);
 
       if (typeof obj[prop] === "object") {
-        FormattingUtils.traverseObject(obj[prop], func);
+        FormattingUtils.#traverseObject(obj[prop], func);
       }
     }
   }

@@ -47,7 +47,7 @@ export class CausalViewStructure extends EventTarget {
       .decross(d3dag.decrossOpt()) // minimize number of crossings
       // set node size instead of constraining to fit
       .nodeSize((node) => {
-        return [(node ? 1.3 : 0) * this.nodeWidth, 3 * this.nodeHeight];
+        return [(node ? 1.1 : 0) * this.nodeWidth, 3 * this.nodeHeight];
       });
 
     this.svg = svgParent

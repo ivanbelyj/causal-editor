@@ -54,14 +54,14 @@ export class NodeValueComponent {
 
     this.titleInput = this.appendInputItem({
       name: "Title",
-      factPropName: "Title",
+      factPropName: "title",
       inputId: "node-title-input",
       dontShowLabel: true,
       isFactProp: false,
     });
     this.valueInput = this.appendInputItem({
       name: "Fact Value",
-      factPropName: "FactValue",
+      factPropName: "factValue",
       inputId: "node-id-input",
       isReadonly: false,
       useTextArea: true,
@@ -69,7 +69,7 @@ export class NodeValueComponent {
     });
     this.idInput = this.appendInputItem({
       name: "Id",
-      factPropName: "Id",
+      factPropName: "id",
       inputId: "node-id-input",
       isReadonly: true,
       isFactProp: true,

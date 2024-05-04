@@ -79,7 +79,7 @@ export class CausesExpressionProvider extends DataProvider {
       }
       if (newType == "factor") {
         res.edge = {
-          Probability: 1,
+          probability: 1,
         };
       }
     }
