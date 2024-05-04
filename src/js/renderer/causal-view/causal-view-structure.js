@@ -350,7 +350,7 @@ export class CausalViewStructure extends EventTarget {
   }
 
   edgeDataToString(d) {
-    return `edge (${d.source.data.fact.NodeValue}, ${d.target.data.fact.NodeValue})`;
+    return `edge (${d.source.data.fact.factValue}, ${d.target.data.fact.factValue})`;
   }
 
   printEdge(d) {

@@ -1,17 +1,11 @@
 import { DataValidator } from "../data/validation/data-validator";
 
 export class ProjectData {
-  static createProjectData(facts, nodesData, restKeyValues) {
-    return { facts, nodesData, ...restKeyValues };
-  }
-
-  static fromCausalModelFacts(causalModelFacts) {
-    return ProjectData.createProjectData(causalModelFacts, [], {
-      version: DataValidator.getLatestVersion(),
-    });
-  }
-
-  static createEmptyProjectData() {
-    return ProjectData.fromCausalModelFacts([]);
+  static createProjectData(args) {
+    let { facts, nodesData, version } = args ?? {};
+    if (!facts) facts = [];
+    if (!nodesData) nodesData = [];
+    if (!version) version = DataValidator.getLatestVersion();
+    return { facts, nodesData, version };
   }
 }

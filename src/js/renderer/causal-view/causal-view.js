@@ -35,11 +35,11 @@ export class CausalView {
         );
 
       event.sender.send(`data-to-save-${dataToSaveId}`, {
-        dataToSave: ProjectData.createProjectData(
+        dataToSave: ProjectData.createProjectData({
+          ...(this.projectData ?? {}),
           facts,
           nodesData,
-          this.projectData ?? {}
-        ),
+        }),
         title,
       });
     });

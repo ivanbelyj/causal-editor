@@ -14,7 +14,7 @@ export class DataProcessingHelper {
   }
 
   createEmptyProjectData() {
-    return ProjectData.createEmptyProjectData();
+    return ProjectData.createProjectData();
   }
 
   mutateProjectDataBeforeSave(projectData) {
@@ -31,7 +31,7 @@ export class DataProcessingHelper {
   }
 
   processImportedFacts(openedData) {
-    ProjectData.fromCausalModelFacts(openedData);
+    ProjectData.createProjectData({ facts: openedData });
   }
 
   async #upgradeProjectData(projectData) {
