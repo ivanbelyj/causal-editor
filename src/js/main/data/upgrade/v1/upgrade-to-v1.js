@@ -14,14 +14,9 @@ export class UpgradeToV1 {
   }
 
   #upgradeCore(data) {
-    data = UpgradeToV1Utils.convertKeysToLowerCase(data);
+    data = UpgradeToV1Utils.convertKeysToCamelCase(data);
     data = this.#upgradeFacts(data);
-    data = this.#incrementVersion(data);
     return data;
-  }
-
-  #incrementVersion(data) {
-    return { ...data, version: (data.version ?? 0) + 1 };
   }
 
   #upgradeFacts(data) {

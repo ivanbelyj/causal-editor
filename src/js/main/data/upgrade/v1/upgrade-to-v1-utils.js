@@ -1,19 +1,18 @@
 export default class UpgradeToV1Utils {
-  static convertKeysToLowerCase(obj) {
+  static convertKeysToCamelCase(obj) {
     if (typeof obj !== "object" || obj === null) {
       return obj; // If not object, just return it
     }
 
     if (Array.isArray(obj)) {
       // Recursive process every item
-      return obj.map((item) => UpgradeToV1Utils.convertKeysToLowerCase(item));
+      return obj.map((item) => UpgradeToV1Utils.convertKeysToCamelCase(item));
     }
 
     // For objects create new object, where keys are converted into lowercase
     return Object.keys(obj).reduce((acc, key) => {
-      acc[key.toLowerCase()] = UpgradeToV1Utils.convertKeysToLowerCase(
-        obj[key]
-      );
+      const newKey = key.charAt(0).toLowerCase() + key.slice(1);
+      acc[newKey] = UpgradeToV1Utils.convertKeysToCamelCase(obj[key]);
       return acc;
     }, {});
   }

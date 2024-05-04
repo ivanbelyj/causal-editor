@@ -1,23 +1,14 @@
-import { DataValidator } from "../validation/data-validator";
-import VersionUtils from "../version-utils";
+import { DataValidator } from "../data/validation/data-validator";
 
 export class ProjectData {
-  facts;
-  nodesData;
-  version;
-
-  constructor(facts, nodesData, version) {
-    this.facts = facts;
-    this.nodesData = nodesData;
-    this.version = version;
+  static createProjectData(facts, nodesData, restKeyValues) {
+    return { facts, nodesData, ...restKeyValues };
   }
 
   static fromCausalModelFacts(causalModelFacts) {
-    return new ProjectData(
-      causalModelFacts,
-      [],
-      DataValidator.getLatestVersion()
-    );
+    return ProjectData.createProjectData(causalModelFacts, [], {
+      version: DataValidator.getLatestVersion(),
+    });
   }
 
   static createEmptyProjectData() {

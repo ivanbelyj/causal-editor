@@ -1,4 +1,3 @@
-import { dialog } from "electron";
 import { betterAjvErrors } from "@apideck/better-ajv-errors";
 import {
   projectSchema as projectSchemaV0,

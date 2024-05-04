@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require("electron");
 const { MenuManager } = require("./menu/menu-manager.js");
-const { ProjectManager } = require("./project-management/project-manager.js");
+const { DataManager } = require("./data-management/data-manager.js");
 const { ContextMenuManager } = require("./context-menu-manager.js");
 
 // Creates the browser window
@@ -40,8 +40,8 @@ app.whenReady().then(() => {
   const contextMenuManager = new ContextMenuManager(mainWindow);
   contextMenuManager.setContextMenu();
 
-  const projectManager = new ProjectManager(mainWindow);
-  const menuManager = new MenuManager(projectManager, mainWindow);
+  const dataManager = new DataManager(mainWindow);
+  const menuManager = new MenuManager(dataManager, mainWindow);
   menuManager.render();
 
   app.on("activate", function () {

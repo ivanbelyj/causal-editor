@@ -2,7 +2,7 @@ import { app } from "electron";
 import { CurrentFileManager } from "../data/current-file-manager";
 import { UnsavedChangesHelper } from "./unsaved-changes-helper";
 import { AppTitleManager } from "./app-title-manager";
-import { ProjectDataHelper } from "./project-data-helper";
+import { DataProcessingHelper } from "./data-processing-helper";
 
 const cmPrjFilter = {
   name: "Causal Model Project",
@@ -17,19 +17,11 @@ const jsonFilter = { name: "JSON", extensions: ["json"] };
 const projectFileFilters = [cmPrjFilter];
 const causalModelFactsFileFilters = [cmFactsFilter];
 
-export class ProjectManager {
+export class DataManager {
   constructor(window) {
     this.window = window;
 
     const appTitleManager = new AppTitleManager(window);
-
-    this.projectDataHelper = new ProjectDataHelper();
-
-    this.filesManager = new CurrentFileManager(
-      appTitleManager,
-      this.projectDataHelper.mutateProjectDataBeforeSave,
-      window
-    );
 
     this.unsavedChangesHelper = new UnsavedChangesHelper({
       window,
@@ -37,6 +29,16 @@ export class ProjectManager {
       saveProjectCallback: this.saveProject.bind(this),
       appTitleManager,
     });
+
+    this.projectDataHelper = new DataProcessingHelper(
+      this.unsavedChangesHelper
+    );
+
+    this.filesManager = new CurrentFileManager(
+      appTitleManager,
+      this.projectDataHelper.mutateProjectDataBeforeSave,
+      window
+    );
 
     window.on("close", this.onClose.bind(this));
   }

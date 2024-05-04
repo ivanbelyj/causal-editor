@@ -1,5 +1,4 @@
 import { ipcMain, dialog } from "electron";
-import { AppTitleManager } from "./app-title-manager";
 
 export class UnsavedChangesHelper {
   #isUnsavedChanges;
@@ -18,10 +17,14 @@ export class UnsavedChangesHelper {
     ipcMain.on(
       "send-is-unsaved-changes",
       (event, { isUnsavedChangesInCurrentFile }) => {
-        this.appTitleManager.isUnsavedChanges = isUnsavedChangesInCurrentFile;
-        this.#isUnsavedChanges = isUnsavedChangesInCurrentFile;
+        this.setIsUnsavedChanges(isUnsavedChangesInCurrentFile);
       }
     );
+  }
+
+  setIsUnsavedChanges(isUnsavedChangesInCurrentFile) {
+    this.appTitleManager.isUnsavedChanges = isUnsavedChangesInCurrentFile;
+    this.#isUnsavedChanges = isUnsavedChangesInCurrentFile;
   }
 
   async confirmUnsavedChanges(onConfirmed, onCancelled) {
@@ -43,10 +46,8 @@ export class UnsavedChangesHelper {
 
     if (response === 0) {
       await this.saveProject();
-      // onSavedCallback?.();
     }
     if (response === 2) {
-      // Promise.resolve().then(onCancelled);
       await onCancelled?.();
     } else {
       await onConfirmed?.();

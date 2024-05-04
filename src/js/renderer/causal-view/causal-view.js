@@ -35,12 +35,17 @@ export class CausalView {
         );
 
       event.sender.send(`data-to-save-${dataToSaveId}`, {
-        // ...arg,
-        dataToSave: new ProjectData(facts, nodesData),
+        dataToSave: ProjectData.createProjectData(
+          facts,
+          nodesData,
+          this.projectData ?? {}
+        ),
         title,
       });
     });
     api.onOpenData((event, projectData) => {
+      console.log("opened project data: ", projectData);
+      this.projectData = projectData;
       const causalViewData =
         CausalViewDataUtils.factsAndNodesDataToCausalViewData(
           projectData.facts,
