@@ -112,3 +112,8 @@ export const factsSchema = {
     anyOf: [factSchema, variantSchema],
   },
 };
+
+export const defsSchema = {
+  $id: "schema-v0",
+  definitions: {},
+};

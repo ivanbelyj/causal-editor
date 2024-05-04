@@ -173,7 +173,7 @@ export class CausesItem {
       .attr("step", "0.1")
       .attr("class", "input-item text-input input-item__input")
       .attr("placeholder", "Probability")
-      .property("value", expr.Edge.Probability)
+      .property("value", expr.edge.probability)
       .on(
         "change",
         function (event) {
@@ -192,7 +192,7 @@ export class CausesItem {
           newCauseId
         );
       }
-    ).init(expr.Edge.CauseId);
+    ).init(expr.edge.causeId);
   }
 
   setAndOrItemContent() {

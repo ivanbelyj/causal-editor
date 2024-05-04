@@ -5,7 +5,7 @@ export class CausalViewDataUtils {
   static factsAndNodesDataToCausalViewData(facts, nodesData) {
     return facts.map((fact) => {
       const nodeData = nodesData?.find(
-        (nodeData) => nodeData.factId === fact.Id
+        (nodeData) => nodeData.factId === fact.id
       );
       return { fact, ...(nodeData ?? {}) };
     });
@@ -17,7 +17,7 @@ export class CausalViewDataUtils {
     for (const datum of causalViewData) {
       facts.push(datum.fact);
 
-      const nodeData = { factId: datum.fact.Id, ...datum };
+      const nodeData = { factId: datum.fact.id, ...datum };
       delete nodeData.fact;
       nodesData.push(nodeData);
     }

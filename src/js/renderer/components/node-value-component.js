@@ -60,8 +60,8 @@ export class NodeValueComponent {
       isFactProp: false,
     });
     this.valueInput = this.appendInputItem({
-      name: "Node Value",
-      factPropName: "NodeValue",
+      name: "Fact Value",
+      factPropName: "FactValue",
       inputId: "node-id-input",
       isReadonly: false,
       useTextArea: true,

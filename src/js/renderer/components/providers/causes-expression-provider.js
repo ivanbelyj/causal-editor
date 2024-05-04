@@ -28,10 +28,10 @@ export class CausesExpressionProvider extends DataProvider {
   createAndSetChildrenExpressionProviders() {
     const childrenExpr = [];
     const expression = this._causesExpression;
-    if (this._causesExpression.Operands)
-      childrenExpr.push(...expression.Operands);
-    else if (expression.CausesExpression)
-      childrenExpr.push(expression.CausesExpression);
+    if (this._causesExpression.operands)
+      childrenExpr.push(...expression.operands);
+    else if (expression.causesExpression)
+      childrenExpr.push(expression.causesExpression);
     const res = childrenExpr.map((expr) => {
       const newProvider = new CausesExpressionProvider(
         this.undoRedoManager,
@@ -71,14 +71,14 @@ export class CausesExpressionProvider extends DataProvider {
       res = structuredClone(causesExpression);
     } else {
       if (newType == "and" || newType == "or") {
-        res.Operands = [];
+        res.operands = [];
       }
       if (newType == "not") {
         // Add a child that has not been defined yet, but is required
-        res.CausesExpression = CausalModelUtils.createFactorExpression();
+        res.causesExpression = CausalModelUtils.createFactorExpression();
       }
       if (newType == "factor") {
-        res.Edge = {
+        res.edge = {
           Probability: 1,
         };
       }
@@ -119,10 +119,10 @@ export class CausesExpressionProvider extends DataProvider {
   }
 
   changeProbability(newProbability) {
-    const prevProbability = this._causesExpression.Edge.Probability;
+    const prevProbability = this._causesExpression.edge.probability;
     const expr = this._causesExpression;
     const setProbability = function (newVal) {
-      expr.Edge.Probability = newVal;
+      expr.edge.probability = newVal;
       this._dispatchMutated();
     }.bind(this);
     const changeProbCmd = new Command(
@@ -135,17 +135,17 @@ export class CausesExpressionProvider extends DataProvider {
   changeCauseId(causalFact, newCauseId) {
     const expr = this._causesExpression;
     const setCauseId = function (causeId) {
-      const oldId = expr.Edge.CauseId;
-      expr.Edge.CauseId = causeId;
+      const oldId = expr.edge.causeId;
+      expr.edge.causeId = causeId;
 
       this.causesChangeManager.onCauseIdChanged(
         causalFact,
         oldId,
-        expr.Edge.CauseId
+        expr.edge.causeId
       );
       this._dispatchMutated();
     }.bind(this);
-    const oldCauseId = this._causesExpression?.Edge?.CauseId;
+    const oldCauseId = this._causesExpression?.edge?.causeId;
     const cmd = new Command(
       () => setCauseId(newCauseId),
       () => setCauseId(oldCauseId)
@@ -184,7 +184,7 @@ export class CausesExpressionProvider extends DataProvider {
 
   #addOperand(causalFact, baseExpr, newExpr) {
     if (!newExpr) console.error("add empty operand", newExpr);
-    baseExpr.Operands.push(newExpr);
+    baseExpr.operands.push(newExpr);
     // New operand has no cause so cause change will be handled on change type
 
     const newExprProvider = new CausesExpressionProvider(
@@ -201,8 +201,8 @@ export class CausesExpressionProvider extends DataProvider {
   }
 
   #removeOperand(causalFact, baseExpr, operandExpr) {
-    const removeIndex = baseExpr.Operands.indexOf(operandExpr);
-    baseExpr.Operands.splice(removeIndex, 1);
+    const removeIndex = baseExpr.operands.indexOf(operandExpr);
+    baseExpr.operands.splice(removeIndex, 1);
 
     // Pass removed causes to update causal-view
     this.causesChangeManager.onCausesExpressionRemoved(causalFact, operandExpr);

@@ -73,7 +73,7 @@ export class WeightsComponent {
   }
 
   getWeights() {
-    return this.nodeDataProvider.get()?.fact.WeightNest?.Weights;
+    return this.nodeDataProvider.get()?.fact.weights;
   }
 
   // Content is a part of component that is changing
@@ -100,7 +100,7 @@ export class WeightsComponent {
       this.component.append("div").node(),
       this.causalView,
       this.nodeDataProvider.changeAbstractFactId.bind(this.nodeDataProvider)
-    ).init(this.nodeDataProvider.getFact().AbstractFactId);
+    ).init(this.nodeDataProvider.getFact().abstractFactId);
   }
 
   appendItem(weightEdge) {
@@ -122,7 +122,7 @@ export class WeightsComponent {
       .attr("step", "1")
       .attr("class", "input-item text-input input-item__input")
       .attr("placeholder", "Weight")
-      .property("value", weightEdge.Weight ?? "");
+      .property("value", weightEdge.weight ?? "");
 
     weightInput.on(
       "change",
@@ -151,6 +151,6 @@ export class WeightsComponent {
       function (newId) {
         this.nodeDataProvider.changeWeightEdgeCauseId(weightEdge, newId);
       }.bind(this)
-    ).init(weightEdge.CauseId);
+    ).init(weightEdge.causeId);
   }
 }

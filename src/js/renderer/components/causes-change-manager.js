@@ -25,7 +25,7 @@ export class CausesChangeManager {
 
       const curLink = this.causalView.structure.getLinkBySourceAndTargetIds(
         addedCauseId,
-        causalFact.Id
+        causalFact.id
       );
 
       // console.log(
@@ -34,10 +34,10 @@ export class CausesChangeManager {
       //   "from",
       //   addedCauseId,
       //   "to",
-      //   causalFact.Id
+      //   causalFact.id
       // );
       if (!curLink) {
-        this.causalView.structure.addLink(addedCauseId, causalFact.Id);
+        this.causalView.structure.addLink(addedCauseId, causalFact.id);
       } else {
         // The link already exists in the causal-view
       }
@@ -57,7 +57,7 @@ export class CausesChangeManager {
       causalFact,
       removedCauseIds
     )) {
-      this.causalView.structure.removeLink(removedId, causalFact.Id);
+      this.causalView.structure.removeLink(removedId, causalFact.id);
     }
     this.causalView.structure.render();
   }

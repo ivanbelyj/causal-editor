@@ -23,7 +23,7 @@ export class ProjectDataHelper {
   }
 
   async processOpenedProjectData(projectData) {
-    projectData = await this.#upgradedProjectData(projectData);
+    projectData = await this.#upgradeProjectData(projectData);
     this.#validate(projectData);
 
     return projectData;
@@ -33,10 +33,12 @@ export class ProjectDataHelper {
     ProjectData.fromCausalModelFacts(openedData);
   }
 
-  async #upgradedProjectData(projectData) {
-    if (this.upgradePipeline.shouldUpgradeProjectData(projectData)) {
+  async #upgradeProjectData(projectData) {
+    if (this.upgradePipeline.shouldUpgrade(projectData)) {
       await this.#showDataUpgradeDialog();
       projectData = this.upgradePipeline.upgradeProjectData(projectData);
+    } else {
+      console.log("Data should not be upgraded");
     }
     return projectData;
   }

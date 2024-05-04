@@ -47,10 +47,7 @@ export class CausesComponent {
       return;
     }
 
-    const rootCausesExpr =
-      this.causalModelFact.ProbabilityNest?.CausesExpression;
-    // if (!this.rootCausesItem) {
-    // this.rootCausesItem =
+    const rootCausesExpr = this.causalModelFact.causesExpression;
     const rootCausesItem = new CausesItem({
       selector: this.content.node(),
       isRemovable: false,
@@ -63,8 +60,6 @@ export class CausesComponent {
         causalModelFact
       ),
     });
-    // }
-    // this.rootCausesItem
     rootCausesItem.resetProvider(rootCausesExpr);
   }
 }

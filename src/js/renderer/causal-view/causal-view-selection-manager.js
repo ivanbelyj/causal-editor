@@ -1,6 +1,6 @@
 import { SelectionCommand } from "../undo-redo/commands/selection-command.js";
 import { CausalModelUtils } from "./causal-model-utils.js";
-import * as d3 from "d3"; // "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import * as d3 from "d3";
 import { CausalViewStructure } from "./causal-view-structure.js";
 
 const nodeSelectionStrokeWidth = 4;
@@ -26,8 +26,7 @@ export class CausalViewSelectionManager extends EventTarget {
 
   selectAll() {
     this.executeSelectNodeIds(
-      this._structure.getNodeFacts().map((fact) => fact.Id)
-      // this._structure.getNodes().map((node) => node.data.fact.Id)
+      this._structure.getNodeFacts().map((fact) => fact.id)
     );
   }
 
@@ -149,13 +148,13 @@ export class CausalViewSelectionManager extends EventTarget {
 
     const isMultiSelect = clickEvent.ctrlKey || clickEvent.metaKey;
     const removeClicked =
-      isMultiSelect && this.selectedNodesIds?.has(nodeFact["Id"]);
+      isMultiSelect && this.selectedNodesIds?.has(nodeFact.id);
     let newSelected = [
       ...(isMultiSelect ? this.selectedNodesIds ?? [] : []),
-      nodeFact["Id"],
+      nodeFact.id,
     ];
     if (removeClicked)
-      newSelected = newSelected.filter((x) => x != nodeFact["Id"]);
+      newSelected = newSelected.filter((x) => x != nodeFact.id);
 
     this.executeSelectNodeIds(newSelected);
   }

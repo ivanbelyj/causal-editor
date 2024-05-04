@@ -78,7 +78,7 @@ export class CausalViewStructure extends EventTarget {
 
     this.stratify = d3dag
       .graphStratify()
-      .id(({ fact }) => fact.Id)
+      .id(({ fact }) => fact.id)
       .parentIds(
         function ({ fact }) {
           return CausalModelUtils.getCausesIdsUnique(fact);
@@ -187,7 +187,7 @@ export class CausalViewStructure extends EventTarget {
   }
 
   getNodeById(nodeId) {
-    return this.getNodes().find((node) => node.data.fact.Id === nodeId);
+    return this.getNodes().find((node) => node.data.fact.id === nodeId);
   }
 
   getNodeDataById(nodeId) {
@@ -229,8 +229,8 @@ export class CausalViewStructure extends EventTarget {
   getLinkBySourceAndTargetIds(sourceId, targetId) {
     return Array.from(this.mutGraph.links()).find(
       (link) =>
-        link.source.data.fact.Id === sourceId &&
-        link.target.data.fact.Id === targetId
+        link.source.data.fact.id === sourceId &&
+        link.target.data.fact.id === targetId
     );
   }
 
@@ -259,7 +259,7 @@ export class CausalViewStructure extends EventTarget {
     if (showLog) console.log("nodes");
     d3.select(".nodes-parent")
       .selectAll("g")
-      .data(nodes, (node) => node.data.fact.Id)
+      .data(nodes, (node) => node.data.fact.id)
       .join(
         function (enter) {
           if (showLog) console.log("enter", Array.from(enter));
@@ -267,7 +267,7 @@ export class CausalViewStructure extends EventTarget {
             .append("g")
             .attr("class", (d) => {
               return `node ${CausalModelUtils.getNodeIdClassNameByNodeId(
-                d.data.fact.Id
+                d.data.fact.id
               )}`;
             })
             .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
@@ -323,7 +323,7 @@ export class CausalViewStructure extends EventTarget {
       d3.select(".nodes-parent").selectAll("g").select("text"),
       (d) =>
         this.truncateTextWithEllipsis(
-          d.data["Title"] || d.data.fact["NodeValue"] || d.data.fact["Id"]
+          d.data.title || d.data.fact.factValue || d.data.fact.id
         )
     );
   }
@@ -369,8 +369,8 @@ export class CausalViewStructure extends EventTarget {
       .selectAll("path")
       .data(this.mutGraph.links(), ({ source, target }) => {
         return CausalModelUtils.sourceAndTargetIdsToEdgeId(
-          source.data.fact.Id,
-          target.data.fact.Id
+          source.data.fact.id,
+          target.data.fact.id
         );
       });
 
@@ -392,8 +392,8 @@ export class CausalViewStructure extends EventTarget {
           .attr("stroke", function ({ source, target }) {
             // Edges gradients
             const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
-              source.data.fact["Id"],
-              target.data.fact["Id"]
+              source.data.fact.id,
+              target.data.fact.id
             );
 
             const grad = edgesDefs
@@ -449,8 +449,8 @@ export class CausalViewStructure extends EventTarget {
       const factSrc = source.data.fact;
       const factTarget = target.data.fact;
 
-      return factTarget.AbstractFactId &&
-        factTarget.AbstractFactId == factSrc.Id
+      return factTarget.abstractFactId &&
+        factTarget.abstractFactId == factSrc.id
         ? ""
         : "5,5";
     });
@@ -466,8 +466,8 @@ export class CausalViewStructure extends EventTarget {
     edgePathsSelection.attr("stroke", ({ source, target }) => {
       // this.printEdge({ source, target });
       const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
-        source.data.fact.Id,
-        target.data.fact.Id
+        source.data.fact.id,
+        target.data.fact.id
       );
       d3.select(`#${gradId}`)
         .attr("x1", source.x)

@@ -1,10 +1,8 @@
 import { app } from "electron";
 import { CurrentFileManager } from "../data/current-file-manager";
-import { ProjectData } from "../data/project-data";
 import { UnsavedChangesHelper } from "./unsaved-changes-helper";
 import { AppTitleManager } from "./app-title-manager";
 import { ProjectDataHelper } from "./project-data-helper";
-import { ProjectHelper } from "./project-helper";
 
 const cmPrjFilter = {
   name: "Causal Model Project",

@@ -21,7 +21,7 @@ export class NodesCreateRemoveManager {
           // this.structure.nodeWidth,
           // this.structure.nodeHeight
         ),
-      () => this.#removeNodeById(nodeData.fact.Id)
+      () => this.#removeNodeById(nodeData.fact.id)
     );
   }
 
@@ -47,7 +47,7 @@ export class NodesCreateRemoveManager {
 
   createNodeData() {
     const newFact = CausalModelUtils.createNewFactWithFactor();
-    newFact.Id = crypto.randomUUID();
+    newFact.id = crypto.randomUUID();
     return { fact: newFact };
   }
 
@@ -93,6 +93,6 @@ export class NodesCreateRemoveManager {
   getNodeIdByPos(x, y) {
     const nodeElement = ScreenUtils.nodeElementFromPoint({ x, y }, "node");
     const nodeData = d3.select(nodeElement).data()[0];
-    return nodeData.data.fact.Id;
+    return nodeData.data.fact.id;
   }
 }

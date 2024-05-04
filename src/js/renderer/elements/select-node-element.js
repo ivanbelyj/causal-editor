@@ -72,7 +72,7 @@ export class SelectNodeElement {
 
   onNodeClicked(event) {
     const causalModelFact = event.nodeSelection.data.fact;
-    this.setIdInputAndCancelSelect(causalModelFact.Id);
+    this.setIdInputAndCancelSelect(causalModelFact.id);
   }
 
   setIdInputAndCancelSelect(causalModelFactId) {

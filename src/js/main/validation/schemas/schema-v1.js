@@ -2,23 +2,23 @@ const causesExpressionSchema = {
   type: "object",
   properties: {
     $type: { type: "string" },
-    Operands: {
+    operands: {
       type: "array",
       oneOf: [
         {
           type: "object",
           properties: {
             $type: { type: "string" },
-            Edge: {
+            edge: {
               type: "object",
               properties: {
                 Probability: { type: "number" },
-                CauseId: { type: "string" },
+                causeId: { type: "string" },
               },
-              required: ["Probability", "CauseId"],
+              required: ["probability", "causeId"],
             },
           },
-          required: ["$type", "Edge"],
+          required: ["$type", "edge"],
         },
         {
           $ref: "#/definitions/causesExpression",
@@ -34,39 +34,21 @@ const weightsSchema = {
   items: {
     type: "object",
     properties: {
-      Weight: { type: "number" },
-      CauseId: { type: "string" },
+      weight: { type: "number" },
+      causeId: { type: "string" },
     },
-    required: ["Weight", "CauseId"],
+    required: ["weight", "causeId"],
   },
 };
 
 const factSchema = {
   type: "object",
   properties: {
-    Id: { type: "string" },
-    ProbabilityNest: probabilityNestSchema,
-    NodeValue: { type: "string" },
+    id: { type: "string" },
+    abstractFactId: { type: "string" },
+    factValue: { type: "string" },
   },
-  required: ["Id", "ProbabilityNest", "NodeValue"],
-};
-
-const variantSchema = {
-  type: "object",
-  properties: {
-    Id: { type: "string" },
-    ProbabilityNest: probabilityNestSchema,
-    NodeValue: { type: "string" },
-    AbstractFactId: { type: "string" },
-    WeightNest: weightNestSchema,
-  },
-  required: [
-    "Id",
-    "ProbabilityNest",
-    "NodeValue",
-    "AbstractFactId",
-    "WeightNest",
-  ],
+  required: ["id", "factValue"],
 };
 
 export const projectSchema = {
@@ -75,7 +57,7 @@ export const projectSchema = {
     facts: {
       type: "array",
       items: {
-        anyOf: [factSchema, variantSchema],
+        anyOf: [factSchema],
       },
     },
     nodesData: {
@@ -98,7 +80,7 @@ export const projectSchema = {
 export const factsSchema = {
   type: "array",
   items: {
-    anyOf: [factSchema, variantSchema],
+    anyOf: [factSchema],
   },
 };
 

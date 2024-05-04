@@ -33,7 +33,7 @@ export class DragAndDropManager {
     let posDataBeforeDrag;
     function dragStarted(event, d) {
       posDataBeforeDrag = dragAndDropManager.getNodesToDragPosData(
-        d.data.fact.Id
+        d.data.fact.id
       );
 
       d3.select(this).attr("cursor", "grabbing");
@@ -41,7 +41,7 @@ export class DragAndDropManager {
 
     function dragged(event, d) {
       const posDataToDrag = dragAndDropManager.getNodesToDragPosData(
-        d.data.fact.Id
+        d.data.fact.id
       );
 
       // Change positions of nodes that should be dragged
@@ -57,7 +57,7 @@ export class DragAndDropManager {
     }
 
     function dragEnded(event, d) {
-      const draggedNodeId = d.data.fact.Id;
+      const draggedNodeId = d.data.fact.id;
       const posDataAfterDrag =
         dragAndDropManager.getNodesToDragPosData(draggedNodeId);
 
@@ -97,7 +97,7 @@ export class DragAndDropManager {
 
   getNodesToDragPosData(draggedNodeId) {
     return this.getNodesToDragData(draggedNodeId).map((nodeData) => ({
-      nodeId: nodeData.data.fact.Id,
+      nodeId: nodeData.data.fact.id,
       x: nodeData.ux,
       y: nodeData.uy,
     }));

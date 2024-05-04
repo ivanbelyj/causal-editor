@@ -2,13 +2,13 @@ export class CausalModelUtils {
   static findCauseIds(obj) {
     let edgeProps = new Set();
     for (let prop in obj) {
-      if (prop === "Edge") {
+      if (prop === "edge") {
         if (
-          obj[prop].hasOwnProperty("CauseId") &&
-          obj[prop].CauseId &&
-          !edgeProps.has(obj[prop]["CauseId"])
+          obj[prop].hasOwnProperty("causeId") &&
+          obj[prop].causeId &&
+          !edgeProps.has(obj[prop]["causeId"])
         )
-          edgeProps.add(obj[prop]["CauseId"]);
+          edgeProps.add(obj[prop]["causeId"]);
       }
       if (typeof obj[prop] === "object") {
         const nestedEdgeProps = CausalModelUtils.findCauseIds(obj[prop]);
@@ -24,7 +24,7 @@ export class CausalModelUtils {
   // static traverseInnerExpressions(obj, func) {
   //   for (let prop in obj) {
   //     if (
-  //       ["Operands", "Edge"].find(
+  //       ["operands", "edge"].find(
   //         (exprProp) => obj[prop] && obj[prop].hasOwnProperty(exprProp)
   //       )
   //     )
@@ -37,11 +37,11 @@ export class CausalModelUtils {
   // }
 
   static getWeightsEdgesIds(causalModelFact) {
-    const weightEdges = causalModelFact.WeightNest?.Weights;
+    const weightEdges = causalModelFact.weights;
     if (!weightEdges) return [];
     const idsSet = new Set();
     for (const weightEdge of weightEdges) {
-      const id = weightEdge.CauseId;
+      const id = weightEdge.causeId;
       if (!idsSet.has(id) && id) {
         idsSet.add(id);
       }
@@ -51,13 +51,11 @@ export class CausalModelUtils {
 
   static getCausesIdsUnique(causalModelFact) {
     const idsAll = [
-      ...CausalModelUtils.findCauseIds(
-        causalModelFact.ProbabilityNest.CausesExpression
-      ),
+      ...CausalModelUtils.findCauseIds(causalModelFact.causesExpression),
       ...CausalModelUtils.getWeightsEdgesIds(causalModelFact),
     ];
-    if (causalModelFact.AbstractFactId)
-      idsAll.push(causalModelFact.AbstractFactId);
+    if (causalModelFact.abstractFactId)
+      idsAll.push(causalModelFact.abstractFactId);
     return [...new Set(idsAll)];
   }
 
@@ -75,8 +73,8 @@ export class CausalModelUtils {
   static createFactorExpression() {
     return {
       $type: "factor",
-      Edge: {
-        Probability: 1,
+      edge: {
+        probability: 1,
       },
     };
   }
@@ -84,16 +82,14 @@ export class CausalModelUtils {
   static lastCreatedFactNumber = 0;
   static createNewFactWithFactor() {
     return {
-      Id: null,
-      ProbabilityNest: {
-        CausesExpression: {
-          $type: "factor",
-          Edge: {
-            Probability: 1,
-          },
+      id: null,
+      causesExpression: {
+        $type: "factor",
+        edge: {
+          probability: 1,
         },
       },
-      NodeValue: `New Fact ${++CausalModelUtils.lastCreatedFactNumber}`,
+      factValue: `New Fact ${++CausalModelUtils.lastCreatedFactNumber}`,
     };
   }
 

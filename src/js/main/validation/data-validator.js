@@ -3,8 +3,13 @@ import { betterAjvErrors } from "@apideck/better-ajv-errors";
 import {
   projectSchema as projectSchemaV0,
   factsSchema,
-  defsSchema,
+  defsSchema as defsSchemaV0,
 } from "./schemas/schema-v0";
+
+import {
+  projectSchema as projectSchemaV1,
+  defsSchema as defsSchemaV1,
+} from "./schemas/schema-v1";
 
 import Ajv from "ajv";
 import VersionUtils from "../version-utils";
@@ -16,7 +21,15 @@ export class DataValidator {
       {
         projectSchema: projectSchemaV0,
         causalModelSchema: factsSchema,
-        defsSchema,
+        defsSchema: defsSchemaV0,
+      },
+    ],
+    [
+      1,
+      {
+        projectSchema: projectSchemaV1,
+        causalModelSchema: factsSchema,
+        defsSchema: defsSchemaV1,
       },
     ],
   ]);
@@ -43,8 +56,8 @@ export class DataValidator {
     return latestVersionEntry ? latestVersionEntry[0] : null;
   }
 
-  static #validateDataCore({ data, defsSchema, getSchema }) {
-    const schemas = DataValidator.#getschemasForData(data);
+  static #validateDataCore({ data, getSchema }) {
+    const schemas = DataValidator.#getSchemasForData(data);
     if (schemas == null) {
       return null;
     }
@@ -68,11 +81,14 @@ export class DataValidator {
   }
 
   static #createSchema({ schema, defsSchema }) {
-    const ajv = new Ajv({ allErrors: true, schemas: [schema, defsSchema] });
+    const ajv = new Ajv({
+      allErrors: true,
+      schemas: [schema, defsSchema],
+    });
     return ajv.compile(schema);
   }
 
-  static #getschemasForData(data) {
+  static #getSchemasForData(data) {
     const version = VersionUtils.getVersion(data);
     return DataValidator.schemasByVersion.get(version);
   }

@@ -25,13 +25,11 @@ export class NodeDataProvider extends DataProvider {
   }
 
   #getWeights(causalFact) {
-    return causalFact?.WeightNest?.Weights;
+    return causalFact?.weights;
   }
 
-  #setInitialWeightNest(causalFact) {
-    causalFact.WeightNest = {
-      Weights: [],
-    };
+  #setInitialWeights(causalFact) {
+    causalFact.weights = [];
   }
 
   addNewWeightEdge() {
@@ -52,21 +50,21 @@ export class NodeDataProvider extends DataProvider {
 
   #createDefaultWeightEdge(abstractFactId) {
     return {
-      Weight: 1,
-      CauseId: abstractFactId ?? null,
+      weight: 1,
+      causeId: abstractFactId ?? null,
     };
   }
 
   #addWeightEdge(causalFact, newWeight) {
     if (!this.#getWeights(causalFact)) {
-      this.#setInitialWeightNest(causalFact);
+      this.#setInitialWeights(causalFact);
     }
     const weights = this.#getWeights(causalFact);
 
     weights.push(newWeight);
 
-    if (newWeight.CauseId)
-      this.causesChangeManager.onCausesAdd(causalFact, [newWeight.CauseId]);
+    if (newWeight.causeId)
+      this.causesChangeManager.onCausesAdd(causalFact, [newWeight.causeId]);
 
     this._dispatchMutated();
   }
@@ -77,16 +75,16 @@ export class NodeDataProvider extends DataProvider {
     if (removeIndex != -1) {
       const edgeToRemove = weights[removeIndex];
       weights.splice(removeIndex, 1);
-      if (edgeToRemove.CauseId) {
+      if (edgeToRemove.causeId) {
         this.causesChangeManager.onCausesRemoved(causalFact, [
-          edgeToRemove.CauseId,
+          edgeToRemove.causeId,
         ]);
       } else {
         // There is no removed causes
       }
 
       if (weights.length === 0) {
-        causalFact.WeightNest = null;
+        causalFact.weights = undefined;
       }
 
       this._dispatchMutated();
@@ -106,7 +104,7 @@ export class NodeDataProvider extends DataProvider {
   }
 
   changeAbstractFactId(newAbstrId) {
-    const oldAbstrId = this._causalFact.AbstractFactId;
+    const oldAbstrId = this._causalFact.abstractFactId;
     const causalFact = this._causalFact;
 
     let cmdToExecute = new Command(
@@ -138,8 +136,8 @@ export class NodeDataProvider extends DataProvider {
   }
 
   #changeAbstractFactId(causalFact, newId) {
-    const oldAbstrId = causalFact.AbstractFactId;
-    causalFact.AbstractFactId = newId;
+    const oldAbstrId = causalFact.abstractFactId;
+    causalFact.abstractFactId = newId;
 
     this.causesChangeManager.onCauseIdChanged(causalFact, oldAbstrId, newId);
 
@@ -154,10 +152,10 @@ export class NodeDataProvider extends DataProvider {
   changeWeightEdgeWeight(weightEdge, newWeight) {
     const setWeightEdge = (weight) => {
       // const actualWeightEdge = this.#getActualWeightEdge(weightEdge);
-      weightEdge.Weight = weight;
+      weightEdge.weight = weight;
       this._dispatchMutated();
     };
-    const oldWeight = weightEdge.Weight;
+    const oldWeight = weightEdge.weight;
 
     CommandUtils.executeChangeStateCommand(
       this.undoRedoManager,
@@ -177,8 +175,8 @@ export class NodeDataProvider extends DataProvider {
     const causalFact = this._causalFact;
     const setWeightEdge = (newCauseId) => {
       // const actualWeightEdge = this.#getActualWeightEdge(weightEdge);
-      const oldCauseId = weightEdge.CauseId;
-      weightEdge.CauseId = newCauseId;
+      const oldCauseId = weightEdge.causeId;
+      weightEdge.causeId = newCauseId;
       this.causesChangeManager.onCauseIdChanged(
         causalFact,
         oldCauseId,
@@ -186,7 +184,7 @@ export class NodeDataProvider extends DataProvider {
       );
       this._dispatchMutated();
     };
-    const oldCauseId = weightEdge.CauseId;
+    const oldCauseId = weightEdge.causeId;
 
     CommandUtils.executeChangeStateCommand(
       this.undoRedoManager,
