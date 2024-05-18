@@ -69,7 +69,6 @@ export class CausalModelUtils {
     return `node-${nodeId}`;
   }
 
-  // Pascal case due to the causal model format
   static createFactorExpression() {
     return {
       $type: "factor",

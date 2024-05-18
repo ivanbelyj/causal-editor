@@ -1,14 +1,14 @@
 import { CausalViewStructure } from "./causal-view-structure.js";
-import { factsCollection } from "../test-data.js";
 import { CausalViewSelectionManager } from "./causal-view-selection-manager.js";
 
 import * as d3 from "d3";
 import { NodesCreateRemoveManager } from "./nodes-create-remove-manager.js";
 import { CausesChangeManager } from "../components/causes-change-manager.js";
-import { ProjectData } from "../../main/data/project-data.js";
-import { CausalViewDataUtils } from "./causal-view-data-utils.js";
+import { CausalViewDataManager } from "./causal-view-data-manager.js";
 
-// A component representing causal model visual structure
+/**
+ * A component managing causal view
+ */
 export class CausalView {
   structure = null;
   selectionManager = null;
@@ -16,84 +16,25 @@ export class CausalView {
   constructor(selector, api, undoRedoManager) {
     this.undoRedoManager = undoRedoManager;
     this.causesChangeManager = new CausesChangeManager(this);
-
-    api.onCreateNode((event, data) => {
-      undoRedoManager.execute(
-        this.nodesCreateRemoveManager.getCreateNodeCommand(data.x, data.y)
-      );
-    });
-    api.onRemoveNode((event, data) => {
-      undoRedoManager.execute(
-        this.nodesCreateRemoveManager.getRemoveNodeCommand(data.x, data.y)
-      );
-    });
-
-    api.onSaveData((event, { dataToSaveId, title }) => {
-      const { facts, nodesData } =
-        CausalViewDataUtils.causalViewDataToFactsAndNodesData(
-          this.structure.getNodesData()
-        );
-
-      event.sender.send(`data-to-save-${dataToSaveId}`, {
-        dataToSave: ProjectData.createProjectData({
-          ...(this.projectData ?? {}),
-          facts,
-          nodesData,
-        }),
-        title,
-      });
-    });
-    api.onOpenData((event, projectData) => {
-      console.log("opened project data: ", projectData);
-      this.projectData = projectData;
-      const causalViewData =
-        CausalViewDataUtils.factsAndNodesDataToCausalViewData(
-          projectData.facts,
-          projectData.nodesData
-        );
-      this.reset(causalViewData);
-    });
-
-    api.onReset((event, data) => {
-      this.selectionManager.reset();
-    });
     this.api = api;
 
-    const causalView = (this.component = d3.select(selector));
-    causalView.on("mouseenter", () => api.sendCausalViewEnter());
-    causalView.on("mouseleave", () => api.sendCausalViewLeave());
+    this.#initCreateRemoveNodes();
+
+    this.causalViewDataManager = new CausalViewDataManager();
+    this.causalViewDataManager.init({
+      api,
+      causalView: this,
+    });
+
+    this.#initEnterLeaveView(selector);
   }
 
   init(nodesData) {
-    this.structure = new CausalViewStructure(this.undoRedoManager);
-    this.structure.addEventListener("nodeEnter", () =>
-      this.api.sendNodeEnter()
-    );
-    this.structure.addEventListener("nodeLeave", () =>
-      this.api.sendNodeLeave()
-    );
+    this.#initCausalViewStructure(nodesData);
 
     this.nodesCreateRemoveManager = new NodesCreateRemoveManager(
       this.structure,
       this.causesChangeManager
-    );
-    this.selectionManager = new CausalViewSelectionManager(
-      this.api,
-      this.undoRedoManager
-    );
-
-    this.selectionManager.init(this.structure);
-    this.structure.init(this.component, nodesData, this.selectionManager);
-
-    // Test of reset
-    setTimeout(
-      function () {
-        // console.log("reset with deleted!");
-        // const facts = JSON.parse(factsCollection);
-        // facts.splice(0, 6);
-        // this.reset(facts);
-      }.bind(this),
-      500
     );
   }
 
@@ -102,8 +43,53 @@ export class CausalView {
     this.structure.setInitialZoom();
   }
 
-  // Todo: remove?
-  nodes() {
-    return this.structure.getNodes();
+  #initCreateRemoveNodes() {
+    this.api.onCreateNode((event, data) => {
+      this.undoRedoManager.execute(
+        this.nodesCreateRemoveManager.getCreateNodeCommand(data.x, data.y)
+      );
+    });
+    this.api.onRemoveNode((event, data) => {
+      this.undoRedoManager.execute(
+        this.nodesCreateRemoveManager.getRemoveNodeCommand(data.x, data.y)
+      );
+    });
+  }
+
+  #initEnterLeaveView(selector) {
+    const causalView = (this.component = d3.select(selector));
+    causalView.on("mouseenter", () => api.sendCausalViewEnter());
+    causalView.on("mouseleave", () => api.sendCausalViewLeave());
+  }
+
+  #initCausalViewStructure(nodesData) {
+    this.structure = new CausalViewStructure(this.undoRedoManager);
+    this.#initEnterLeaveNode();
+
+    this.#initSelection();
+
+    this.structure.init(this.component, nodesData, this.selectionManager);
+  }
+
+  #initEnterLeaveNode() {
+    this.structure.addEventListener("nodeEnter", () =>
+      this.api.sendNodeEnter()
+    );
+    this.structure.addEventListener("nodeLeave", () =>
+      this.api.sendNodeLeave()
+    );
+  }
+
+  #initSelection() {
+    this.selectionManager = new CausalViewSelectionManager(
+      this.api,
+      this.undoRedoManager
+    );
+
+    this.selectionManager.init(this.structure);
+
+    this.api.onReset((event, data) => {
+      this.selectionManager.reset();
+    });
   }
 }

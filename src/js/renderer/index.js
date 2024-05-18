@@ -1,4 +1,4 @@
-import { AppLayoutManager } from "./app-layout-manager.js";
+import { LayoutManager } from "./layout/layout-manager";
 import * as d3 from "d3";
 // import * as glDark from "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
 // import * as glLight from "golden-layout/dist/css/themes/goldenlayout-light-theme.css";
@@ -7,7 +7,7 @@ import * as d3 from "d3";
 
 (() => {
   const layoutContainer = d3.select("body").append("div");
-  const componentsManager = new AppLayoutManager(
+  const componentsManager = new LayoutManager(
     layoutContainer.node(),
     window.api
   );

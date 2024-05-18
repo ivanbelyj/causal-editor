@@ -2,9 +2,11 @@ import { CausalModelUtils } from "../../causal-view/causal-model-utils";
 import { Command } from "../../undo-redo/commands/command";
 import { DataProvider } from "./data-provider";
 
-// Provides api of CausesExpression change,
-// performing all related actions such as CausalView updating
-// (via CausesChangeManager) and undo / redo support
+/**
+ * Provides api of CausesExpression change,
+ * performing all related actions such as CausalView updating
+ * (via CausesChangeManager) and undo / redo support
+ */
 export class CausesExpressionProvider extends DataProvider {
   constructor(undoRedoManager, causesChangeManager, causalFact) {
     super(undoRedoManager, causesChangeManager);

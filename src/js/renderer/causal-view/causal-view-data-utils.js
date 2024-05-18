@@ -1,6 +1,6 @@
 // In the context of causal-view causal-view-data is called "nodes data",
 // but "nodes data" can also mean some data about nodes (color, size, etc.)
-// that is separated from causal model fact
+// that is separated from the causal model fact
 export class CausalViewDataUtils {
   static factsAndNodesDataToCausalViewData(facts, nodesData) {
     return facts.map((fact) => {

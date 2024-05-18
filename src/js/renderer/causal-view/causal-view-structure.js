@@ -6,8 +6,10 @@ import { DragAndDropManager } from "./drag-and-drop-manager.js";
 const maxNodeTextLength = 22;
 
 const showDebugMessages = false;
-// Displays interactive causal view elements and provides some of their common events
-// (node click, enter, etc.)
+/**
+ * Displays interactive causal view elements and provides some of their common events
+ * (node click, enter, etc.)
+ */
 export class CausalViewStructure extends EventTarget {
   // ===== Set in constructor / init =====
 
