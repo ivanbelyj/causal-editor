@@ -1,5 +1,5 @@
 import { CausalViewStructure } from "./causal-view-structure.js";
-import { CausalViewSelectionManager } from "./causal-view-selection-manager.js";
+import { CausalViewSelectionManager } from "./selection/selection-manager.js";
 
 import * as d3 from "d3";
 import { NodesCreateRemoveManager } from "./nodes-create-remove-manager.js";

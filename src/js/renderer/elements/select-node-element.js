@@ -1,10 +1,17 @@
 import * as d3 from "d3";
+import { SelectionRenderer } from "../causal-view/selection/selection-renderer";
+
+const highlightingColor = "#fde910";
 
 export class SelectNodeElement {
+  #selectionRenderer;
+  #causalModelFactId;
   constructor(selector, causalView, onNodeIdSelected) {
     this.component = d3.select(selector);
     this.causalView = causalView;
     this.onNodeIdSelected = onNodeIdSelected;
+
+    this.#selectionRenderer = new SelectionRenderer(causalView.structure);
   }
 
   init(initialId) {
@@ -12,36 +19,81 @@ export class SelectNodeElement {
 
     this.component.attr("class", "input-item select-node-element");
 
-    this.idInput = this.component
+    this.#causalModelFactId = initialId;
+    this.#createElements(initialId);
+
+    this.#setButtonsVisible(true);
+  }
+
+  #createElements(initialId) {
+    this.idInput = this.#createIdInput(initialId);
+    this.selectNodeButton = this.#createSelectNodeButton();
+    this.clearButton = this.#createClearButton();
+    this.cancelSelectButton = this.#createCancelSelectButton();
+  }
+
+  #createIdInput(initialId) {
+    return this.component
       .append("input")
       .attr("type", "text")
       .attr("class", "text-input input-item__input select-node-element__input")
       .attr("placeholder", "CauseId")
       .attr("readonly", true)
-      .property("value", initialId ?? "");
+      .property("value", initialId ?? "")
+      .on("mouseenter", this.#handleIdInputMouseEvent.bind(this, true))
+      .on("mouseleave", this.#handleIdInputMouseEvent.bind(this, false));
+  }
 
-    this.selectNodeButton = this.component
+  #handleIdInputMouseEvent(isMouseEnter, event) {
+    this.#setIdInputAndNodeAppearance(isMouseEnter, event.target);
+  }
+
+  #setIdInputAndNodeAppearance(isMouseEnter, element) {
+    d3.select(element).style(
+      "outline",
+      isMouseEnter && this.#causalModelFactId
+        ? `2px solid ${highlightingColor}`
+        : "initial"
+    );
+
+    if (!this.#causalModelFactId) return;
+
+    const func = isMouseEnter
+      ? this.#selectionRenderer.setSelectedAppearance
+      : this.#selectionRenderer.setNotSelectedAppearance;
+
+    func.call(
+      this.#selectionRenderer,
+      this.#causalModelFactId,
+      highlightingColor
+    );
+  }
+
+  #createSelectNodeButton() {
+    return this.component
       .append("button")
       .attr("class", "button")
       .text("Select")
-      .on("click", this.onSelectButtonClick.bind(this));
+      .on("click", this.#onSelectButtonClick.bind(this));
+  }
 
-    this.clearButton = this.component
+  #createClearButton() {
+    return this.component
       .append("button")
       .attr("class", "button select-node-element__input")
       .text("Clear")
-      .on("click", this.onClearButtonClick.bind(this));
+      .on("click", this.#onClearButtonClick.bind(this));
+  }
 
-    this.cancelSelectButton = this.component
+  #createCancelSelectButton() {
+    return this.component
       .append("button")
       .attr("class", "button")
       .text("Cancel")
-      .on("click", this.onCancelButtonClick.bind(this));
-
-    this.setButtonsVisible(true);
+      .on("click", this.#onCancelButtonClick.bind(this));
   }
 
-  setButtonsVisible(showSelectButtonOnly) {
+  #setButtonsVisible(showSelectButtonOnly) {
     this.selectNodeButton.style(
       "display",
       showSelectButtonOnly ? "inline-block" : "none"
@@ -54,36 +106,31 @@ export class SelectNodeElement {
       "display",
       !showSelectButtonOnly ? "inline-block" : "none"
     );
-
-    // [this.selectNodeButton, this.clearButton, this.cancelSelectButton].forEach(
-    //   (btn) => {
-    //     btn.style("display", showSelectButtonOnly ? "inline-block" : "none");
-    //   }
-    // );
   }
 
-  onCancelButtonClick(event) {
-    this.cancelSelect();
+  #onCancelButtonClick(event) {
+    this.#cancelSelect();
   }
 
-  onClearButtonClick(event) {
-    this.setIdInputAndCancelSelect("");
+  #onClearButtonClick(event) {
+    this.#setIdInputAndCancelSelectionButton("");
   }
 
   onNodeClicked(event) {
     const causalModelFact = event.nodeSelection.data.fact;
-    this.setIdInputAndCancelSelect(causalModelFact.id);
+    this.#causalModelFactId = causalModelFact.id;
+    this.#setIdInputAndCancelSelectionButton(causalModelFact.id);
   }
 
-  setIdInputAndCancelSelect(causalModelFactId) {
+  #setIdInputAndCancelSelectionButton(causalModelFactId) {
     this.idInput.property("value", causalModelFactId);
 
-    this.cancelSelect();
+    this.#cancelSelect();
 
     this.onNodeIdSelected?.(causalModelFactId);
   }
 
-  onSelectButtonClick(event) {
+  #onSelectButtonClick(event) {
     // The last click is to select the cause id, not to select the node to edit
     this.causalView.selectionManager.isSelectByClick = false;
 
@@ -92,15 +139,15 @@ export class SelectNodeElement {
       this.onNodeClicked // already bound to this
     );
 
-    this.setButtonsVisible(false);
+    this.#setButtonsVisible(false);
   }
 
-  cancelSelect() {
+  #cancelSelect() {
     this.causalView.structure.removeEventListener(
       "nodeClicked",
       this.onNodeClicked // the same function as in addEventListener
     );
     this.causalView.selectionManager.isSelectByClick = true;
-    this.setButtonsVisible(true);
+    this.#setButtonsVisible(true);
   }
 }

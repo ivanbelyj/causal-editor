@@ -1,27 +1,24 @@
-import { SelectionCommand } from "../undo-redo/commands/selection-command.js";
-import { CausalModelUtils } from "./causal-model-utils.js";
-import * as d3 from "d3";
-import { CausalViewStructure } from "./causal-view-structure.js";
-
-const nodeSelectionStrokeWidth = 4;
+import { SelectionCommand } from "../../undo-redo/commands/selection-command.js";
+import { SelectionRenderer } from "./selection-renderer.js";
 
 export class CausalViewSelectionManager extends EventTarget {
   selectedNodesIds = null;
   _structure = null;
 
   _isSelectByClick = true;
-  get isSelectByClick() {
-    return this._isSelectByClick;
-  }
-  set isSelectByClick(val) {
-    this._isSelectByClick = val;
-  }
 
   constructor(api, undoRedoManager) {
     super();
     this.undoRedoManager = undoRedoManager;
     this.api = api;
     this.api.onSelectAll(this.selectAll.bind(this));
+  }
+
+  get isSelectByClick() {
+    return this._isSelectByClick;
+  }
+  set isSelectByClick(val) {
+    this._isSelectByClick = val;
   }
 
   selectAll() {
@@ -32,15 +29,11 @@ export class CausalViewSelectionManager extends EventTarget {
 
   init(structure) {
     this._structure = structure;
+    this.selectionRenderer = new SelectionRenderer(structure);
+    this.selectionRenderer.initCausalViewSelectionZoom();
 
     structure.addEventListener("nodeClicked", this.onNodeClicked.bind(this));
     structure.addEventListener("viewClicked", this.onViewClicked.bind(this));
-
-    structure.addEventListener("zoomed", () => {
-      d3.selectAll(".node__rect_selected").attr("stroke-width", () =>
-        this.getSelectionStrokeWidthIgnoreZoom()
-      );
-    });
 
     this.reset();
   }
@@ -56,29 +49,6 @@ export class CausalViewSelectionManager extends EventTarget {
   reset() {
     this.selectedNodesIds = null;
     this.isSelectByClick = true;
-  }
-
-  setSelectedAppearance(nodeId) {
-    CausalViewStructure.getNodeSelectionById(nodeId)
-      .raise()
-      .select("rect")
-      .attr("stroke-width", this.getSelectionStrokeWidthIgnoreZoom())
-      .attr("stroke", "#F5AE00")
-      .classed("node__rect_selected", true);
-  }
-
-  getSelectionStrokeWidthIgnoreZoom() {
-    return (
-      nodeSelectionStrokeWidth /
-      d3.zoomTransform(this._structure.svgChild.node()).k
-    );
-  }
-
-  setNotSelectedAppearance(nodeId) {
-    d3.select(`.${CausalModelUtils.getNodeIdClassNameByNodeId(nodeId)}`)
-      .select("rect")
-      .attr("stroke", "none")
-      .classed("node__rect_selected", false);
   }
 
   setSelectedNodeIds(ids) {
@@ -98,7 +68,7 @@ export class CausalViewSelectionManager extends EventTarget {
     }
 
     for (const id of toSelect.values()) {
-      this.setSelectedAppearance(id);
+      this.selectionRenderer.setSelectedAppearance(id);
     }
 
     if (prevSelected) {
@@ -112,7 +82,7 @@ export class CausalViewSelectionManager extends EventTarget {
       }
 
       for (const id of toDeselect.values()) {
-        this.setNotSelectedAppearance(id);
+        this.selectionRenderer.setNotSelectedAppearance(id);
       }
     }
 
