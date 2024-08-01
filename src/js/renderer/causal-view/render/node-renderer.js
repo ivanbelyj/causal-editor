@@ -1,71 +1,151 @@
 import * as d3 from "d3";
-import { CausalModelUtils } from "./causal-model-utils.js";
+import * as d3dag from "d3-dag";
+import { CausalModelUtils } from "../causal-model-utils.js";
+import { DragAndDropManager } from "../drag-and-drop-manager.js";
+
+const showDebugMessages = false;
+
+const maxNodeTextLength = 22;
 
 /**
  * Class responsible for rendering nodes in the causal view structure.
  */
 export class NodeRenderer {
-  constructor(nodesParent, dragAndDropManager) {
+  nodeWidth;
+  nodeHeight;
+
+  dragAndDropManager;
+  layout;
+  nodesParent;
+  graphManager;
+
+  dagWidth;
+  dagHeight;
+
+  onNodeClicked;
+  onMouseEnter;
+  onMouseLeave;
+
+  onEnterNodesSelection;
+
+  constructor(
+    nodesParent,
+    graphManager,
+    nodeWidth,
+    nodeHeight,
+    onNodeClicked,
+    onMouseEnter,
+    onMouseLeave,
+    onEnterNodesSelection
+  ) {
     this.nodesParent = nodesParent;
-    this.dragAndDropManager = dragAndDropManager;
+    this.graphManager = graphManager;
+    this.nodeWidth = nodeWidth;
+    this.nodeHeight = nodeHeight;
+
+    this.onNodeClicked = onNodeClicked;
+    this.onMouseEnter = onMouseEnter;
+    this.onMouseLeave = onMouseLeave;
+
+    this.onEnterNodesSelection = onEnterNodesSelection;
+
+    this.#setLayout();
   }
 
-  /**
-   * Renders nodes for the given graph data.
-   * @param {Array} nodesData - Array of graph nodes data to render.
-   */
-  renderNodes(nodesData) {
-    const nodes = nodesData.map(node => ({
-      ...node,
-      id: node.data.fact.id,
-      color: node.data.color ?? "#aaa"
-    }));
+  #setLayout() {
+    this.layout = d3dag
+      .sugiyama() // base layout
+      .decross(d3dag.decrossOpt()) // minimize number of crossings
+      // set node size instead of constraining to fit
+      .nodeSize((node) => {
+        return [(node ? 1.1 : 0) * this.nodeWidth, 3 * this.nodeHeight];
+      });
+  }
 
-    const nodeGroups = this.nodesParent
+  reset() {
+    this.#setDagWidthAndHeight();
+  }
+
+  #setDagWidthAndHeight() {
+    const { width: dagWidth, height: dagHeight } = this.layout(
+      this.graphManager.mutGraph
+    );
+    this.dagWidth = dagWidth;
+    this.dagHeight = dagHeight;
+  }
+
+  renderNodes() {
+    const nodes = this.graphManager.getNodes();
+
+    // Set missing color fields
+    const interp = d3.interpolateRainbow;
+    for (const node of nodes) {
+      if (!node.data.color) {
+        const rndStep = Math.random() * nodes.length;
+        node.data.color = interp(rndStep);
+      }
+    }
+
+    const showLog = showDebugMessages;
+    if (showLog) console.log("nodes");
+    d3.select(".nodes-parent")
       .selectAll("g")
-      .data(nodes, d => d.id)
+      .data(nodes, (node) => node.data.fact.id)
       .join(
-        enter => this.createNodeGroups(enter),
-        update => this.updateNodeGroups(update),
-        exit => this.removeNodeGroups(exit)
+        function (enter) {
+          if (showLog) console.log("enter", Array.from(enter));
+          const enterNodesSelection = enter
+            .append("g")
+            .attr("class", (d) => {
+              return `node ${CausalModelUtils.getNodeIdClassNameByNodeId(
+                d.data.fact.id
+              )}`;
+            })
+            .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
+            .on("click", this.onNodeClicked)
+            .on("mouseenter", this.onMouseEnter)
+            .on("mouseleave", this.onMouseLeave);
+
+          enterNodesSelection
+            .append("rect")
+            .attr("width", this.nodeWidth)
+            .attr("height", this.nodeHeight)
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .attr("fill", (n) => n.data.color ?? "#aaa");
+
+          enterNodesSelection.append("text");
+
+          this.onEnterNodesSelection(enterNodesSelection);
+        }.bind(this),
+        function (update) {
+          if (showLog) console.log("update", Array.from(update));
+        }.bind(this),
+        function (exit) {
+          if (showLog) console.log("exit", Array.from(exit));
+          exit.remove();
+        }.bind(this)
       );
-
-    this.dragAndDropManager.addNodesDrag(nodeGroups);
+    this.updateNodes();
   }
 
-  createNodeGroups(enter) {
-    const nodeGroups = enter
-      .append("g")
-      .attr("class", d => `node ${CausalModelUtils.getNodeIdClassNameByNodeId(d.id)}`)
-      .attr("transform", d => `translate(${d.x}, ${d.y})`);
-
-    nodeGroups
-      .append("rect")
-      .attr("width", this.nodeWidth)
-      .attr("height", this.nodeHeight)
-      .attr("rx", 5)
-      .attr("ry", 5)
-      .attr("fill", d => d.color);
-
-    nodeGroups.append("text");
+  updateNodes() {
+    this.updateNodeText(
+      d3.select(".nodes-parent").selectAll("g").select("text"),
+      (d) =>
+        this.truncateTextWithEllipsis(
+          d.data.title || d.data.fact.factValue || d.data.fact.id
+        )
+    );
   }
 
-  updateNodeGroups(update) {
-    update.select("rect")
-      .attr("fill", d => d.color);
-
-    this.updateNodeText(update.select("text"), d => this.truncateTextWithEllipsis(d.data.title || d.data.fact.factValue || d.data.fact.id));
+  // Todo: text truncating by width
+  truncateTextWithEllipsis(str) {
+    return str.length > maxNodeTextLength
+      ? str.slice(0, maxNodeTextLength - 3) + "..."
+      : str;
   }
 
-  removeNodeGroups(exit) {
-    exit.remove();
-  }
-
-  /**
-   * Updates the text of the nodes.
-   * @param {D3 Selection} textSelection - D3 selection of text elements.
-   * @param {Function} getText - Function that returns the text for each node.
-   */
   updateNodeText(textSelection, getText) {
     textSelection
       .text(getText)
@@ -73,16 +153,10 @@ export class NodeRenderer {
       .attr("font-family", "sans-serif")
       .attr("text-anchor", "middle")
       .attr("alignment-baseline", "middle")
-      .attr("transform", `translate(${this.nodeWidth / 2}, ${this.nodeHeight / 2})`)
+      .attr(
+        "transform",
+        `translate(${this.nodeWidth / 2}, ${this.nodeHeight / 2})`
+      )
       .attr("fill", "var(--color)");
-  }
-
-  /**
-   * Truncates the text with an ellipsis if it exceeds the maximum length.
-   * @param {string} str - The string to truncate.
-   * @returns {string} The truncated string.
-   */
-  truncateTextWithEllipsis(str) {
-    return str.length > maxNodeTextLength ? `${str.slice(0, maxNodeTextLength - 3)}...` : str;
   }
 }

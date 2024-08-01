@@ -1,17 +1,17 @@
 import { CausalModelUtils } from "../causal-model-utils";
-import { CausalViewStructure } from "../causal-view-structure";
+import { CausalView } from "../causal-view";
 import * as d3 from "d3";
 
 const nodeSelectionStrokeWidth = 4;
 const defaultSelectionColor = "#F5AE00";
 
 export class SelectionRenderer {
-  constructor(causalViewStructure) {
-    this._structure = causalViewStructure;
+  constructor(causalView) {
+    this._causalView = causalView;
   }
 
   initCausalViewSelectionZoom() {
-    this._structure.addEventListener("zoomed", () => {
+    this._causalView.addEventListener("zoomed", () => {
       d3.selectAll(".node__rect_selected").attr("stroke-width", () =>
         this.getSelectionStrokeWidthIgnoreZoom()
       );
@@ -20,7 +20,7 @@ export class SelectionRenderer {
 
   setSelectedAppearance(nodeId, selectionColor) {
     selectionColor ??= defaultSelectionColor;
-    CausalViewStructure.getNodeSelectionById(nodeId)
+    CausalView.getNodeSelectionById(nodeId)
       .raise()
       .select("rect")
       .attr("stroke-width", this.getSelectionStrokeWidthIgnoreZoom())
@@ -38,7 +38,7 @@ export class SelectionRenderer {
   getSelectionStrokeWidthIgnoreZoom() {
     return (
       nodeSelectionStrokeWidth /
-      d3.zoomTransform(this._structure.svgChild.node()).k
+      d3.zoomTransform(this._causalView.getViewNode()).k
     );
   }
 }

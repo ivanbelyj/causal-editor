@@ -1,16 +1,16 @@
 import * as d3 from "d3";
-import { CausalModelUtils } from "./causal-model-utils";
+import { CausalModelUtils } from "./causal-model-utils.js";
 import { DragNodesCommand } from "../undo-redo/commands/drag-nodes-command";
-import { CausalViewStructure } from "./causal-view-structure";
+import { CausalView } from "./causal-view.js";
 
 // Distances less than this value will not be considered as a node move
 // and won't execute a Command
 const dragDistanceThreshold = 1e-3;
 
-// CausalViewStructure's drag and drop manager
+// CausalView's drag and drop manager
 export class DragAndDropManager {
-  constructor(causalViewStructure, undoRedoManager, selectionManager) {
-    this.causalViewStructure = causalViewStructure;
+  constructor(causalView, undoRedoManager, selectionManager) {
+    this.causalView = causalView;
     this.undoRedoManager = undoRedoManager;
     this.selectionManager = selectionManager;
   }
@@ -26,7 +26,7 @@ export class DragAndDropManager {
           .on("end", dragEnded)
       );
 
-    const structure = this.causalViewStructure;
+    const structure = this.causalView;
     const undoRedoManager = this.undoRedoManager;
     const dragAndDropManager = this;
 
@@ -46,7 +46,7 @@ export class DragAndDropManager {
 
       // Change positions of nodes that should be dragged
       posDataToDrag.forEach(({ nodeId }) => {
-        CausalViewStructure.getNodeSelectionById(nodeId)
+        CausalView.getNodeSelectionById(nodeId)
           .attr("transform", (d) => {
             return `translate(${(d.x += event.dx)}, ${(d.y += event.dy)})`;
           })
@@ -87,10 +87,7 @@ export class DragAndDropManager {
   // Pos data contains node id and position of the node
   getNodesToDragData(draggedNodeId) {
     const idsToDrag = this.selectionManager.getNodeIdsToDrag(draggedNodeId);
-    return idsToDrag.map(
-      this.causalViewStructure.getNodeById,
-      this.causalViewStructure
-    );
+    return idsToDrag.map(this.causalView.getNodeById, this.causalView);
   }
 
   // Todo: refactor?
@@ -125,7 +122,7 @@ export class DragAndDropManager {
         return `translate(${x}, ${y})`;
       });
 
-      this.causalViewStructure.updateEdges();
+      this.causalView.updateEdges();
     });
   }
 }

@@ -5,8 +5,8 @@ import { Command } from "../undo-redo/commands/command.js";
 
 // Class that allows to create or remove nodes in causal view
 export class NodesCreateRemoveManager {
-  constructor(causalViewStructure, causesChangeManager) {
-    this.structure = causalViewStructure;
+  constructor(causalView, causesChangeManager) {
+    this.structure = causalView;
     this.causesChangeManager = causesChangeManager;
   }
 

@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 
 import { UndoRedoManager } from "../../undo-redo/undo-redo-manager.js";
-import { CausalView } from "../../causal-view/causal-view.js";
+import { CausalViewManager } from "../../causal-view/causal-view-manager.js";
 
 // Todo:
 class CausalViewFactory {}
@@ -44,7 +44,7 @@ export function createCausalView(container) {
 
   this.undoRedoManager = new UndoRedoManager(this.api);
 
-  this.causalView = new CausalView(
+  this.causalView = new CausalViewManager(
     container.element,
     this.api,
     this.undoRedoManager

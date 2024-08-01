@@ -203,7 +203,7 @@ export class NodeDataProvider extends DataProvider {
     propertyName,
     isFactProp,
     propertyValue,
-    causalViewStructureToRender
+    causalViewToRender
   ) {
     // this._causalFact can change after selecting another node
     const objToMutate = isFactProp ? this._causalFact : this._nodeData;
@@ -213,7 +213,7 @@ export class NodeDataProvider extends DataProvider {
         (newVal) => {
           objToMutate[propertyName] = newVal;
           this._dispatchPropertyChanged(propertyName, propertyValue);
-          causalViewStructureToRender.render();
+          causalViewToRender.render();
         },
         propertyValue,
         oldValue,

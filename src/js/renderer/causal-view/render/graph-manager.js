@@ -1,23 +1,34 @@
 import * as d3 from "d3";
 import * as d3dag from "d3-dag";
+import { CausalModelUtils } from "../causal-model-utils.js";
 
 export class GraphManager {
+  mutGraph;
+  stratify;
+
   constructor() {
-    this.mutGraph = null;
+    this.#setStratify();
   }
 
-  setGraph(graphData) {
-    const stratify = d3dag.graphStratify()
+  #setStratify() {
+    this.stratify = d3dag
+      .graphStratify()
       .id(({ fact }) => fact.id)
-      .parentIds(function ({ fact }) {
-        return CausalModelUtils.getCausesIdsUnique(fact);
-      });
+      .parentIds(
+        function ({ fact }) {
+          return CausalModelUtils.getCausesIdsUnique(fact);
+        }.bind(this)
+      );
+  }
 
-    this.mutGraph = stratify(graphData);
+  // Sets directed acyclic graph by causal model facts
+  resetGraph(nodesData) {
+    this.mutGraph = this.stratify(nodesData);
   }
 
   addNodeWithData(nodeData) {
     const newNode = this.mutGraph.node(nodeData);
+
     newNode.ux = nodeData.x;
     newNode.uy = nodeData.y;
     return newNode;
@@ -26,43 +37,47 @@ export class GraphManager {
   removeNode(nodeId) {
     const nodeToRemove = this.getNodeById(nodeId);
     if (!nodeToRemove) {
-      console.error("Node to remove is not found.");
+      console.error("Node to remove is not found. ", nodeToRemove);
       return;
     }
     nodeToRemove.delete();
   }
 
-  getNodeById(nodeId) {
-    return Array.from(this.mutGraph.nodes()).find((node) => node.data.fact.id === nodeId);
-  }
-
   addLink(sourceId, targetId) {
     const [source, target] = [sourceId, targetId].map(this.getNodeById, this);
+
     this.mutGraph.link(source, target);
   }
 
-  removeLink(sourceId, targetId) {
-    const linkToRemove = Array.from(this.mutGraph.links()).find(
+  getLinkBySourceAndTargetIds(sourceId, targetId) {
+    return Array.from(this.mutGraph.links()).find(
       (link) =>
         link.source.data.fact.id === sourceId &&
         link.target.data.fact.id === targetId
     );
-    if (linkToRemove) {
-      linkToRemove.delete();
-    } else {
-      console.error("Link to remove is not found.");
-    }
   }
 
-  resetGraph(nodesData) {
-    this.mutGraph = d3dag.graphStratify()(nodesData);
+  removeLink(sourceId, targetId) {
+    this.getLinkBySourceAndTargetIds(sourceId, targetId).delete();
   }
 
   getNodes() {
     return Array.from(this.mutGraph.nodes());
   }
 
-  getLinks() {
-    return Array.from(this.mutGraph.links());
+  getNodesData() {
+    return this.getNodes().map((node) => node.data);
+  }
+
+  getNodeFacts() {
+    return this.getNodes().map((node) => node.data.fact);
+  }
+
+  getNodeById(nodeId) {
+    return this.getNodes().find((node) => node.data.fact.id === nodeId);
+  }
+
+  getNodeDataById(nodeId) {
+    return this.getNodeById(nodeId).data;
   }
 }
