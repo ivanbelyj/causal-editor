@@ -1,10 +1,11 @@
 import * as d3 from "d3";
 import * as d3dag from "d3-dag";
 import { CausalModelUtils } from "../causal-model-utils.js";
-import { DragAndDropManager } from "../drag-and-drop-manager.js";
 
 const showDebugMessages = false;
 
+const nodeWidthMultiplier = 1.1;
+const nodeHeightMultiplier = 3;
 const maxNodeTextLength = 22;
 
 /**
@@ -58,7 +59,10 @@ export class NodeRenderer {
       .decross(d3dag.decrossOpt()) // minimize number of crossings
       // set node size instead of constraining to fit
       .nodeSize((node) => {
-        return [(node ? 1.1 : 0) * this.nodeWidth, 3 * this.nodeHeight];
+        return [
+          (node ? nodeWidthMultiplier : 0) * this.nodeWidth,
+          nodeHeightMultiplier * this.nodeHeight,
+        ];
       });
   }
 
@@ -106,13 +110,7 @@ export class NodeRenderer {
             .on("mouseenter", this.onMouseEnter)
             .on("mouseleave", this.onMouseLeave);
 
-          enterNodesSelection
-            .append("rect")
-            .attr("width", this.nodeWidth)
-            .attr("height", this.nodeHeight)
-            .attr("rx", 5)
-            .attr("ry", 5)
-            .attr("fill", (n) => n.data.color ?? "#aaa");
+          this.#applyNodeStyles(enterNodesSelection);
 
           enterNodesSelection.append("text");
 
@@ -127,6 +125,23 @@ export class NodeRenderer {
         }.bind(this)
       );
     this.updateNodes();
+  }
+
+  #applyNodeStyles(enterNodesSelection) {
+    enterNodesSelection
+      .append("rect")
+      .attr("width", this.nodeWidth)
+      .attr("height", this.nodeHeight)
+      .attr("rx", 5)
+      .attr("ry", 5)
+      .attr("fill", "transparent")
+      // .attr("stroke", (n) => n.data.color)
+      // .attr("stroke-width", 2)
+      // .attr("stroke-dasharray", "8, 8")
+      // .each(function (n) {
+      //   console.log("n fact type: ", n.data.fact);
+      // })
+      .attr("fill", (n) => n.data.color ?? "#aaa");
   }
 
   updateNodes() {

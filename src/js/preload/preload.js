@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld("api", {
   sendIsUnsavedChanges: (data) => send("send-is-unsaved-changes", data),
 
   onCreateNode: (func) => on("create-node", func),
+  onDeclareBlock: (func) => on("declare-block", func),
   onRemoveNode: (func) => on("remove-node", func),
   onOpenData: (func) => on("open-data", func),
   onReset: (func) => on("reset", func),

@@ -1,3 +1,4 @@
+import MicroModal from "micromodal";
 import { LayoutManager } from "./layout/layout-manager";
 import * as d3 from "d3";
 // import * as glDark from "golden-layout/dist/css/themes/goldenlayout-dark-theme.css";
@@ -22,6 +23,8 @@ import * as d3 from "d3";
   updateTheme(mediaQuery.matches);
 
   preventDefaultSelectAll();
+
+  MicroModal.init();
 })();
 
 function preventDefaultSelectAll() {

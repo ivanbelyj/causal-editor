@@ -5,6 +5,7 @@ import * as d3 from "d3";
 import { NodesCreateRemoveManager } from "./nodes-create-remove-manager.js";
 import { CausesChangeManager } from "../components/causes-change-manager.js";
 import { CausalViewDataManager } from "./causal-view-data-manager.js";
+import { DeclaredBlockDialog } from "../elements/declared-block-dialog.js";
 
 /**
  * A component managing causal view
@@ -18,7 +19,7 @@ export class CausalViewManager {
     this.causesChangeManager = new CausesChangeManager(this);
     this.api = api;
 
-    this.#initCreateRemoveNodes();
+    this.#initApiCallbacks();
 
     this.causalViewDataManager = new CausalViewDataManager();
     this.causalViewDataManager.init({
@@ -36,6 +37,8 @@ export class CausalViewManager {
       this.structure,
       this.causesChangeManager
     );
+
+    this.#initDialogs();
   }
 
   reset(nodesData) {
@@ -43,11 +46,27 @@ export class CausalViewManager {
     this.structure.setInitialZoom();
   }
 
-  #initCreateRemoveNodes() {
+  #initDialogs() {
+    this.declaredBlockDialog = new DeclaredBlockDialog(
+      "declared-block-modal",
+      this.onDeclareBlockClicked.bind(this)
+    );
+    this.declaredBlockDialog.init();
+  }
+
+  onDeclareBlockClicked({ declaredBlockId, blockConvention }) {
+    // TODO:
+    console.log(`${declaredBlockId} ${blockConvention}`);
+  }
+
+  #initApiCallbacks() {
     this.api.onCreateNode((event, data) => {
       this.undoRedoManager.execute(
         this.nodesCreateRemoveManager.getCreateNodeCommand(data.x, data.y)
       );
+    });
+    this.api.onDeclareBlock((event, data) => {
+      this.declaredBlockDialog.show();
     });
     this.api.onRemoveNode((event, data) => {
       this.undoRedoManager.execute(

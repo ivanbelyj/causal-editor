@@ -1,5 +1,5 @@
 const contextMenu = require("electron-context-menu");
-const { ipcMain } = require("electron");
+const { ipcMain, dialog } = require("electron");
 
 class ContextMenuManager {
   isNodeEntered = false;
@@ -35,6 +35,16 @@ class ContextMenuManager {
           visible: this.isCausalViewEntered,
           click: (event) => {
             this.window.webContents.send("create-node", {
+              x: parameters.x,
+              y: parameters.y,
+            });
+          },
+        },
+        {
+          label: "Declare Block",
+          visible: this.isCausalViewEntered,
+          click: (event) => {
+            this.window.webContents.send("declare-block", {
               x: parameters.x,
               y: parameters.y,
             });

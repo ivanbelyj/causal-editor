@@ -50,6 +50,7 @@
     "electron-context-menu": "^3.6.1",
     "electron-squirrel-startup": "^1.0.0",
     "golden-layout": "^2.6.0",
+    "micromodal": "^0.4.10",
     "remove-files-webpack-plugin": "^1.5.0"
   },
   "config": {
