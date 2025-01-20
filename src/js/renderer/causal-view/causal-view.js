@@ -24,7 +24,7 @@ export class CausalView extends EventTarget {
   undoRedoManager;
   selectionManager;
 
-  // Todo: handle when causal view component is hidden
+  // Todo: handle the case when causal view component is hidden
 
   constructor(undoRedoManager) {
     super();

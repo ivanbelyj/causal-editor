@@ -2,11 +2,12 @@ import * as d3 from "d3";
 import { CausalModelUtils } from "./causal-model-utils.js";
 import { ScreenUtils } from "./screen-utils.js";
 import { Command } from "../undo-redo/commands/command.js";
+import { CausalViewNodeUtils } from "./render/causal-view-node-utils.js";
 
 // Class that allows to create or remove nodes in causal view
 export class NodesCreateRemoveManager {
   constructor(causalView, causesChangeManager) {
-    this.structure = causalView;
+    this.causalView = causalView;
     this.causesChangeManager = causesChangeManager;
   }
 
@@ -21,18 +22,18 @@ export class NodesCreateRemoveManager {
           // this.structure.nodeWidth,
           // this.structure.nodeHeight
         ),
-      () => this.#removeNodeById(nodeData.fact.id)
+      () => this.#removeNodeById(CausalViewNodeUtils.getNodeId(nodeData))
     );
   }
 
   #removeNodeById(id) {
-    this.structure.removeNode(id);
-    this.structure.render();
+    this.causalView.removeNode(id);
+    this.causalView.render();
   }
 
   getRemoveNodeCommand(x, y, factId) {
     factId = factId ?? this.getNodeIdByPos(x, y);
-    const nodeData = this.structure.getNodeDataById(factId);
+    const nodeData = this.causalView.getNodeDataById(factId);
     return new Command(
       () => this.#removeNodeById(factId),
       () =>
@@ -52,21 +53,20 @@ export class NodesCreateRemoveManager {
   }
 
   createNodeWithNodeData(nodeData) {
-    this.structure.addNodeWithData(nodeData);
+    this.causalView.addNodeWithData(nodeData);
 
-    this.causesChangeManager.onCausesAdd(
-      nodeData,
-      CausalModelUtils.getCausesIdsUnique(nodeData.fact)
-    );
+    // TODO: blocks support
+    if (nodeData.fact) {
+      this.causesChangeManager.onCausesAdd(
+        nodeData,
+        CausalModelUtils.getCausesIdsUnique(nodeData.fact)
+      );
+    }
 
-    this.structure.render();
+    this.causalView.render();
 
     // Todo: handle causes changing after remove
     // this.structure.reset();
-
-    function getOffset(size) {
-      return size ? size / 2 : 0;
-    }
   }
 
   // Todo: fix node creating in incorrect position after redo
@@ -93,6 +93,6 @@ export class NodesCreateRemoveManager {
   getNodeIdByPos(x, y) {
     const nodeElement = ScreenUtils.nodeElementFromPoint({ x, y }, "node");
     const nodeData = d3.select(nodeElement).data()[0];
-    return nodeData.data.fact.id;
+    return CausalViewNodeUtils.getNodeId(nodeData.data);
   }
 }

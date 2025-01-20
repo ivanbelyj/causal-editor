@@ -49,8 +49,6 @@ export class Dialog {
     d3.select(`#${this.#getDialogElementContent()}`)
       .node()
       .appendChild(this.mainContent.node());
-
-    this.show();
   }
 
   show() {

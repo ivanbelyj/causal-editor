@@ -1,3 +1,4 @@
+// Todo: rename
 export class DataProvider extends EventTarget {
   #data;
   constructor(undoRedoManager, causesChangeManager) {

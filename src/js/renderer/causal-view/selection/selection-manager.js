@@ -1,4 +1,5 @@
 import { SelectionCommand } from "../../undo-redo/commands/selection-command.js";
+import { CausalViewNodeUtils } from "../render/causal-view-node-utils.js";
 import { SelectionRenderer } from "./selection-renderer.js";
 
 export class CausalViewSelectionManager extends EventTarget {
@@ -23,13 +24,15 @@ export class CausalViewSelectionManager extends EventTarget {
 
   selectAll() {
     this.executeSelectNodeIds(
-      this._structure.getNodeFacts().map((fact) => fact.id)
+      this._structure
+        .getNodes()
+        .map((d) => CausalViewNodeUtils.getNodeId(d.data))
     );
   }
 
-  init(structure) {
+  init(structure, nodeAppearanceProvider) {
     this._structure = structure;
-    this.selectionRenderer = new SelectionRenderer(structure);
+    this.selectionRenderer = new SelectionRenderer(structure, nodeAppearanceProvider);
     this.selectionRenderer.initCausalViewSelectionZoom();
 
     structure.addEventListener("nodeClicked", this.onNodeClicked.bind(this));
@@ -89,8 +92,9 @@ export class CausalViewSelectionManager extends EventTarget {
     const event = new Event(
       ids.length == 1 ? "singleNodeSelected" : "singleNodeNotSelected"
     );
-    if (ids.length == 1)
+    if (ids.length == 1) {
       event.nodeData = this._structure.getNodeDataById(ids[0]);
+    }
     this.dispatchEvent(event);
   }
 
@@ -114,17 +118,15 @@ export class CausalViewSelectionManager extends EventTarget {
 
     if (!this.isSelectByClick) return;
 
-    const nodeFact = event.nodeSelection.data.fact;
+    const nodeId = CausalViewNodeUtils.getNodeId(event.nodeSelection.data);
 
     const isMultiSelect = clickEvent.ctrlKey || clickEvent.metaKey;
-    const removeClicked =
-      isMultiSelect && this.selectedNodesIds?.has(nodeFact.id);
+    const removeClicked = isMultiSelect && this.selectedNodesIds?.has(nodeId);
     let newSelected = [
       ...(isMultiSelect ? this.selectedNodesIds ?? [] : []),
-      nodeFact.id,
+      nodeId,
     ];
-    if (removeClicked)
-      newSelected = newSelected.filter((x) => x != nodeFact.id);
+    if (removeClicked) newSelected = newSelected.filter((x) => x != nodeId);
 
     this.executeSelectNodeIds(newSelected);
   }

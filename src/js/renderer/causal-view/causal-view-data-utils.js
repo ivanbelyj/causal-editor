@@ -11,22 +11,25 @@ export class CausalViewDataUtils {
     });
   }
 
-  static causalViewDataToFactsAndNodesData(causalViewData) {
+  static causalViewDataToModelNodesData(causalViewData) {
     const facts = [];
+    const blocks = [];
     const nodesData = [];
     for (const datum of causalViewData) {
-      facts.push(datum.fact);
+      let nodeId;
+      if (datum.fact) {
+        facts.push(datum.fact);
+        nodeId = datum.fact.id;
+      } else if (datum.block) {
+        blocks.push(datum.block)
+        nodeId = datum.block.id;
+      }
 
-      const nodeData = { factId: datum.fact.id, ...datum };
+      const nodeData = { nodeId, ...datum };
       delete nodeData.fact;
+      delete nodeData.block;
       nodesData.push(nodeData);
     }
-    return { facts, nodesData };
+    return { facts, blocks, nodesData };
   }
-
-  //   static nodesDataToFacts(facts) {
-  //     return facts.map((fact) => {
-  //       fact;
-  //     });
-  //   }
 }

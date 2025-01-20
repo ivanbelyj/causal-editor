@@ -9,19 +9,16 @@ export class NodeDataProvider extends DataProvider {
     super(undoRedoManager, causesChangeManager);
   }
 
-  get _causalFact() {
+  get #causalFact() {
     return this._data?.fact;
   }
-  // set _causalFact(value) {
-  //   this._data = value;
-  // }
 
-  get _nodeData() {
+  get #nodeData() {
     return this._data;
   }
 
   getFact() {
-    return this._getFrozenOrNull(this._causalFact);
+    return this._getFrozenOrNull(this.#causalFact);
   }
 
   #getWeights(causalFact) {
@@ -38,7 +35,7 @@ export class NodeDataProvider extends DataProvider {
     //   () => this.#addWeightEdge(newEdge),
     //   () => this.#removeWeightEdge(newEdge)
     // );
-    const causalFact = this._causalFact;
+    const causalFact = this.#causalFact;
 
     CommandUtils.executeUndoRedoActionCommand(
       this.undoRedoManager,
@@ -94,7 +91,7 @@ export class NodeDataProvider extends DataProvider {
   }
 
   removeEdge(weightEdge) {
-    const causalFact = this._causalFact;
+    const causalFact = this.#causalFact;
     CommandUtils.executeUndoRedoActionCommand(
       this.undoRedoManager,
       this.#removeWeightEdge.bind(this, causalFact),
@@ -104,8 +101,8 @@ export class NodeDataProvider extends DataProvider {
   }
 
   changeAbstractFactId(newAbstrId) {
-    const oldAbstrId = this._causalFact.abstractFactId;
-    const causalFact = this._causalFact;
+    const oldAbstrId = this.#causalFact.abstractFactId;
+    const causalFact = this.#causalFact;
 
     let cmdToExecute = new Command(
       () => {
@@ -172,7 +169,7 @@ export class NodeDataProvider extends DataProvider {
 
   // Todo: test with undo and non-clear redo stack selection
   changeWeightEdgeCauseId(weightEdge, newCauseId) {
-    const causalFact = this._causalFact;
+    const causalFact = this.#causalFact;
     const setWeightEdge = (newCauseId) => {
       // const actualWeightEdge = this.#getActualWeightEdge(weightEdge);
       const oldCauseId = weightEdge.causeId;
@@ -205,8 +202,8 @@ export class NodeDataProvider extends DataProvider {
     propertyValue,
     causalViewToRender
   ) {
-    // this._causalFact can change after selecting another node
-    const objToMutate = isFactProp ? this._causalFact : this._nodeData;
+    // this.#causalFact can change after selecting another node
+    const objToMutate = isFactProp ? this.#causalFact : this.#nodeData;
     const oldValue = objToMutate[propertyName];
     this.undoRedoManager.execute(
       new ChangePropertyCommand(

@@ -35,9 +35,12 @@ export class DeclaredBlockDialog extends Dialog {
     this.isCallbackSubscribed = false;
   }
 
-  show() {
+  show({ blockNodePosX, blockNodePosY }) {
     super.show();
     this.#resetDeclaredBlockInput();
+
+    this.blockNodePosX = blockNodePosX;
+    this.blockNodePosY = blockNodePosY;
 
     if (!this.isCallbackSubscribed) {
       d3.select(`#${this.continueButtonId}`).on("click", () => {
@@ -59,6 +62,8 @@ export class DeclaredBlockDialog extends Dialog {
     const data = {
       declaredBlockId,
       blockConvention,
+      blockNodePosY: this.blockNodePosY,
+      blockNodePosX: this.blockNodePosX,
     };
 
     this.onDeclareBlockClicked(data);

@@ -1,4 +1,4 @@
-import { dialog, ipcMain } from "electron";
+import { dialog } from "electron";
 import { FormattingUtils } from "../data/formatting-utils";
 import { ProjectData } from "../data/project-data";
 import { UpgradePipeline } from "../data/upgrade/upgrade-pipeline";
@@ -18,21 +18,24 @@ export class DataProcessingHelper {
   }
 
   mutateProjectDataBeforeSave(projectData) {
-    projectData.facts.forEach((fact) => {
-      FormattingUtils.moveUpTypePropertiesRecursively(fact);
-    });
+    for (const causalModel of projectData.causalModels) {
+      causalModel.facts.forEach((fact) => {
+        FormattingUtils.moveUpTypePropertiesRecursively(fact);
+      });
+    }
   }
 
   async processOpenedProjectData(projectData) {
     projectData = await this.#upgradeProjectData(projectData);
+    console.log("upgraded project data:", projectData);
     this.#validate(projectData);
 
     return projectData;
   }
 
-  processImportedFacts(openedData) {
-    ProjectData.createProjectData({ facts: openedData });
-  }
+  // processImportedFacts(openedData) {
+  //   ProjectData.createProjectData({ facts: openedData });
+  // }
 
   async #upgradeProjectData(projectData) {
     if (this.upgradePipeline.shouldUpgrade(projectData)) {

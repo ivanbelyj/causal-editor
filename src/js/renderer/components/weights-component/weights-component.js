@@ -10,7 +10,7 @@ export class WeightsComponent {
     this.component = d3.select(selector);
     this.causalView = causalView;
 
-    this.causesChangeManager = causesChangeManager; // new CausesChangeManager(causalView);
+    this.causesChangeManager = causesChangeManager;
 
     api.onReset(
       function (event, data) {

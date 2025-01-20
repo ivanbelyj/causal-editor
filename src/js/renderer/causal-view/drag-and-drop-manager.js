@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { CausalModelUtils } from "./causal-model-utils.js";
 import { DragNodesCommand } from "../undo-redo/commands/drag-nodes-command";
 import { CausalView } from "./causal-view.js";
+import { CausalViewNodeUtils } from "./render/causal-view-node-utils.js";
 
 // Distances less than this value will not be considered as a node move
 // and won't execute a Command
@@ -33,7 +34,7 @@ export class DragAndDropManager {
     let posDataBeforeDrag;
     function dragStarted(event, d) {
       posDataBeforeDrag = dragAndDropManager.getNodesToDragPosData(
-        d.data.fact.id
+        CausalViewNodeUtils.getNodeId(d.data)
       );
 
       d3.select(this).attr("cursor", "grabbing");
@@ -41,7 +42,7 @@ export class DragAndDropManager {
 
     function dragged(event, d) {
       const posDataToDrag = dragAndDropManager.getNodesToDragPosData(
-        d.data.fact.id
+        CausalViewNodeUtils.getNodeId(d.data)
       );
 
       // Change positions of nodes that should be dragged
@@ -57,7 +58,7 @@ export class DragAndDropManager {
     }
 
     function dragEnded(event, d) {
-      const draggedNodeId = d.data.fact.id;
+      const draggedNodeId = CausalViewNodeUtils.getNodeId(d.data);
       const posDataAfterDrag =
         dragAndDropManager.getNodesToDragPosData(draggedNodeId);
 
@@ -94,7 +95,7 @@ export class DragAndDropManager {
 
   getNodesToDragPosData(draggedNodeId) {
     return this.getNodesToDragData(draggedNodeId).map((nodeData) => ({
-      nodeId: nodeData.data.fact.id,
+      nodeId: CausalViewNodeUtils.getNodeId(nodeData.data),
       x: nodeData.ux,
       y: nodeData.uy,
     }));

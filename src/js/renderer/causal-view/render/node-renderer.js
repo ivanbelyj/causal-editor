@@ -1,12 +1,12 @@
 import * as d3 from "d3";
 import * as d3dag from "d3-dag";
 import { CausalModelUtils } from "../causal-model-utils.js";
+import { CausalViewNodeUtils } from "./causal-view-node-utils.js";
 
 const showDebugMessages = false;
 
 const nodeWidthMultiplier = 1.1;
 const nodeHeightMultiplier = 3;
-const maxNodeTextLength = 22;
 
 /**
  * Class responsible for rendering nodes in the causal view structure.
@@ -94,7 +94,7 @@ export class NodeRenderer {
     if (showLog) console.log("nodes");
     d3.select(".nodes-parent")
       .selectAll("g")
-      .data(nodes, (node) => node.data.fact.id)
+      .data(nodes, (node) => CausalViewNodeUtils.getNodeId(node.data))
       .join(
         function (enter) {
           if (showLog) console.log("enter", Array.from(enter));
@@ -102,7 +102,7 @@ export class NodeRenderer {
             .append("g")
             .attr("class", (d) => {
               return `node ${CausalModelUtils.getNodeIdClassNameByNodeId(
-                d.data.fact.id
+                CausalViewNodeUtils.getNodeId(d.data)
               )}`;
             })
             .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
@@ -134,31 +134,35 @@ export class NodeRenderer {
       .attr("height", this.nodeHeight)
       .attr("rx", 5)
       .attr("ry", 5)
-      .attr("fill", "transparent")
-      // .attr("stroke", (n) => n.data.color)
-      // .attr("stroke-width", 2)
-      // .attr("stroke-dasharray", "8, 8")
-      // .each(function (n) {
-      //   console.log("n fact type: ", n.data.fact);
-      // })
-      .attr("fill", (n) => n.data.color ?? "#aaa");
+      .each(function (n) {
+        var nodeRect = d3.select(this);
+
+        NodeRenderer.applyNodeStrokeAndFill(n, nodeRect)
+      });
+  }
+
+  // I don't know what exactly d3 object is it, so let it be 'n'
+  static applyNodeStrokeAndFill(n, nodeRect) {
+    if (n.data.fact) {
+      nodeRect
+        .attr("fill", (n) => n.data.color ?? "#aaa")
+        .attr("stroke", "none");
+    } else if (n.data.block) {
+      nodeRect
+        .attr("fill", "transparent")
+        .attr("stroke", (n) => n.data.color)
+        .attr("stroke-width", 2)
+        .attr("stroke-dasharray", "8, 8");
+    } else {
+      console.error("Node has neither fact, nor block data");
+    }
   }
 
   updateNodes() {
     this.updateNodeText(
       d3.select(".nodes-parent").selectAll("g").select("text"),
-      (d) =>
-        this.truncateTextWithEllipsis(
-          d.data.title || d.data.fact.factValue || d.data.fact.id
-        )
+      (d) => CausalViewNodeUtils.getNodeDisplayingText(d.data)
     );
-  }
-
-  // Todo: text truncating by width
-  truncateTextWithEllipsis(str) {
-    return str.length > maxNodeTextLength
-      ? str.slice(0, maxNodeTextLength - 3) + "..."
-      : str;
   }
 
   updateNodeText(textSelection, getText) {

@@ -1,6 +1,7 @@
 const rules = require("./webpack.rules");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const RemovePlugin = require("remove-files-webpack-plugin");
+const webpack = require("webpack");
 
 rules.push(
   {
@@ -49,5 +50,23 @@ module.exports = {
         ],
       },
     }),
+    new webpack.ProvidePlugin({
+      $: "jquery",
+      jQuery: "jquery",
+      "window.jQuery": "jquery",
+    }),
+    // new webpack.ProvidePlugin({
+    //   $: "/src/third-party/jquery-3.7.1.min.js",
+    //   jQuery: "/src/third-party/jquery-3.7.1.min.js",
+    //   jquery: "/src/third-party/jquery-3.7.1.min.js",
+    //   "window.jQuery": "/src/third-party/jquery-3.7.1.min.js",
+    //   "$.jQuery": "/src/third-party/jquery-3.7.1.min.js",
+    // }),
+    new webpack.ProvidePlugin({
+      jstree: "jstree",
+    }),
+    // new webpack.ProvidePlugin({
+    //   jstree: "/src/third-party/jstree/jstree.min.js",
+    // }),
   ],
 };

@@ -35,6 +35,7 @@ export class NodeValueComponent {
     this.causalView.selectionManager.addEventListener(
       "singleNodeSelected",
       (event) => {
+        console.log("nodeData", event.nodeData);
         this.resetProvider(event.nodeData);
       }
     );
@@ -50,30 +51,11 @@ export class NodeValueComponent {
   reset() {
     this.component.html("");
 
-    if (!this.nodeDataProvider.getFact()) return;
+    if (!this.nodeDataProvider.getFact()) {
+      return;
+    }
 
-    this.titleInput = this.appendInputItem({
-      name: "Title",
-      factPropName: "title",
-      inputId: "node-title-input",
-      dontShowLabel: true,
-      isFactProp: false,
-    });
-    this.valueInput = this.appendInputItem({
-      name: "Fact Value",
-      factPropName: "factValue",
-      inputId: "node-id-input",
-      isReadonly: false,
-      useTextArea: true,
-      isFactProp: true,
-    });
-    this.idInput = this.appendInputItem({
-      name: "Id",
-      factPropName: "id",
-      inputId: "node-id-input",
-      isReadonly: true,
-      isFactProp: true,
-    });
+    this.#renderFactNode();
 
     this.getFactPropNamesToData().forEach(
       ([propertyName, { input, isFactProp }]) =>
@@ -99,6 +81,64 @@ export class NodeValueComponent {
         });
       }
     );
+  }
+
+  #renderFactNode() {
+    this.titleInput = this.appendInputItem({
+      name: "Title",
+      factPropName: "title",
+      inputId: "node-title-input",
+      dontShowLabel: true,
+      isFactProp: false,
+    });
+    this.valueInput = this.appendInputItem({
+      name: "Fact Value",
+      factPropName: "factValue",
+      inputId: "node-id-input",
+      isReadonly: false,
+      useTextArea: true,
+      isFactProp: true,
+    });
+    this.idInput = this.appendInputItem({
+      name: "Id",
+      factPropName: "id",
+      inputId: "node-id-input",
+      isReadonly: true,
+      isFactProp: true,
+    });
+  }
+
+  // TODO: move away
+  #renderBlockNode() {
+    this.idInput = this.appendInputItem({
+      name: "Id",
+      factPropName: "id",
+      inputId: "node-id-input",
+      isReadonly: true,
+      isFactProp: true,
+    });
+    this.conventionInput = this.appendInputItem({
+      name: "Convention",
+      factPropName: "convention",
+      inputId: "block-convention-input",
+      isReadonly: false,
+      isFactProp: false,
+    });
+    this.causesConventionInput = this.appendInputItem({
+      name: "Causes Convention",
+      factPropName: "causesConvention",
+      inputId: "block-causes-convention-input",
+      isReadonly: false,
+      isFactProp: false,
+    });
+
+    // TODO: ?
+    this.component.append("div")
+      .attr("class", "block-maps")
+      .html(`
+      <div><strong>Block Causes Map:</strong> ${JSON.stringify(nodeData.blockCausesMap)}</div>
+      <div><strong>Block Consequences Map:</strong> ${JSON.stringify(nodeData.blockConsequencesMap)}</div>
+    `);
   }
 
   getFactPropNamesToData() {

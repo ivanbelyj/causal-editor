@@ -1,14 +1,21 @@
 import { betterAjvErrors } from "@apideck/better-ajv-errors";
 import {
   projectSchema as projectSchemaV0,
-  factsSchema,
+  factsSchema as factsSchemaV0,
   defsSchema as defsSchemaV0,
 } from "./schemas/schema-v0";
 
 import {
   projectSchema as projectSchemaV1,
+  factsSchema as factsSchemaV1,
   defsSchema as defsSchemaV1,
 } from "./schemas/schema-v1";
+
+import {
+  projectSchema as projectSchemaV2,
+  factsSchema as factsSchemaV2,
+  defsSchema as defsSchemaV2,
+} from "./schemas/schema-v2";
 
 import Ajv from "ajv";
 import VersionUtils from "../version-utils";
@@ -19,7 +26,7 @@ export class DataValidator {
       0,
       {
         projectSchema: projectSchemaV0,
-        causalModelSchema: factsSchema,
+        causalModelSchema: factsSchemaV0,
         defsSchema: defsSchemaV0,
       },
     ],
@@ -27,8 +34,16 @@ export class DataValidator {
       1,
       {
         projectSchema: projectSchemaV1,
-        causalModelSchema: factsSchema,
+        causalModelSchema: factsSchemaV1,
         defsSchema: defsSchemaV1,
+      },
+    ],
+    [
+      2,
+      {
+        projectSchema: projectSchemaV2,
+        causalModelSchema: factsSchemaV2,
+        defsSchema: defsSchemaV2,
       },
     ],
   ]);

@@ -47,7 +47,8 @@ export function createCausalView(container) {
   this.causalView = new CausalViewManager(
     container.element,
     this.api,
-    this.undoRedoManager
+    this.undoRedoManager,
+    this.dataManager
   );
 
   this.causesChangeManager = this.causalView.causesChangeManager;

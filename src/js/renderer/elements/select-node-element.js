@@ -5,7 +5,7 @@ const highlightingColor = "#fde910";
 
 export class SelectNodeElement {
   #selectionRenderer;
-  #causalModelFactId;
+  #causalModelNodeId;
   constructor(selector, causalView, onNodeIdSelected) {
     this.component = d3.select(selector);
     this.causalView = causalView;
@@ -19,7 +19,7 @@ export class SelectNodeElement {
 
     this.component.attr("class", "input-item select-node-element");
 
-    this.#causalModelFactId = initialId;
+    this.#causalModelNodeId = initialId;
     this.#createElements(initialId);
 
     this.#setButtonsVisible(true);
@@ -51,12 +51,12 @@ export class SelectNodeElement {
   #setIdInputAndNodeAppearance(isMouseEnter, element) {
     d3.select(element).style(
       "outline",
-      isMouseEnter && this.#causalModelFactId
+      isMouseEnter && this.#causalModelNodeId
         ? `2px solid ${highlightingColor}`
-        : "initial"
+        : "inherit"
     );
 
-    if (!this.#causalModelFactId) return;
+    if (!this.#causalModelNodeId) return;
 
     const func = isMouseEnter
       ? this.#selectionRenderer.setSelectedAppearance
@@ -64,7 +64,7 @@ export class SelectNodeElement {
 
     func.call(
       this.#selectionRenderer,
-      this.#causalModelFactId,
+      this.#causalModelNodeId,
       highlightingColor
     );
   }
@@ -118,8 +118,10 @@ export class SelectNodeElement {
 
   onNodeClicked(event) {
     const causalModelFact = event.nodeSelection.data.fact;
-    this.#causalModelFactId = causalModelFact.id;
-    this.#setIdInputAndCancelSelectionButton(causalModelFact.id);
+    if (causalModelFact) {
+      this.#causalModelNodeId = causalModelFact.id;
+      this.#setIdInputAndCancelSelectionButton(causalModelFact.id);
+    }
   }
 
   #setIdInputAndCancelSelectionButton(causalModelFactId) {

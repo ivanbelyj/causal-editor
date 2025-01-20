@@ -7,22 +7,27 @@ import { createCausesComponent } from "./component-factories/create-causes-compo
 import { createWeightsComponent } from "./component-factories/create-weights-component.js";
 import { defaultLayoutConfig } from "./default-layout-config.js";
 import LayoutConfigUtils from "./layout-config-utils.js";
+import { createProjectView } from "./component-factories/create-project-view.js";
+import { DataManager } from "../data/data-manager.js";
 
 const defaultComponentTypesAndFactories = {
   "Causal View": createCausalView,
   "Node Value": createNodeValue,
   Causes: createCausesComponent,
   Weights: createWeightsComponent,
+  "Project View": createProjectView,
 };
 
 export class LayoutManager {
-  constructor(layoutSelector, api) {
+  constructor(layoutSelector, api, dataManager) {
     this.layoutContainer = d3
       .select(layoutSelector)
       .attr("class", "layout-container");
     this.api = api;
 
     this.componentTypesAndItems = new Map();
+
+    this.dataManager = dataManager;
   }
 
   initLayout(config) {
@@ -100,8 +105,11 @@ export class LayoutManager {
   #loadConfig(config) {
     const loadedFromConfig =
       LayoutConfigUtils.getComponentTypesFromLayoutConfig(config);
-    for (const componentType of loadedFromConfig) {
-      this.api.sendComponentActive({ componentType, isActive: true });
+    for (const componentType in defaultComponentTypesAndFactories) {
+      this.api.sendComponentActive({
+        componentType,
+        isActive: loadedFromConfig.includes(componentType),
+      });
     }
     this.layout.loadLayout(config);
   }

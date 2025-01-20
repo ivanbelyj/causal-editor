@@ -6,6 +6,10 @@ import { NodesCreateRemoveManager } from "./nodes-create-remove-manager.js";
 import { CausesChangeManager } from "../components/causes-change-manager.js";
 import { CausalViewDataManager } from "./causal-view-data-manager.js";
 import { DeclaredBlockDialog } from "../elements/declared-block-dialog.js";
+import { DeclareBlockHelper } from "./declare-block-helper.js";
+import { CausalViewDataUtils } from "./causal-view-data-utils.js";
+
+const eventBus = require("js-event-bus")();
 
 /**
  * A component managing causal view
@@ -14,20 +18,25 @@ export class CausalViewManager {
   structure = null;
   selectionManager = null;
 
-  constructor(selector, api, undoRedoManager) {
+  constructor(selector, api, undoRedoManager, dataManager) {
     this.undoRedoManager = undoRedoManager;
     this.causesChangeManager = new CausesChangeManager(this);
     this.api = api;
 
-    this.#initApiCallbacks();
+    this.#initNodesApiCallbacks();
 
     this.causalViewDataManager = new CausalViewDataManager();
     this.causalViewDataManager.init({
       api,
-      causalView: this,
+      causalViewManager: this,
     });
 
+    this.declareBlockHelper = new DeclareBlockHelper();
+
     this.#initEnterLeaveView(selector);
+
+    this.dataManager = dataManager;
+    this.dataManager.setCurrentCausalViewDataManager(this.causalViewDataManager);
   }
 
   init(nodesData) {
@@ -39,6 +48,8 @@ export class CausalViewManager {
     );
 
     this.#initDialogs();
+
+    eventBus.on("causalModelSelected", this.onCausalModelSelected.bind(this));
   }
 
   reset(nodesData) {
@@ -54,19 +65,55 @@ export class CausalViewManager {
     this.declaredBlockDialog.init();
   }
 
-  onDeclareBlockClicked({ declaredBlockId, blockConvention }) {
-    // TODO:
-    console.log(`${declaredBlockId} ${blockConvention}`);
+  onCausalModelSelected({ causalModelName }) {
+    const selectedCausalModel =
+      this.dataManager.projectData.getCausalModel(causalModelName);
+    const causalViewData =
+      CausalViewManager.#toCausalViewData(selectedCausalModel);
+
+    this.reset(causalViewData);
   }
 
-  #initApiCallbacks() {
+  static #toCausalViewData(causalModel) {
+    return CausalViewDataUtils.factsAndNodesDataToCausalViewData(
+      causalModel.facts,
+      causalModel.nodesData
+    );
+  }
+
+  onDeclareBlockClicked({
+    blockNodePosX,
+    blockNodePosY,
+    declaredBlockId,
+    blockConvention,
+  }) {
+    const nodeData = {
+      block: this.declareBlockHelper.createBlock({
+        declaredBlockId,
+        blockConvention,
+      }),
+    };
+
+    this.undoRedoManager.execute(
+      this.nodesCreateRemoveManager.getCreateNodeCommand(
+        blockNodePosX,
+        blockNodePosY,
+        nodeData
+      )
+    );
+  }
+
+  #initNodesApiCallbacks() {
     this.api.onCreateNode((event, data) => {
       this.undoRedoManager.execute(
         this.nodesCreateRemoveManager.getCreateNodeCommand(data.x, data.y)
       );
     });
     this.api.onDeclareBlock((event, data) => {
-      this.declaredBlockDialog.show();
+      this.declaredBlockDialog.show({
+        blockNodePosX: data.x,
+        blockNodePosY: data.y,
+      });
     });
     this.api.onRemoveNode((event, data) => {
       this.undoRedoManager.execute(

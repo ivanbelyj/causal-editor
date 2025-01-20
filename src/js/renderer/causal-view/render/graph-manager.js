@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import * as d3dag from "d3-dag";
 import { CausalModelUtils } from "../causal-model-utils.js";
+import { CausalViewNodeUtils } from "./causal-view-node-utils.js";
 
 export class GraphManager {
   mutGraph;
@@ -13,7 +14,7 @@ export class GraphManager {
   #setStratify() {
     this.stratify = d3dag
       .graphStratify()
-      .id(({ fact }) => fact.id)
+      .id((nodeData) => CausalViewNodeUtils.getNodeId(nodeData))
       .parentIds(
         function ({ fact }) {
           return CausalModelUtils.getCausesIdsUnique(fact);
@@ -74,7 +75,9 @@ export class GraphManager {
   }
 
   getNodeById(nodeId) {
-    return this.getNodes().find((node) => node.data.fact.id === nodeId);
+    return this.getNodes().find(
+      (node) => CausalViewNodeUtils.getNodeId(node.data) === nodeId
+    );
   }
 
   getNodeDataById(nodeId) {

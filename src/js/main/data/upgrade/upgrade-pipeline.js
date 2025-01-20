@@ -1,12 +1,16 @@
 import { DataValidator } from "../../data/validation/data-validator";
 import VersionUtils from "../version-utils";
 import { UpgradeToV1 } from "./v1/upgrade-to-v1";
+import { UpgradeToV2 } from "./v2/upgrade-to-v2";
 
 export class UpgradePipeline {
   constructor() {
     // In the current implementation, the keys of this map are not utilized
     // during the upgrade process; only the order of handlers is significant
-    this.upgradeHandlers = new Map([[0, new UpgradeToV1()]]);
+    this.upgradeHandlers = new Map([
+      [0, new UpgradeToV1()],
+      [1, new UpgradeToV2()],
+    ]);
   }
 
   upgradeProjectData(projectData) {

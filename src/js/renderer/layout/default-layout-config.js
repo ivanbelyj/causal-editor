@@ -3,6 +3,18 @@ export const defaultLayoutConfig = {
     type: "row",
     content: [
       {
+        type: "column",
+        width: 15,
+        content: [
+          {
+            type: "component", // For debug purposes
+            componentType: "Project View",
+            // id: createId(),
+            height: 22,
+          },
+        ],
+      },
+      {
         type: "component",
         componentType: "Causal View",
         // id: createId(),
