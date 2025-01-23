@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import { Dialog } from "./dialog";
 
 export class DeclaredBlockDialog extends Dialog {
-  constructor(modalId, onDeclareBlockClicked) {
+  constructor(modalId, onDeclareBlockClicked, blockConventionsProvider) {
     super(modalId, {
       title: "Declare Block",
       closeButtonContent: "Cancel",
@@ -14,19 +14,20 @@ export class DeclaredBlockDialog extends Dialog {
               id="${modalId}-declared-block-input-id"
               class="input-item text-input input-item__input" type="text"
               placeholder="Declared Block Id"/>
-          </div>
-          
-          <div class="input-item">
-            <label class="input-item__label">Block Convention</label>
-            <select id="${modalId}-block-convention-select" class="input-item__input">
-              <option value="test">Test convention</option>
-            </select>
-          </div>
-
-          <div class="input-item">
-            <button class="button">Add Block Convention</button>
-          </div>
+          </div> 
       `),
+
+      // Todo: add convention select on block declaration
+      // <div class="input-item">
+      //   <label class="input-item__label">Block Convention</label>
+      //   <select id="${modalId}-block-convention-select" class="input-item__input">
+      //     ${[].map(x => `<option value="${x}">${x}</option>`).join(" ")}
+      //   </select>
+      // </div>
+      // 
+      // <div class="input-item">
+      //   <button class="button">Add Block Convention</button>
+      // </div>
     });
     this.declaredBlockInputId = `${modalId}-declared-block-input-id`;
     this.blockConventionSelectId = `${modalId}-block-convention-select`;
@@ -55,13 +56,15 @@ export class DeclaredBlockDialog extends Dialog {
     const declaredBlockId = d3
       .select(`#${this.declaredBlockInputId}`)
       .property("value");
-    const blockConvention = d3
-      .select(`#${this.blockConventionSelectId}`)
-      .property("value");
+    // Todo:
+    // const blockConvention = d3
+    //   .select(`#${this.blockConventionSelectId}`)
+    //   .property("value");
 
     const data = {
       declaredBlockId,
-      blockConvention,
+      blockConvention: "",
+      // blockConvention,
       blockNodePosY: this.blockNodePosY,
       blockNodePosX: this.blockNodePosX,
     };

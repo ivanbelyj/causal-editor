@@ -2,17 +2,16 @@ import { GoldenLayout } from "golden-layout";
 import * as d3 from "d3";
 
 import { createCausalView } from "./component-factories/create-causal-view.js";
-import { createNodeValue } from "./component-factories/create-node-value.js";
 import { createCausesComponent } from "./component-factories/create-causes-component.js";
 import { createWeightsComponent } from "./component-factories/create-weights-component.js";
 import { defaultLayoutConfig } from "./default-layout-config.js";
 import LayoutConfigUtils from "./layout-config-utils.js";
 import { createProjectView } from "./component-factories/create-project-view.js";
-import { DataManager } from "../data/data-manager.js";
+import { createNodeComponent } from "./component-factories/create-node-component.js";
 
 const defaultComponentTypesAndFactories = {
   "Causal View": createCausalView,
-  "Node Value": createNodeValue,
+  "Node": createNodeComponent,
   Causes: createCausesComponent,
   Weights: createWeightsComponent,
   "Project View": createProjectView,

@@ -53,8 +53,8 @@ export class GraphManager {
   getLinkBySourceAndTargetIds(sourceId, targetId) {
     return Array.from(this.mutGraph.links()).find(
       (link) =>
-        link.source.data.fact.id === sourceId &&
-        link.target.data.fact.id === targetId
+        CausalViewNodeUtils.getNodeId(link.source.data) === sourceId &&
+        CausalViewNodeUtils.getNodeId(link.target.data) === targetId
     );
   }
 

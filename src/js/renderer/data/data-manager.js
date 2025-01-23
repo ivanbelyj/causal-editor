@@ -18,6 +18,19 @@ export class DataManager extends EventTarget {
     this.#initOpenData(api);
   }
 
+  get blockConventions() {
+    console.log("get block conventions. project data: ", this.projectData);
+    return this.projectData.blockConventions ?? [];
+  }
+
+  get blockCausesConventions() {
+    return this.projectData.blockCausesConventions ?? [];
+  }
+
+  get blockCausesConventions() {
+    return this.projectData.blockCausesConventions ?? [];
+  }
+
   /**
    * Current CausalViewDataManager is used for getting data
    * of the currently editing causal view

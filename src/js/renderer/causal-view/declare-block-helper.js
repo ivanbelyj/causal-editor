@@ -3,13 +3,13 @@ export class DeclareBlockHelper {
     return {
       id: declaredBlockId,
       convention: blockConvention,
-      //   causesConvention: "TestCausesConvention",
-      //   blockCausesMap: {
-      //     BlockCause: "BlockCause1",
-      //   },
-      //   blockConsequencesMap: {
-      //     BlockConsequence: "BlockConsequence1",
-      //   },
+      causesConvention: null,
+      blockCausesMap: {
+
+      },
+      blockConsequencesMap: {
+
+      },
     };
   }
 }

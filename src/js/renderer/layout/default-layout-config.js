@@ -25,9 +25,9 @@ export const defaultLayoutConfig = {
         content: [
           {
             type: "component",
-            componentType: "Node Value",
+            componentType: "Node",
             // id: createId(),
-            height: 22,
+            height: 40,// 22,
           },
           {
             type: "component",

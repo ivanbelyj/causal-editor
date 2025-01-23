@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { CausalModelUtils } from "../causal-model-utils.js";
+import { CausalViewNodeUtils } from "./causal-view-node-utils.js";
 
 const showDebugMessages = false;
 
@@ -68,8 +69,8 @@ export class EdgeRenderer {
       .selectAll("path")
       .data(this.graphManager.mutGraph.links(), ({ source, target }) => {
         return CausalModelUtils.sourceAndTargetIdsToEdgeId(
-          source.data.fact.id,
-          target.data.fact.id
+          CausalViewNodeUtils.getNodeId(source.data),
+          CausalViewNodeUtils.getNodeId(target.data),
         );
       });
 
@@ -88,11 +89,11 @@ export class EdgeRenderer {
           .attr("class", "edge")
           .attr("fill", "none")
           .attr("stroke-width", 3)
-          .attr("stroke", function ({ source, target }) {
+          .attr("stroke", ({ source, target }) => {
             // Edges gradients
             const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
-              source.data.fact.id,
-              target.data.fact.id
+              CausalViewNodeUtils.getNodeId(source.data),
+              CausalViewNodeUtils.getNodeId(target.data),
             );
 
             const grad = edgesDefs
@@ -148,7 +149,7 @@ export class EdgeRenderer {
       const factSrc = source.data.fact;
       const factTarget = target.data.fact;
 
-      return factTarget.abstractFactId &&
+      return factTarget?.abstractFactId &&
         factTarget.abstractFactId == factSrc.id
         ? ""
         : "5,5";
@@ -165,8 +166,8 @@ export class EdgeRenderer {
     edgePathsSelection.attr("stroke", ({ source, target }) => {
       // this.printEdge({ source, target });
       const gradId = CausalModelUtils.sourceAndTargetIdsToEdgeId(
-        source.data.fact.id,
-        target.data.fact.id
+        CausalViewNodeUtils.getNodeId(source.data),
+        CausalViewNodeUtils.getNodeId(target.data),
       );
       d3.select(`#${gradId}`)
         .attr("x1", source.x)

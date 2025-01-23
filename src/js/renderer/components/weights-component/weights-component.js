@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import { SelectNodeElement } from "../../elements/select-node-element.js";
 import binSrc from "../../../../images/bin.svg";
-import { NodeDataProvider } from "../providers/node-data-provider.js";
+import { FactDataProvider } from "../providers/fact-data-provider.js";
 
 // Block is used as a part of a component
 export class WeightsComponent {
@@ -20,7 +20,7 @@ export class WeightsComponent {
 
     this.undoRedoManager = undoRedoManager;
 
-    this.nodeDataProvider = new NodeDataProvider(
+    this.nodeDataProvider = new FactDataProvider(
       this.undoRedoManager,
       this.causesChangeManager
     );

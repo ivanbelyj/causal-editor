@@ -43,7 +43,7 @@ export class DataProcessingHelper {
       projectData = this.upgradePipeline.upgradeProjectData(projectData);
       this.unsavedChangesHelper.setIsUnsavedChanges(true);
     } else {
-      console.log("Data should not be upgraded");
+      console.log("Project version is up to date");
     }
     return projectData;
   }

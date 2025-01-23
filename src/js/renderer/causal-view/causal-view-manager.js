@@ -3,7 +3,7 @@ import { CausalViewSelectionManager } from "./selection/selection-manager.js";
 
 import * as d3 from "d3";
 import { NodesCreateRemoveManager } from "./nodes-create-remove-manager.js";
-import { CausesChangeManager } from "../components/causes-change-manager.js";
+import { CausesChangeManager } from "../common/causes-change-manager.js";
 import { CausalViewDataManager } from "./causal-view-data-manager.js";
 import { DeclaredBlockDialog } from "../elements/declared-block-dialog.js";
 import { DeclareBlockHelper } from "./declare-block-helper.js";
@@ -60,7 +60,8 @@ export class CausalViewManager {
   #initDialogs() {
     this.declaredBlockDialog = new DeclaredBlockDialog(
       "declared-block-modal",
-      this.onDeclareBlockClicked.bind(this)
+      this.onDeclareBlockClicked.bind(this),
+      this.dataManager
     );
     this.declaredBlockDialog.init();
   }
